@@ -81,7 +81,7 @@ const initialToggleListeners=toggleAdds-toggleRemoves;
 const initial=openRoles(),progress={req:hasProgress("req"),dev:hasProgress("dev"),cr:hasProgress("cr"),qa:hasProgress("qa")};
 const waitingSnapshot=structuredClone(snapshot);waitingSnapshot.state="ready_for_qa";waitingSnapshot.role_details={req:{status:"passed"},dev:{status:"passed"},cr:{status:"pending"},qa:{status:"pending"}};window.renderSurveyCorpsTaskView(root,waitingSnapshot);const waitingActive=[...root.querySelectorAll('details[data-sc-role].is-active')].map(node=>node.dataset.scRole);window.renderSurveyCorpsTaskView(root,snapshot);
 const finishedDev=structuredClone(waitingSnapshot);finishedDev.state="dev_in_progress";window.renderSurveyCorpsTaskView(root,finishedDev);const finishedDevActive=[...root.querySelectorAll('details[data-sc-role].is-active')].map(node=>node.dataset.scRole);window.renderSurveyCorpsTaskView(root,snapshot);
-const flow={roles:[...root.querySelectorAll("details[data-sc-role]")].map(node=>node.dataset.scRole),titles:[...root.querySelectorAll("details[data-sc-role] summary .sc-task-view__role-name > span:first-child")].map(node=>node.textContent),lastRole:root.querySelector("[data-sc-roles]").lastElementChild?.dataset.scRole,extraExitNodes:root.querySelectorAll("[data-sc-exit], .sc-task-view__exit").length,exitTextCount:root.querySelector("[data-sc-roles]").textContent.split("任务出口").length-1,connectorCount:root.querySelectorAll("[data-sc-connector], .sc-task-view__connector").length};
+const flow={roles:[...root.querySelectorAll("details[data-sc-role]")].map(node=>node.dataset.scRole),titles:[...root.querySelectorAll("details[data-sc-role] summary .sc-task-view__role-name > span:first-child")].map(node=>node.textContent),lastRole:root.querySelector("[data-sc-roles]").lastElementChild?.dataset.scRole,extraExitNodes:root.querySelectorAll("[data-sc-exit], .sc-task-view__exit").length,exitTextCount:root.querySelector("[data-sc-roles]").textContent.split("任务出口").length-1,connectorCount:root.querySelectorAll("[data-sc-connector], .sc-task-view__connector").length,firstNode:root.querySelector("[data-sc-roles]").firstElementChild?.dataset.scRole};
 const defaults={summary:root.querySelector('[data-sc-task-summary]').textContent,selected:root.querySelector('[data-sc-selected-roles]').textContent,contextRemoved:!root.querySelector('[data-sc-context]'),namesRemoved:!root.querySelector('[data-sc-agent-name]'),projectMcpsHidden:root.querySelector('[data-sc-project-mcps]').hidden,debugHidden:root.querySelector('[data-sc-play-animation]').hidden,autoMotion:root.querySelector('.sc-task-view').classList.contains('is-entering'),connectorGeometry:[...root.querySelectorAll('.sc-task-view__connector')].map(node=>({before:getComputedStyle(node,"::before").content,after:getComputedStyle(node,"::after").content,afterTransform:getComputedStyle(node,"::after").transform}))};
 root.querySelector('details[data-sc-role="cr"]').open=false;
 root.querySelector('details[data-sc-role="req"]').open=true;
@@ -223,8 +223,8 @@ try {
   assert.ok(result.invalidStates.every(state=>state==='未知状态'), "malformed state values must render safely");
   assert.deepEqual(result.emptyView.roles, [], "empty snapshots must not invent participants");
   assert.deepEqual(result.recovered.active, ['cr'], "valid updates must recover after malformed input");
-  assert.deepEqual(result.flow, { roles: ["req", "dev", "cr", "qa"], titles: ["REQ", "DEV", "CR", "QA"], lastRole: "qa", extraExitNodes: 0, exitTextCount: 0, connectorCount: 4 }, "four role cards must end at QA without a separate exit label");
-  assert.equal(result.defaults.connectorGeometry.length, 4, "every role card must have a connector");
+  assert.deepEqual(result.flow, { roles: ["req", "dev", "cr", "qa"], titles: ["REQ", "DEV", "CR", "QA"], lastRole: "qa", extraExitNodes: 0, exitTextCount: 0, connectorCount: 3, firstNode: "req" }, "role connectors must begin between the first and second role");
+  assert.equal(result.defaults.connectorGeometry.length, 3, "only transitions between role cards must have connectors");
   assert.ok(result.defaults.connectorGeometry.every(({before,after,afterTransform})=>before!=="none"&&after!=="none"&&afterTransform!=="none"), "connectors must expose a visible stem and arrowhead in the browser");
   const {connectorGeometry,...defaultValues}=result.defaults;
   assert.deepEqual(defaultValues, { summary: "暂无总结", selected: "REQ → DEV → CR → QA", contextRemoved: true, namesRemoved: true, projectMcpsHidden: true, debugHidden: true, autoMotion: false }, "task context, agent names, absent project MCPs and automatic entrance motion must remain absent");
@@ -308,7 +308,7 @@ try {
     }
     for(const [status,tone] of Object.entries(observed.subskillTones)) assert.equal(observed.subskillColors[status].color,toneColors[tone],`${status} must retain the legacy subskill color`);
     for(const [state,tone] of Object.entries(observed.globalTones)) assert.equal(observed.globalColors[state].color,toneColors[tone],`${state} must render the ${tone} workflow color`);
-    assert.deepEqual(observed.connectors.map(item=>item.next),["req","dev","cr","qa"],"every downward connector must lead to the next role without adding a node after QA");
+    assert.deepEqual(observed.connectors.map(item=>item.next),["dev","cr","qa"],"downward connectors must connect adjacent roles and omit the task-context arrow");
     for(const item of observed.connectors) {
       assert.ok(item.width>=8&&item.height>=22,"arrowheads must fit inside visible connectors");
       assert.equal(item.stemWidth,"2px");assert.ok(parseFloat(item.stemHeight)>0);

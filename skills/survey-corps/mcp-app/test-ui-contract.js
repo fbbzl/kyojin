@@ -92,7 +92,9 @@ assertSkillMatch(/不展示状态机、状态参考集、复验入口或 `resume
 assertSkillDoesNotMatch(/needs_revalidation` 时必须展示 `resume_state`/, "skill must not require resume_state rendering");
 assertSkillMatch(/handoffs: \[\].*权威交接记录.*不在 UI 中逐条展示/, "skill must keep handoffs authoritative but out of the minimal UI");
 assertSkillDoesNotMatch(/handoffs: \[\].*每条均展示|handoffs?.*(session log|Session log|逐条展示其自身)/, "skill must not require handoff or session-log rendering");
-assert.match(appTemplate, /dataset\.scConnectorFrom=selectedRoles\[index-1\]\|\|"sc"; connector\.dataset\.scConnectorTo=role/, "decorative connectors must identify their actual adjacent endpoints");
+assert.match(appTemplate, /if \(index\) \{ const connector=document\.createElement\("span"\);.*dataset\.scConnectorFrom=selectedRoles\[index-1\]; connector\.dataset\.scConnectorTo=role/s, "decorative connectors must connect roles only, without an arrow from task context");
+assert.match(appTemplate, /details\[data-sc-role\] \{ position:relative; width:12\.5%;/, "desktop role cards must use one eighth of the role lane width");
+assert.match(appTemplate, /@media \(max-width:560px\).*details\[data-sc-role\] \{ width:100%; \}/, "role cards must remain usable at mobile widths");
 assertSkillMatch(/handoff_id/, "the snapshot contract must document stable optional handoff identity");
 
 for (const tone of ["pending", "active", "completed", "passed", "danger", "waiting", "revision", "unknown"]) assert.match(appTemplate, new RegExp(`sc-task-view__state--${tone} \\{[^}]*color:`), `${tone} must define a semantic status color`);

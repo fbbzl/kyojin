@@ -39,16 +39,21 @@
     .sc-task-view__connector.is-handoff-flow::before { left:4px; width:4px; background-color:currentColor; background-image:linear-gradient(transparent 30%,var(--focus) 48%,transparent 66%); background-size:100% 300%; animation:sc-handoff-flow 650ms ease-in-out 1 both; }
     .sc-task-view__connector.is-handoff-reverse::before { animation-direction:reverse; }
     .sc-task-view__connector.is-handoff-reverse::after { top:4px; bottom:auto; transform:rotate(225deg); }
-    .sc-task-view__roles { display:flex; flex-direction:column; align-items:stretch; }
-    .sc-task-view details { min-width:0; border:1px solid var(--line); border-radius:6px; background:var(--panel); transition:border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease; }
+    .sc-task-view__roles { display:flex; flex-direction:column; align-items:center; padding-top:20px; }
+    .sc-task-view details { min-width:0; border:1px solid var(--line); border-radius:6px; background:var(--panel); transition:width 180ms ease,border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease; }
     .sc-task-view details[data-sc-role]:hover { transform:translateY(-1px); box-shadow:0 3px 12px color-mix(in srgb,#000 28%,transparent); }
-    .sc-task-view details[data-sc-role] { position:relative; border-color:var(--line); }
+    .sc-task-view details[data-sc-role] { position:relative; width:12.5%; border-color:var(--line); }
+    .sc-task-view details[data-sc-role][open] { width:100%; }
     .sc-task-view details[data-sc-role].is-active { border-color:var(--active); background:var(--panel-active); animation:sc-running-pulse 1.6s ease-in-out infinite; }
     .sc-task-view details[data-sc-role].is-active > * { position:relative; z-index:1; }
     .sc-task-view details[data-sc-role].is-handoff-receiving::after { content:""; position:absolute; inset:-1px; border:1px solid var(--focus); border-radius:inherit; pointer-events:none; animation:sc-handoff-receive 420ms ease-out 650ms 1 both; }
     .sc-task-view summary { display:flex; justify-content:space-between; gap:12px; padding:11px 12px; border-radius:5px; cursor:pointer; font-weight:700; list-style-position:inside; overflow-wrap:anywhere; transition:background-color 160ms ease; }
     .sc-task-view summary:hover { background:color-mix(in srgb,var(--focus) 7%,transparent); }
     .sc-task-view summary:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+    .sc-task-view details[data-sc-role]:not([open]) > summary { flex-direction:column; align-items:center; gap:3px; padding:8px 3px; text-align:center; }
+    .sc-task-view details[data-sc-role]:not([open]) .sc-task-view__role-name { justify-content:center; }
+    .sc-task-view details[data-sc-role]:not([open]) .sc-task-view__role-state { max-width:100%; font-size:10px; text-align:center; white-space:nowrap; }
+    .sc-task-view details[data-sc-role][open] > summary { flex-direction:row; align-items:baseline; }
     .sc-task-view__role-state { color:var(--muted); font-weight:400; text-align:right; }
     .sc-task-view .sc-task-view__state--pending { color:var(--pending); }
     .sc-task-view .sc-task-view__state--active { color:var(--active); }
@@ -78,7 +83,7 @@
     @keyframes sc-handoff-flow { 0% { background-position:50% 100%; opacity:.5; } 35%,65% { opacity:1; } 100% { background-position:50% 0%; opacity:.5; } }
     @keyframes sc-handoff-receive { 0% { opacity:0; box-shadow:0 0 0 transparent; } 25% { opacity:1; box-shadow:0 0 18px color-mix(in srgb,var(--focus) 55%,transparent); } 100% { opacity:0; box-shadow:0 0 0 transparent; } }
     @keyframes sc-detail-reveal { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-    @media (max-width:560px) { .sc-task-view { padding:14px; } .sc-task-view__header { flex-direction:column; } .sc-task-view__project-mcps, .sc-task-view__header-controls { position:static; align-self:flex-start; max-width:100%; } .sc-task-view__header-controls { align-self:flex-end; } .sc-task-view summary { flex-direction:column; gap:3px; } .sc-task-view__project-mcps > summary { flex-direction:row; } .sc-task-view__role-state { text-align:left; } }
+    @media (max-width:560px) { .sc-task-view { padding:14px; } .sc-task-view__header { flex-direction:column; } .sc-task-view__project-mcps, .sc-task-view__header-controls { position:static; align-self:flex-start; max-width:100%; } .sc-task-view__header-controls { align-self:flex-end; } .sc-task-view summary { flex-direction:column; gap:3px; } .sc-task-view__project-mcps > summary { flex-direction:row; } .sc-task-view__role-state { text-align:left; } .sc-task-view details[data-sc-role] { width:100%; } }
     @media (prefers-reduced-motion:reduce) { .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { animation:none !important; transition:none !important; } }
   </style>
   <header class="sc-task-view__header">
@@ -274,7 +279,7 @@
         const focusedRole=focused?.closest("[data-sc-role]")?.dataset.scRole,focusedSkill=focused?.closest("[data-sc-subskill]")?.dataset.scSubskill;
         const skillSelector=focusedSkill?`[data-sc-subskill="${focusedSkill}"] > summary`:null,skillIndex=skillSelector?[...focused.closest("[data-sc-role]").querySelectorAll(skillSelector)].indexOf(focused):-1;
         box.setAttribute("aria-label",`${selectedRoles.map(role=>roleLabels[role]).join("、")} 顺序任务`);
-        selectedRoles.forEach((role,index)=>{ const connector=document.createElement("span"); connector.className="sc-task-view__connector"; connector.dataset.scConnectorFrom=selectedRoles[index-1]||"sc"; connector.dataset.scConnectorTo=role; connector.setAttribute("aria-hidden","true"); fragment.append(connector,roleNode(role,asObject(details[role]),activeRole,openRole)); });
+        selectedRoles.forEach((role,index)=>{ if (index) { const connector=document.createElement("span"); connector.className="sc-task-view__connector"; connector.dataset.scConnectorFrom=selectedRoles[index-1]; connector.dataset.scConnectorTo=role; connector.setAttribute("aria-hidden","true"); fragment.append(connector); } fragment.append(roleNode(role,asObject(details[role]),activeRole,openRole)); });
         box.replaceChildren(fragment);
         if (!focused?.matches("summary")) return;
         const role=box.querySelector(`[data-sc-role="${focusedRole}"]`),summary=role?.querySelector(":scope > summary"),skill=skillSelector?role?.querySelectorAll(skillSelector)[skillIndex]:null;
