@@ -27,12 +27,12 @@ const snapshot=(id='task')=>({view_id:'sc-task-view:'+id,state:'ready_for_cr',wo
 const handoff=(id,from='dev',to='cr',unit='task')=>({handoff_id:id,from,to,work_unit_id:unit,handoff_result:'accepted'});
 const render=(root,value)=>window.renderSurveyCorpsTaskView(root,value);
 const marked=root=>({flows:root.querySelectorAll('.is-handoff-flow').length,receivers:[...root.querySelectorAll('.is-handoff-receiving')].map(node=>node.dataset.scRole),reverse:root.querySelectorAll('.is-handoff-reverse').length});
-const inspect=root=>{const connector=root.querySelector('.is-handoff-flow'),receiver=root.querySelector('.is-handoff-receiving');const flow=connector&&getComputedStyle(connector,'::before'),head=connector&&getComputedStyle(connector,'::after'),receive=receiver&&getComputedStyle(receiver,'::after');return {...marked(root),from:connector?.dataset.scConnectorFrom,to:connector?.dataset.scConnectorTo,hidden:connector?.getAttribute('aria-hidden'),flowAnimation:flow?.animationName,flowDuration:flow?.animationDuration,flowIterations:flow?.animationIterationCount,flowDirection:flow?.animationDirection,headTransform:head?.transform,receiveAnimation:receive?.animationName,receiveDuration:receive?.animationDuration,receiveDelay:receive?.animationDelay,receiveIterations:receive?.animationIterationCount,receivePointerEvents:receive?.pointerEvents,activeAnimation:receiver&&getComputedStyle(receiver).animationName};};
+const inspect=root=>{const connector=root.querySelector('.is-handoff-flow'),receiver=root.querySelector('.is-handoff-receiving');const flow=connector&&getComputedStyle(connector,'::before'),head=connector&&getComputedStyle(connector,'::after'),receive=receiver&&getComputedStyle(receiver,'::after');return {...marked(root),from:connector?.dataset.scConnectorFrom,to:connector?.dataset.scConnectorTo,hidden:connector?.getAttribute('aria-hidden'),flowAnimation:flow?.animationName,flowDuration:flow?.animationDuration,flowIterations:flow?.animationIterationCount,flowDirection:flow?.animationDirection,headTransform:head?.transform,headTop:head?.borderTopWidth,headBottom:head?.borderBottomWidth,headLeft:head?.borderLeftWidth,headRight:head?.borderRightWidth,headTopColor:head?.borderTopColor,headBottomColor:head?.borderBottomColor,headLeftColor:head?.borderLeftColor,headRightColor:head?.borderRightColor,color:connector&&getComputedStyle(connector).color,receiveAnimation:receive?.animationName,receiveDuration:receive?.animationDuration,receiveDelay:receive?.animationDelay,receiveIterations:receive?.animationIterationCount,receivePointerEvents:receive?.pointerEvents,activeAnimation:receiver&&getComputedStyle(receiver).animationName};};
 const fresh=()=>{const root=makeRoot(),value=snapshot();render(root,value);return {root,value};};
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const settle=async()=>{await wait(0);await new Promise(requestAnimationFrame);await wait(0);};
-const revealAnimations=root=>root.getAnimations({subtree:true}).filter(animation=>animation.animationName==='sc-detail-reveal'&&animation.effect.target.checkVisibility()&&getComputedStyle(animation.effect.target).animationName==='sc-detail-reveal');
-const revealState=root=>({marked:root.querySelectorAll('.is-detail-revealing').length,animations:revealAnimations(root).map(animation=>({duration:animation.effect.getTiming().duration,iterations:animation.effect.getTiming().iterations,role:animation.effect.target.closest('[data-sc-role]').dataset.scRole,skill:animation.effect.target.closest('[data-sc-subskill]')?.dataset.scSubskill||null}))});
+const revealAnimations=root=>root.getAnimations({subtree:true}).filter(animation=>['sc-detail-reveal','sc-preview-reveal'].includes(animation.animationName)&&animation.effect.target.checkVisibility()&&getComputedStyle(animation.effect.target).animationName===animation.animationName);
+const revealState=root=>({marked:root.querySelectorAll('.is-detail-revealing').length,animations:revealAnimations(root).map(animation=>({name:animation.animationName,transform:getComputedStyle(animation.effect.target).transform,duration:animation.effect.getTiming().duration,iterations:animation.effect.getTiming().iterations,role:animation.effect.target.closest('[data-sc-role]')?.dataset.scRole||null,skill:animation.effect.target.closest('[data-sc-preview-subskill]')?.dataset.scPreviewSubskill||animation.effect.target.closest('[data-sc-subskill]')?.dataset.scSubskill||null}))});
 let keySequence=0;
 const nativeKey=key=>new Promise(resolve=>{const id=++keySequence;const done=event=>{if(event.source!==parent||event.data.scInputDone!==id)return;window.removeEventListener('message',done);resolve();};window.addEventListener('message',done);parent.postMessage({scInputKey:{id,key}},'*');});
 (async()=>{
@@ -93,6 +93,29 @@ const nativeKey=key=>new Promise(resolve=>{const id=++keySequence;const done=eve
   // Requirement source: approved detail opening transition; use native details toggles and real CSS events.
   const detail=fresh(),detailResult=results.detail={starts:[],ends:[]};
   detail.value.role_details.dev.subskills=[{name:'tech-select',summary:'方案记录'},{name:'refactor-with-goal',summary:'等价证据'}];render(detail.root,detail.value);
+  if(innerWidth>560){
+    // Desktop details live in the independent preview; native disclosures must remain operable there.
+    detail.value.role_details.cr.subskills=[{name:'review-with-goal',summary:'审查记录'}];render(detail.root,detail.value);
+    const preview=()=>detail.root.querySelector('[data-sc-role-preview]'),body=()=>detail.root.querySelector('[data-sc-preview-body]'),skills=()=>[...preview().querySelectorAll('[data-sc-preview-subskill]')];
+    const eventName=event=>event.target.closest('[data-sc-preview-subskill]')?.dataset.scPreviewSubskill||detail.root.querySelector('[data-sc-preview-role]').textContent.toLowerCase();
+    detail.root.addEventListener('animationstart',event=>{if(['sc-detail-reveal','sc-preview-reveal'].includes(event.animationName))detailResult.starts.push(eventName(event));});
+    detail.root.addEventListener('animationend',event=>{if(['sc-detail-reveal','sc-preview-reveal'].includes(event.animationName))detailResult.ends.push(eventName(event));});
+    detail.root.scrollIntoView({block:'start'});await settle();detailResult.initial=revealState(preview());detailResult.initialStarts=detailResult.starts.length;
+    detail.root.querySelector('[data-sc-role=dev] > summary').focus();await settle();detailResult.manual=revealState(preview());detailResult.manualFocus=document.activeElement===detail.root.querySelector('[data-sc-role=dev] > summary');
+    const parentAnimation=revealAnimations(preview())[0];if(parentAnimation){parentAnimation.pause();await parentAnimation.ready;}
+    skills()[0].querySelector('summary').click();await settle();detailResult.child=revealState(skills()[0]);
+    await Promise.all(revealAnimations(skills()[0]).map(animation=>animation.finished));await settle();detailResult.childEndKeepsParent=body().classList.contains('is-detail-revealing')===!reduced;
+    if(parentAnimation&&body().classList.contains('is-detail-revealing')){parentAnimation.play();await parentAnimation.finished;}await settle();detailResult.afterEnd=revealState(preview());detailResult.firstStarts=[...detailResult.starts];detailResult.firstEnds=[...detailResult.ends];
+    skills()[0].querySelector('summary').focus();await nativeKey('Enter');await settle();detailResult.enterClosed=!skills()[0].open&&revealState(preview()).marked===0;
+    await nativeKey('Space');await settle();detailResult.keyboard=revealState(preview());detailResult.keyboardFocus=document.activeElement===skills()[0].querySelector('summary');detailResult.spaceOpened=skills()[0].open;
+    await Promise.all(revealAnimations(preview()).map(animation=>animation.finished));await settle();
+    skills()[1].querySelector('summary').click();await settle();detailResult.secondChild=revealState(skills()[1]);detailResult.independentSkills=skills().every(node=>node.open);await Promise.all(revealAnimations(preview()).map(animation=>animation.finished));await settle();
+    skills()[0].querySelector('summary').focus();const oldBody=body();render(detail.root,detail.value);await settle();detailResult.refresh={...revealState(preview()),oldClean:!oldBody.classList.contains('is-detail-revealing'),open:skills()[0].open,focus:document.activeElement===skills()[0].querySelector('summary')};
+    detail.root.querySelector('[data-sc-role=req] > summary').focus();await settle();detail.root.querySelector('[data-sc-role=cr] > summary').focus();await settle();detailResult.switch={...revealState(preview()),role:detail.root.querySelector('[data-sc-preview-role]').textContent};await Promise.all(revealAnimations(preview()).map(animation=>animation.finished));await settle();
+    skills()[0].querySelector('summary').focus();await nativeKey('Enter');await settle();await Promise.all(revealAnimations(preview()).map(animation=>animation.finished));await settle();await nativeKey('Enter');detailResult.closeImmediate=!skills()[0].open;await settle();detailResult.closed=revealState(preview());const closedBody=skills()[0].querySelector(':scope > [data-sc-detail-body]');detailResult.closedHidden=!closedBody.checkVisibility();detailResult.closedAnimation=getComputedStyle(closedBody).animationName;
+    const coexist=fresh();coexist.value.role_details.cr.subskills=[{name:'review-with-goal',summary:'交接审查'}];render(coexist.root,coexist.value);coexist.value.handoffs.push(handoff('detail-coexist'));render(coexist.root,coexist.value);coexist.root.scrollIntoView({block:'start'});coexist.root.querySelector('[data-sc-preview-subskill] > summary').click();await settle();detailResult.coexist={...revealState(coexist.root.querySelector('[data-sc-role-preview]')),handoff:inspect(coexist.root)};
+    detailResult.sourceHidden=!detail.root.querySelector('[data-sc-role=cr] > [data-sc-detail-body]').checkVisibility();
+  } else {
   detail.root.addEventListener('animationstart',event=>{if(event.animationName==='sc-detail-reveal')detailResult.starts.push(event.target.closest('[data-sc-subskill]')?.dataset.scSubskill||event.target.closest('[data-sc-role]')?.dataset.scRole);});
   detail.root.addEventListener('animationend',event=>{if(event.animationName==='sc-detail-reveal')detailResult.ends.push(event.target.closest('[data-sc-subskill]')?.dataset.scSubskill||event.target.closest('[data-sc-role]')?.dataset.scRole);});
   detail.root.scrollIntoView({block:'start'});await settle();detailResult.initial=revealState(detail.root);detailResult.initialStarts=detailResult.starts.length;
@@ -116,6 +139,8 @@ const nativeKey=key=>new Promise(resolve=>{const id=++keySequence;const done=eve
   const closedBody=detail.root.querySelector('[data-sc-role=cr] > [data-sc-detail-body]');detailResult.closedHidden=!closedBody.checkVisibility();detailResult.closedAnimation=getComputedStyle(closedBody).animationName;
   const coexist=fresh();coexist.value.handoffs.push(handoff('detail-coexist'));render(coexist.root,coexist.value);coexist.root.scrollIntoView({block:'start'});
   coexist.root.querySelector('[data-sc-role=cr] > summary').click();await settle();coexist.root.querySelector('[data-sc-role=cr] > summary').click();await settle();detailResult.coexist={...revealState(coexist.root),handoff:inspect(coexist.root)};
+  detailResult.hiddenPreview={visible:detail.root.querySelector('[data-sc-role-preview]').checkVisibility({visibilityProperty:true}),marked:detail.root.querySelectorAll('[data-sc-role-preview] .is-detail-revealing').length,animations:revealAnimations(detail.root.querySelector('[data-sc-role-preview]')).length};
+  }
   results.reduced=reduced;parent.postMessage({scHandoffResult:results},'*');
 })().catch(error=>{document.body.dataset.scTestError=error.stack;parent.postMessage({scHandoffError:error.stack},'*');});
 </script></body></html>`;
@@ -223,15 +248,16 @@ function assertFlow(value, receiver, reverse, name) {
     assert.equal(result.layout.roleCount, 4, "handoff feedback must not insert synthetic role cards");
     const detail=result.detail,staticReveal={marked:0,animations:[]};
     assert.deepEqual(detail.initial,staticReveal,'initially open role and queued native toggles must stay static');assert.equal(detail.initialStarts,0);
-    for(const field of ['manualFocus','childEndKeepsParent','enterClosed','keyboardFocus','spaceOpened','independentSkills','closeImmediate','closedHidden'])assert.equal(detail[field],true,field+' must retain native detail semantics');
+    for(const field of ['manualFocus','childEndKeepsParent','enterClosed','keyboardFocus','spaceOpened','independentSkills','closeImmediate','closedHidden'])assert.equal(detail[field],true,field+' must retain native detail semantics '+JSON.stringify({mode,detail}));
     assert.equal(detail.closedAnimation,'none','closed detail bodies must have no computed CSS animation');
     assert.deepEqual(detail.afterEnd,staticReveal,'finite detail motion must clear after actual CSS animationend');assert.deepEqual(detail.closed,staticReveal,'closing details must immediately clear transient motion');
     assert.deepEqual(detail.refresh,{...staticReveal,oldClean:true,open:true,focus:true},'same-task refresh must remove old motion, keep manual role selection and focus, and remain static');
-    assert.deepEqual(detail.switch.open,['cr'],'rapid role switching must preserve one-open accordion semantics');
+    if(mode.width>560){assert.equal(detail.switch.role,'CR','desktop focus switching must update the independent preview');assert.equal(detail.sourceHidden,true,'desktop source detail bodies must remain hidden');}
+    else {assert.deepEqual(detail.switch.open,['cr'],'rapid role switching must preserve one-open accordion semantics');assert.deepEqual(detail.hiddenPreview,{visible:false,marked:0,animations:0},'hidden narrow preview must not retain transient reveal markers or animations');}
     for(const field of ['manual','child','keyboard','secondChild','switch','coexist']){
       assert.equal(detail[field].marked,mode.reduced?0:1,field+' must animate only one opened detail body');
       assert.equal(detail[field].animations.length,mode.reduced?0:1,field+' must create exactly one finite detail animation');
-      for(const animation of detail[field].animations){assert.ok(animation.duration>=140&&animation.duration<=200,field+' must use the approved 140–200 ms duration');assert.equal(animation.iterations,1);}
+      for(const animation of detail[field].animations){assert.ok(animation.duration>=140&&animation.duration<=200,field+' must use the approved 140–200 ms duration');assert.equal(animation.iterations,1);const preview=mode.width>560&&['manual','switch'].includes(field);assert.equal(animation.name,preview?'sc-preview-reveal':'sc-detail-reveal',field+' must use its dedicated reveal animation');if(preview)assert.equal(animation.transform,'none','shared preview reveal must not translate its body');}
     }
     if(!mode.reduced){assert.deepEqual(detail.firstStarts.sort(),['dev','tech-select'],'manual role and child openings must each start only once');assert.deepEqual(detail.firstEnds.sort(),['dev','tech-select'],'child completion must not consume the parent completion listener');assertFlow(detail.coexist.handoff,'cr',false,'detail/handoff coexistence');assert.equal(detail.coexist.handoff.activeAnimation,'sc-running-pulse','detail reveal must preserve the running pulse');}
     else {assert.deepEqual(detail.starts,[],'reduced motion must not create detail animationstart events');assert.deepEqual(detail.ends,[]);assertQuiet({flows:detail.coexist.handoff.flows,receivers:detail.coexist.handoff.receivers,reverse:detail.coexist.handoff.reverse},'reduced detail/handoff coexistence');}
@@ -270,8 +296,9 @@ function assertFlow(value, receiver, reverse, name) {
     }
     assert.equal(result.forward.flowDirection, "normal");
     assert.equal(result.reverse.flowDirection, "reverse");
-    assert.match(result.forward.headTransform, /matrix\(0\.707107, 0\.707107, -0\.707107, 0\.707107/, "forward feedback must point down");
-    assert.match(result.reverse.headTransform, /matrix\(-0\.707107, -0\.707107, 0\.707107, -0\.707107/, "reverse feedback must point up");
+    for(const item of [result.forward,result.reverse]){assert.equal(item.headTransform,'matrix(1, 0, 0, 1, -4, 0)');assert.equal(item.headLeft,'4px');assert.equal(item.headRight,'4px');assert.equal(item.headLeftColor,'rgba(0, 0, 0, 0)');assert.equal(item.headRightColor,'rgba(0, 0, 0, 0)');}
+    assert.equal(result.forward.headTop,'7px');assert.equal(result.forward.headBottom,'0px');assert.equal(result.forward.headTopColor,result.forward.color,'forward solid triangle must point down');
+    assert.equal(result.reverse.headTop,'0px');assert.equal(result.reverse.headBottom,'7px');assert.equal(result.reverse.headBottomColor,result.reverse.color,'reverse solid triangle must point up');
   }
   console.log("SC handoff motion independent Chrome regression passed (360px, 960px, reduced motion).");
 } finally {

@@ -82,7 +82,7 @@ const initial=openRoles(),progress={req:hasProgress("req"),dev:hasProgress("dev"
 const waitingSnapshot=structuredClone(snapshot);waitingSnapshot.state="ready_for_qa";waitingSnapshot.role_details={req:{status:"passed"},dev:{status:"passed"},cr:{status:"pending"},qa:{status:"pending"}};window.renderSurveyCorpsTaskView(root,waitingSnapshot);const waitingActive=[...root.querySelectorAll('details[data-sc-role].is-active')].map(node=>node.dataset.scRole);window.renderSurveyCorpsTaskView(root,snapshot);
 const finishedDev=structuredClone(waitingSnapshot);finishedDev.state="dev_in_progress";window.renderSurveyCorpsTaskView(root,finishedDev);const finishedDevActive=[...root.querySelectorAll('details[data-sc-role].is-active')].map(node=>node.dataset.scRole);window.renderSurveyCorpsTaskView(root,snapshot);
 const flow={roles:[...root.querySelectorAll("details[data-sc-role]")].map(node=>node.dataset.scRole),titles:[...root.querySelectorAll("details[data-sc-role] summary .sc-task-view__role-name > span:first-child")].map(node=>node.textContent),lastRole:root.querySelector("[data-sc-roles]").lastElementChild?.dataset.scRole,extraExitNodes:root.querySelectorAll("[data-sc-exit], .sc-task-view__exit").length,exitTextCount:root.querySelector("[data-sc-roles]").textContent.split("任务出口").length-1,connectorCount:root.querySelectorAll("[data-sc-connector], .sc-task-view__connector").length,firstNode:root.querySelector("[data-sc-roles]").firstElementChild?.dataset.scRole};
-const defaults={summary:root.querySelector('[data-sc-task-summary]').textContent,selected:root.querySelector('[data-sc-selected-roles]').textContent,contextRemoved:!root.querySelector('[data-sc-context]'),namesRemoved:!root.querySelector('[data-sc-agent-name]'),projectMcpsHidden:root.querySelector('[data-sc-project-mcps]').hidden,debugHidden:root.querySelector('[data-sc-play-animation]').hidden,autoMotion:root.querySelector('.sc-task-view').classList.contains('is-entering'),connectorGeometry:[...root.querySelectorAll('.sc-task-view__connector')].map(node=>({before:getComputedStyle(node,"::before").content,after:getComputedStyle(node,"::after").content,afterTransform:getComputedStyle(node,"::after").transform}))};
+const defaults={summary:root.querySelector('[data-sc-task-summary]').textContent,selected:root.querySelector('[data-sc-selected-roles]').textContent,contextRemoved:!root.querySelector('[data-sc-context]'),namesRemoved:!root.querySelector('[data-sc-agent-name]'),projectMcpsHidden:root.querySelector('[data-sc-project-mcps]').hidden,debugHidden:root.querySelector('[data-sc-play-animation]').hidden,autoMotion:root.querySelector('.sc-task-view').classList.contains('is-entering'),connectorGeometry:[...root.querySelectorAll('.sc-task-view__connector')].map(node=>({before:getComputedStyle(node,"::before").content,after:getComputedStyle(node,"::after").content,headTop:getComputedStyle(node,"::after").borderTopWidth}))};
 root.querySelector('details[data-sc-role="cr"]').open=false;
 root.querySelector('details[data-sc-role="req"]').open=true;
 window.renderSurveyCorpsTaskView(root,snapshot);
@@ -180,7 +180,7 @@ for(const status of Object.keys(roleTones)){snapshot.role_details.qa={status,sub
 for(const state of Object.keys(globalTones)){snapshot.state=state;window.renderSurveyCorpsTaskView(root,snapshot);globalColors[state]=sample(root.querySelector('[data-sc-field=state]'));}
 for(const status of ['running','preparing','in_progress','working','active','started','started_working']){snapshot.state='ready_for_qa';snapshot.role_details.qa={status};window.renderSurveyCorpsTaskView(root,snapshot);const role=root.querySelector('[data-sc-role=qa]'),roleStyles=getComputedStyle(role);activeRoleMotion[status]={active:role.classList.contains('is-active'),animation:roleStyles.animationName,borderColor:roleStyles.borderTopColor};}
 snapshot.state='ready_for_qa';snapshot.role_details.qa={status:'running'};window.renderSurveyCorpsTaskView(root,snapshot,{debug:true});root.querySelector('[data-sc-play-animation]').click();
-const connectors=[...root.querySelectorAll('.sc-task-view__connector')].map(node=>{const stem=getComputedStyle(node,'::before'),head=getComputedStyle(node,'::after');return {width:node.offsetWidth,height:node.offsetHeight,stemWidth:stem.width,stemHeight:stem.height,headWidth:head.width,headHeight:head.height,headTransform:head.transform,right:head.borderRightWidth,bottom:head.borderBottomWidth,hidden:node.getAttribute('aria-hidden'),next:node.nextElementSibling.dataset.scRole,animation:getComputedStyle(node).animationName};});
+const connectors=[...root.querySelectorAll('.sc-task-view__connector')].map(node=>{const stem=getComputedStyle(node,'::before'),head=getComputedStyle(node,'::after');return {width:node.offsetWidth,height:node.offsetHeight,stemWidth:stem.width,stemHeight:stem.height,headTransform:head.transform,left:head.borderLeftWidth,right:head.borderRightWidth,top:head.borderTopWidth,bottom:head.borderBottomWidth,topColor:head.borderTopColor,leftColor:head.borderLeftColor,rightColor:head.borderRightColor,color:getComputedStyle(node).color,hidden:node.getAttribute('aria-hidden'),next:node.nextElementSibling.dataset.scRole,animation:getComputedStyle(node).animationName};});
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches,view=root.querySelector('.sc-task-view'),active=root.querySelector('details.is-active');
 const header=root.querySelector('.sc-task-view__header'),status=root.querySelector('[data-sc-field=state]'),headerRect=header.getBoundingClientRect(),statusRect=status.getBoundingClientRect();
 const statusLayout={centerOffset:Math.abs((statusRect.left+statusRect.right)/2-(headerRect.left+headerRect.right)/2),fontSize:getComputedStyle(status).fontSize,eyebrowCount:root.querySelectorAll('.sc-task-view__root > .sc-task-view__muted').length,titleCount:root.querySelectorAll('h2').length};
@@ -225,7 +225,7 @@ try {
   assert.deepEqual(result.recovered.active, ['cr'], "valid updates must recover after malformed input");
   assert.deepEqual(result.flow, { roles: ["req", "dev", "cr", "qa"], titles: ["REQ", "DEV", "CR", "QA"], lastRole: "qa", extraExitNodes: 0, exitTextCount: 0, connectorCount: 3, firstNode: "req" }, "role connectors must begin between the first and second role");
   assert.equal(result.defaults.connectorGeometry.length, 3, "only transitions between role cards must have connectors");
-  assert.ok(result.defaults.connectorGeometry.every(({before,after,afterTransform})=>before!=="none"&&after!=="none"&&afterTransform!=="none"), "connectors must expose a visible stem and arrowhead in the browser");
+  assert.ok(result.defaults.connectorGeometry.every(({before,after,headTop})=>before!=="none"&&after!=="none"&&parseFloat(headTop)>0), "connectors must expose a visible stem and solid downward arrowhead in the browser");
   const {connectorGeometry,...defaultValues}=result.defaults;
   assert.deepEqual(defaultValues, { summary: "暂无总结", selected: "REQ → DEV → CR → QA", contextRemoved: true, namesRemoved: true, projectMcpsHidden: true, debugHidden: true, autoMotion: false }, "task context, agent names, absent project MCPs and automatic entrance motion must remain absent");
   assert.deepEqual(result.debugTrue, { hidden: false, replay: true }, "strict debug true must expose and enable replay");
@@ -311,10 +311,10 @@ try {
     assert.deepEqual(observed.connectors.map(item=>item.next),["dev","cr","qa"],"downward connectors must connect adjacent roles and omit the task-context arrow");
     for(const item of observed.connectors) {
       assert.ok(item.width>=8&&item.height>=22,"arrowheads must fit inside visible connectors");
-      assert.equal(item.stemWidth,"2px");assert.ok(parseFloat(item.stemHeight)>0);
-      assert.equal(item.headWidth,"8px");assert.equal(item.headHeight,"8px");
-      assert.equal(item.right,"2px");assert.equal(item.bottom,"2px");
-      assert.match(item.headTransform,/matrix\(0\.707107, 0\.707107, -0\.707107, 0\.707107/,"right and bottom borders rotated 45 degrees must point down");
+      assert.equal(item.stemWidth,"1.5px");assert.ok(parseFloat(item.stemHeight)>0);
+      assert.equal(item.left,"4px");assert.equal(item.right,"4px");assert.equal(item.top,"7px");assert.equal(item.bottom,"0px");
+      assert.equal(item.topColor,item.color);assert.equal(item.leftColor,"rgba(0, 0, 0, 0)");assert.equal(item.rightColor,"rgba(0, 0, 0, 0)");
+      assert.equal(item.headTransform,"matrix(1, 0, 0, 1, -4, 0)","the larger solid arrowhead must remain centered on its vertical stem without rotation");
       assert.equal(item.hidden,"true","decorative arrows must remain hidden from assistive technologies");
       assert.equal(item.animation,"none","workflow connectors must not animate automatically");
     }
@@ -323,7 +323,7 @@ try {
     assert.equal(observed.viewAnimation,"none","opening a task view must not animate when no role is actively working");
     for(const [status,motion] of Object.entries(observed.activeRoleMotion)) {
       assert.equal(motion.active,status === "running",`${status} activity must require exact running`);
-      if(status === "running") assert.equal(motion.borderColor,toneColors.active,`${status} must retain the active role color`);
+      if(status === "running") assert.equal(motion.borderColor,toneColors.danger,`${status} QA must use its character accent on the border`);
       assert.equal(motion.animation,mode.reduced || status !== "running"?"none":"sc-running-pulse",`${status} must ${mode.reduced?"disable":"retain"} its persistent running animation`);
     }
     assert.equal(observed.activeAnimation,"none","role cards must not render a rotating geometric border");

@@ -18,10 +18,10 @@ assert.match(appTemplate, /@media \(prefers-reduced-motion:reduce\).*animation:n
 assert.doesNotMatch(appTemplate, /\.sc-task-view__connector(?:::before|::after)? \{[^}]*animation:/, "idle connectors must remain static");
 assert.match(appTemplate, /\.sc-task-view__connector\.is-handoff-flow::before \{[^}]*animation:sc-handoff-flow [^;]* 1 both/, "an explicitly triggered handoff must use one finite connector animation");
 assert.match(appTemplate, /\.sc-task-view__connector\.is-handoff-reverse::before \{[^}]*animation-direction:reverse/, "return handoffs must reverse their travel direction");
-assert.match(appTemplate, /\.sc-task-view__connector\.is-handoff-reverse::after \{[^}]*transform:rotate\(225deg\)/, "return handoffs must point upward");
+assert.match(appTemplate, /\.sc-task-view__connector\.is-handoff-reverse::after \{[^}]*border-top:0; border-bottom:7px solid currentColor/, "return handoffs must use a filled upward triangle");
 assert.match(appTemplate, /\.is-handoff-receiving::after \{[^}]*pointer-events:none;[^}]*animation:sc-handoff-receive [^;]* 1 both/, "receiver feedback must be finite and must not intercept interaction");
 assert.match(appTemplate, /\.sc-task-view__connector::before[^}]*background:currentColor/, "connector stem must follow the flow color");
-assert.match(appTemplate, /\.sc-task-view__connector::after[^}]*transform:rotate\(45deg\)/, "connector arrowhead must point down");
+assert.match(appTemplate, /\.sc-task-view__connector::after[^}]*border-top:7px solid currentColor/, "connector arrowhead must point down");
 assert.match(appTemplate, /data-sc-play-animation[^>]*aria-label="播放任务视图动画"/, "task view must expose an accessible animation replay button");
 assert.match(appTemplate, /button\.addEventListener\("click",onClick\)/, "animation replay button must have a click handler");
 assert.match(appTemplate, /prefersReducedMotion\(\)\) return;.*animateOnce\(root\.querySelector\("details\.is-active"\),"is-manual-replay"/s, "debug replay must respect reduced motion and target only an active role");
@@ -32,7 +32,7 @@ assert.match(appTemplate, /border-radius:6px/, "card corners must remain restrai
 assert.match(appTemplate, /\[data-sc-detail-body\]\.is-detail-revealing \{ animation:sc-detail-reveal 180ms ease-out 1;/, "detail reveal must be one finite short animation on the content body");
 assert.match(appTemplate, /@keyframes sc-detail-reveal \{ from \{ opacity:0; transform:translateY\(-4px\); \} to \{ opacity:1; transform:translateY\(0\); \} \}/, "detail reveal must finish as fully visible content");
 assert.match(appTemplate, /openStates\.set\(details,details\.open\)/, "detail motion must establish the initial open state before queued native toggle events");
-assert.match(appTemplate, /if \(!details\.open\|\|wasOpen\|\|prefersReducedMotion\(\)\) return;/, "only a new opening may reveal content, and reduced motion must stay static");
+assert.match(appTemplate, /if \(!details\.open\|\|wasOpen\|\|prefersReducedMotion\(\)\|\|!details\.checkVisibility\(\{visibilityProperty:true\}\)\) return;/, "only a new opening may reveal content, and reduced motion must stay static");
 assert.match(appTemplate, /if \(event&&event\.target!==node\) return;/, "nested animation events must not end a parent's animation");
 
 const script = appTemplate.match(/<script>([\s\S]*?)<\/script>/)[1];
@@ -51,7 +51,7 @@ function eventNode() {
 }
 function detailNode(open = false) {
   const body = eventNode();
-  return { open, body, children: [], matches: () => true, querySelector: () => body, contains(target) { return target === body || this.children.some(child => child.contains(target)); } };
+  return { open, body, children: [], checkVisibility: () => true, matches: () => true, querySelector: () => body, contains(target) { return target === body || this.children.some(child => child.contains(target)); } };
 }
 const role = detailNode(true), skill = detailNode();
 role.children.push(skill);
