@@ -24,16 +24,18 @@ function observe(name,input){
   document.getElementById('focus-reset').focus();
   window.renderSurveyCorpsTaskView(root,input);
   const role=root.querySelector('[data-sc-role=qa]');
-  const detail=innerWidth<=560?role:root.querySelector('[data-sc-preview-body]');
+  const narrow=innerWidth<=560,detail=narrow?role:root.querySelector('[data-sc-preview-body]');
   if(innerWidth<=560) role.open=true;
   else { const summary=role.querySelector(':scope > summary'); summary.focus(); summary.dispatchEvent(new FocusEvent('focusin',{bubbles:true})); }
-  const metrics=detail.querySelector('.sc-task-view__role-metrics');
+  const metrics=(narrow?detail:root.querySelector('[data-sc-preview-metrics]')).querySelector('.sc-task-view__role-metrics');
   const task=root.querySelector('[data-sc-metric=task-elapsed]');
   const label=root.querySelector('[data-sc-task-elapsed-label]');
   const term=metrics?.querySelector('dt'),value=metrics?.querySelector('dd');
-  observations.push({name,rolePresent:!!metrics,roleHidden:metrics?.hidden??true,roleDisplay:metrics?getComputedStyle(metrics).display:'none',
+  const box=metrics?.getBoundingClientRect(),valueBox=value?.getBoundingClientRect();
+  const emptyValue=value?.textContent===''?{structure:metrics.children.length===2&&metrics.firstElementChild===term&&metrics.lastElementChild===value,termVisible:term.checkVisibility(),valueVisible:getComputedStyle(value).display!=='none'&&getComputedStyle(value).visibility==='visible',text:metrics.textContent,containerFits:metrics.scrollWidth<=metrics.clientWidth+1&&metrics.scrollHeight<=metrics.clientHeight+1,valueFits:value.scrollWidth<=value.clientWidth+1&&value.scrollHeight<=value.clientHeight+1,contained:valueBox.left>=box.left-1&&valueBox.right<=box.right+1&&valueBox.top>=box.top-1&&valueBox.bottom<=box.bottom+1}:null;
+  observations.push({name,narrow,bodyMetrics:narrow?null:detail.querySelectorAll('.sc-task-view__role-metrics').length,reserveMetrics:root.querySelector('[data-sc-preview-size]').querySelectorAll('.sc-task-view__role-metrics').length,rolePresent:!!metrics,roleHidden:metrics?.hidden??true,roleDisplay:metrics?getComputedStyle(metrics).display:'none',
     roleVisible:metrics?.checkVisibility()??false,taskHidden:task.hidden,labelHidden:label.hidden,
-    taskDisplay:getComputedStyle(task).display,term:term?.textContent??null,value:value?.textContent??null,
+    taskDisplay:getComputedStyle(task).display,term:term?.textContent??null,value:value?.textContent??null,emptyValue,
     sameLine:!metrics||metrics.hidden||Math.abs(term.getBoundingClientRect().top-value.getBoundingClientRect().top)<2,
     titleCount:[...detail.querySelectorAll('h3')].filter(n=>n.textContent==='执行耗时').length});
 }
@@ -56,6 +58,19 @@ const missing=snapshot('completed','passed');delete missing.work_unit.metrics;de
 observe('absent-metrics-finished',missing);
 observe('negative-finished',snapshot('completed','passed',-1));
 observe('string-finished',snapshot('completed','passed','2000'));
+const headerLifecycle=[];
+if(innerWidth>560){
+  const input=snapshot('dev_in_progress','passed');input.view_id='header-same-view';input.role_details.cr.metrics={elapsed_ms:4000};
+  const focus=role=>root.querySelector('[data-sc-role='+role+'] > summary').focus();
+  const record=name=>headerLifecycle.push({name,text:root.querySelector('[data-sc-preview-metrics]').textContent,body:root.querySelectorAll('[data-sc-preview-body] .sc-task-view__role-metrics').length,reserve:root.querySelectorAll('[data-sc-preview-size] .sc-task-view__role-metrics').length});
+  document.getElementById('focus-reset').focus();window.renderSurveyCorpsTaskView(root,input);focus('qa');record('passed');
+  input.role_details.qa.metrics.elapsed_ms=3000;window.renderSurveyCorpsTaskView(root,input);record('refresh');
+  focus('cr');record('switch-role');
+  input.role_details.qa.status='pending';window.renderSurveyCorpsTaskView(root,input);focus('qa');record('pending');
+  input.role_details.qa.status='running';window.renderSurveyCorpsTaskView(root,input);record('running');
+  document.getElementById('focus-reset').focus();input.state='completed';input.role_details.qa.status='passed';window.renderSurveyCorpsTaskView(root,input);record('summary');
+}
+document.body.dataset.headerResult=JSON.stringify(headerLifecycle);
 document.body.dataset.testResult=JSON.stringify(observations);
 </script></body>`;
 // Keep temporary browser evidence for inspection; no files are removed.
@@ -80,13 +95,23 @@ for (const item of observations) {
   assert.equal(item.labelHidden, !taskExpected, item.name);
   assert.equal(item.taskDisplay === "none", !taskExpected, item.name);
   const pendingBody=item.name==='unfinished:pending'||item.name.startsWith('task-finished:');
-  assert.equal(item.rolePresent,!pendingBody,item.name);
-  assert.equal(item.term, pendingBody?null:"执行耗时:", item.name);
+  const present=item.narrow?!pendingBody:roleExpected;
+  assert.equal(item.rolePresent,present,item.name);
+  assert.equal(item.term, present?"执行耗时:":null, item.name);
+  if(!item.narrow) assert.equal(item.bodyMetrics,0,item.name+' must not duplicate elapsed in preview body');
+  assert.equal(item.reserveMetrics,0,item.name+' must not reserve a duplicate elapsed row');
   assert.equal(item.titleCount, 0, item.name);
-  assert.ok(item.sameLine, item.name);
+  if(item.value===''){
+    assert.deepEqual(item.emptyValue,{structure:true,termVisible:true,valueVisible:true,text:'执行耗时:',containerFits:true,valueFits:true,contained:true},item.name+' must keep empty metric structure visible without placeholder text or overflow');
+  } else assert.ok(item.sameLine, item.name);
   const expectedValue = item.name === "zero-finished" ? "0毫秒" :
-    ["absent-metrics-finished", "negative-finished", "string-finished"].includes(item.name) ? "未提供" : "2秒";
-  assert.equal(item.value, pendingBody?null:expectedValue, item.name);
+    ["absent-metrics-finished", "negative-finished", "string-finished"].includes(item.name) ? "" : "2秒";
+  assert.equal(item.value, present?expectedValue:null, item.name);
 }
+const headerEncoded=run.stdout.match(/data-header-result="([^"]+)"/)?.[1];
+assert.ok(headerEncoded,'Chrome must return header lifecycle observations');
+const headerLifecycle=JSON.parse(headerEncoded.replaceAll("&quot;",'"').replaceAll("&amp;",'&'));
+if(!observations[0].narrow) assert.deepEqual(headerLifecycle,[['passed','执行耗时:2秒'],['refresh','执行耗时:3秒'],['switch-role','执行耗时:4秒'],['pending',''],['running',''],['summary','']].map(([name,text])=>({name,text,body:0,reserve:0})),'header metrics must follow selected role, same-view updates and summary clearing');
+fs.writeFileSync(path.join(evidence, "header-observations.json"), JSON.stringify(headerLifecycle, null, 2), "utf8");
 fs.writeFileSync(path.join(evidence, "observations.json"), JSON.stringify(observations, null, 2), "utf8");
 console.log(`Elapsed visibility Chrome behavior passed (${observations.length} cases); evidence: ${evidence}`);
