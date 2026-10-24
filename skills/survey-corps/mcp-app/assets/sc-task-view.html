@@ -308,7 +308,7 @@
           }
           const empty=document.createElement("p");
           empty.className="sc-task-view__preview-empty";
-          empty.textContent="悬停或聚焦左侧角色卡可预览详情。";
+          empty.append(document.createElement("br"));
           body.replaceChildren(empty);
           return;
         }
