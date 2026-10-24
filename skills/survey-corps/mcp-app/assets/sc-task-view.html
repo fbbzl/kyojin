@@ -79,6 +79,7 @@
     .sc-task-view__role-progress { display:grid; align-content:start; gap:3px; min-width:0; padding-left:6px; text-align:left; }
     .sc-task-view details[data-sc-role] > summary .sc-task-view__role-state { min-width:0; max-width:100%; text-align:left; white-space:normal; }
     .sc-task-view__role-elapsed, .sc-task-view__role-subskill { min-width:0; color:var(--muted); font-size:11px; font-weight:400; overflow-wrap:anywhere; }
+    .sc-task-view__role-subskill { min-height:1.6em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .sc-task-view__role-state { color:var(--muted); font-weight:400; text-align:right; }
     .sc-task-view .sc-task-view__state--pending { color:var(--pending); }
     .sc-task-view .sc-task-view__state--active { color:var(--active); }
@@ -295,14 +296,15 @@
         node.append(summary,body);
         return node;
       }
-      function renderSubskills(body,role,value) {
-        if (!Array.isArray(value)) return [];
-        const running=[],nodes=value.map(item=>{
+      function renderSubskills(body,role,value,active) {
+        if (!Array.isArray(value)) return "";
+        let running;
+        const nodes=value.map(item=>{
           const node=subskillNode(role,item);
-          if (node&&asObject(item).status==="running") running.push(node.dataset.scSubskill);
+          if (active&&node&&asObject(item).status==="running") running=node;
           return node;
         }).filter(Boolean);
-        if (!nodes.length) return [];
+        if (!nodes.length) return "";
         const box=document.createElement("section"),heading=document.createElement("h3");
         box.className="sc-task-view__subskills";
         box.dataset.scSubskills="";
@@ -310,7 +312,7 @@
         heading.textContent="子技能";
         box.append(heading,...nodes);
         body.append(box);
-        return [...new Set(running)];
+        return (running||nodes.at(-1)).dataset.scSubskill;
       }
       function previewRoleFor(root) {
         const selected=root.__scSelectedRoles||[];
@@ -471,6 +473,9 @@
           elapsed.append(value);
           progress.append(elapsed);
         }
+        const skill=document.createElement("span");
+        skill.className="sc-task-view__role-subskill";
+        progress.append(skill);
         summary.append(name,progress,link);
         node.append(summary);
         body.className="sc-task-view__detail";
@@ -479,9 +484,7 @@
         detailField(body,"摘要",detail.summary);
         detailField(body,"必要证据",detail.evidence);
         detailField(body,"风险",detail.risks);
-        detailField(body,"下一步",detail.next_action);
-        const running=renderSubskills(body,role,detail.subskills);
-        if (active) running.forEach(name=>{ const skill=document.createElement("span"); skill.className="sc-task-view__role-subskill"; skill.textContent=name; progress.append(skill); });
+        skill.title=skill.textContent=renderSubskills(body,role,detail.subskills,active);
         node.append(body);
         return node;
       }

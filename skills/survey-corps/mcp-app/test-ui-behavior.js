@@ -180,9 +180,52 @@ const result={missingData,missingStateLabels,pendingBodies,focus,lifecycle,bound
 document.body.dataset.scTestResult=JSON.stringify(result);
 </script></body></html>`;
 
+// QA role-subskill-line, P1: user-approved single-name selection and next-action removal.
+const roleLineCases = [
+  {"name":"active-running-priority","status":"running","skills":[{"name":"tech-select","status":"running","summary":"执行记录"},{"name":"refactor-with-goal","status":"passed","summary":"历史记录"}],"text":"tech-select","records":["tech-select","refactor-with-goal"],"active":true},
+  {"name":"active-last-running","status":"running","skills":[{"name":"tech-select","status":"running","summary":"首项"},{"name":"bug-fix","status":"running","summary":"后项"},{"name":"optimize","status":"completed","summary":"历史"}],"text":"bug-fix","records":["tech-select","bug-fix","optimize"],"active":true},
+  {"name":"active-exact-running","status":"running","skills":[{"name":"tech-select","status":"running","summary":"精确状态"},{"name":"refactor-with-goal","status":" RUNNING ","summary":"非精确状态"}],"text":"tech-select","records":["tech-select","refactor-with-goal"],"active":true},
+  {"name":"active-fallback","status":"running","skills":[{"name":"tech-select","status":"preparing","summary":"旧别名"},{"name":"refactor-with-goal","status":"passed","summary":"后项"}],"text":"refactor-with-goal","records":["tech-select","refactor-with-goal"],"active":true},
+  {"name":"passed-history","status":"passed","skills":[{"name":"tech-select","status":"running","summary":"旧进行中"},{"name":"refactor-with-goal","status":"passed","summary":"已完成"}],"text":"refactor-with-goal","records":["tech-select","refactor-with-goal"],"active":false},
+  {"name":"stopped-history","state":"completed","status":"running","skills":[{"name":"tech-select","status":"running","summary":"旧执行"},{"name":"refactor-with-goal","status":"passed","summary":"后项"}],"text":"refactor-with-goal","records":["tech-select","refactor-with-goal"],"active":false},
+  {"name":"conflicting-activity-history","status":"running","conflict":true,"skills":[{"name":"tech-select","status":"running","summary":"执行"},{"name":"refactor-with-goal","status":"passed","summary":"后项"}],"text":"refactor-with-goal","records":["tech-select","refactor-with-goal"],"active":false},
+  {"name":"pending-blank","status":"pending","skills":[{"name":"tech-select","status":"running","summary":"不得展示"}],"text":"","records":[],"active":false},
+  {"name":"invalid-record-filter","status":"running","skills":[null,"tech-select",{},{"name":"test-with-goal","summary":"错误所属"},{"name":"constructor","summary":"非法名称"},{"name":"tech-select","status":"running","evidence":["有效证据"]},{"name":"refactor-with-goal","status":"running","goal":42,"summary":{"bad":true},"options":["不足以成有效记录"]}],"text":"tech-select","records":["tech-select"],"active":true},
+  {"name":"no-valid-record","status":"passed","skills":[{"name":"tech-select","status":"running","summary":"  ","evidence":[null," "]}],"text":"","records":[],"active":false},
+  {"name":"missing-records","status":"passed","text":"","records":[],"active":false},
+  {"name":"nonarray-records","status":"passed","skills":{"name":"tech-select","summary":"不可视为数组"},"text":"","records":[],"active":false},
+  {"name":"missing-role-status-history","skills":[{"name":"tech-select","summary":"已有记录"}],"text":"tech-select","records":["tech-select"],"active":false},
+  {"name":"long-name","status":"passed","skills":[{"name":"refactor-with-goal","summary":"长名称"}],"text":"refactor-with-goal","records":["refactor-with-goal"],"active":false},
+  {"name":"req-history","role":"req","status":"passed","skills":[{"name":"align-with-visuals","summary":"对齐记录"}],"text":"align-with-visuals","records":["align-with-visuals"],"active":false},
+  {"name":"cr-history","role":"cr","status":"passed","skills":[{"name":"review-with-goal","summary":"审查记录"}],"text":"review-with-goal","records":["review-with-goal"],"active":false},
+  {"name":"qa-active","role":"qa","status":"running","skills":[{"name":"test-with-goal","summary":"测试记录","status":"running"}],"text":"test-with-goal","records":["test-with-goal"],"active":true}
+];
+
 const visualHarness = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main id="root">${template}</main><script>
 const root=document.getElementById('root'),snapshot=${JSON.stringify(snapshot)};
 snapshot.role_details.cr.status='passed';
+// The same fixtures run at exact 360/960 iframe widths; observed DOM is the oracle.
+const lineRoot=root.cloneNode(true);lineRoot.removeAttribute('id');document.body.append(lineRoot);
+const lineCases=${JSON.stringify(roleLineCases)},roleLines=[];
+for(const item of lineCases){
+  document.activeElement?.blur();const role=item.role||'dev';
+  // A narrow desktop embed exercises real clipping with the longest allowed name.
+  lineRoot.style.width=item.name==='long-name'&&innerWidth>560?'560px':'';lineRoot.style.maxWidth='100%';
+  const input={view_id:'role-line:'+item.name,state:item.state||'dev_in_progress',work_unit:{roles:['req','dev','cr','qa']},role_details:{req:{status:'passed'},dev:{status:'passed'},cr:{status:'passed'},qa:{status:'pending'}}};
+  input.role_details[role]={status:item.status,metrics:{elapsed_ms:1000},subskills:item.skills,next_action:'ROLE_NEXT_SHOULD_NOT_RENDER'};if(item.conflict)input.role_details.cr.status='running';
+  const before=JSON.stringify(input);window.renderSurveyCorpsTaskView(lineRoot,input);
+  const card=lineRoot.querySelector('[data-sc-role='+role+']'),summary=card.querySelector(':scope > summary'),line=summary.querySelector('.sc-task-view__role-subskill'),styles=getComputedStyle(line),rect=line.getBoundingClientRect(),previous=summary.querySelector('.sc-task-view__role-elapsed')||summary.querySelector('.sc-task-view__role-state'),body=card.querySelector(':scope > [data-sc-detail-body]');
+  roleLines.push({name:item.name,text:line.textContent,title:line.title,count:summary.querySelectorAll('.sc-task-view__role-subskill').length,children:line.childElementCount,records:[...body.querySelectorAll('[data-sc-subskill]')].map(node=>node.dataset.scSubskill),active:card.classList.contains('is-active'),unchanged:before===JSON.stringify(input),below:rect.top>=previous.getBoundingClientRect().bottom-1,height:rect.height,lineHeight:parseFloat(styles.lineHeight),whiteSpace:styles.whiteSpace,overflow:styles.overflow,textOverflow:styles.textOverflow,animation:styles.animationName,clipped:line.scrollWidth>line.clientWidth,fits:rect.right<=summary.getBoundingClientRect().right+1,headings:[...body.querySelectorAll(':scope > h3')].map(node=>node.textContent),nextAbsent:!lineRoot.textContent.includes('ROLE_NEXT_SHOULD_NOT_RENDER')});
+}
+document.activeElement?.blur();lineRoot.style.width='';const interaction={view_id:'role-line:interaction',state:'dev_in_progress',work_unit:{roles:['dev','cr'],summary:'完成',next_action:['任务总结后续']},role_details:{dev:{status:'running',next_action:'ROLE_NEXT_SHOULD_NOT_RENDER',subskills:[{name:'tech-select',status:'running',summary:'方案'},{name:'refactor-with-goal',status:'passed',summary:'完整历史记录'}]},cr:{status:'passed',next_action:'ROLE_NEXT_SHOULD_NOT_RENDER',subskills:[{name:'review-with-goal',summary:'审查记录'}]}}};
+const interactionBefore=JSON.stringify(interaction);window.renderSurveyCorpsTaskView(lineRoot,interaction);
+const roleSummary=role=>lineRoot.querySelector('[data-sc-role='+role+'] > summary'),owner=()=>lineRoot.querySelector('[data-sc-preview-link]:not([hidden])')?.closest('[data-sc-role]').dataset.scRole,geometry=()=>{const rect=lineRoot.querySelector('.sc-task-view').getBoundingClientRect();return [rect.width,rect.height];};
+let lineInteraction=null;if(innerWidth>560){roleSummary('dev').focus();const baseline=geometry();roleSummary('cr').dispatchEvent(new PointerEvent('pointerover',{bubbles:true}));const hovered={owner:owner(),size:geometry(),focus:document.activeElement===roleSummary('dev')};roleSummary('cr').dispatchEvent(new PointerEvent('pointerout',{bubbles:true,relatedTarget:document.body}));const returned=owner();roleSummary('cr').focus();const focused={owner:owner(),size:geometry(),focus:document.activeElement===roleSummary('cr')};lineInteraction={baseline,hovered,returned,focused};}
+const inlineNextAbsent=[...lineRoot.querySelectorAll('[data-sc-role] > [data-sc-detail-body] > h3')].every(node=>node.textContent!=='下一步');
+const previewNextAbsent=!lineRoot.querySelector('[data-sc-preview-body]').textContent.includes('ROLE_NEXT_SHOULD_NOT_RENDER');
+document.activeElement?.blur();interaction.state='completed';interaction.role_details.dev.status='passed';window.renderSurveyCorpsTaskView(lineRoot,interaction);
+const summaryNext=[...lineRoot.querySelectorAll('[data-sc-preview-summary] section')].find(node=>node.querySelector('h4')?.textContent==='下一步')?.querySelector('li')?.textContent;
+const lineSummary={inlineNextAbsent,previewNextAbsent,summaryNext,authorityRetained:interactionBefore.includes('ROLE_NEXT_SHOULD_NOT_RENDER')&&interaction.role_details.dev.next_action==='ROLE_NEXT_SHOULD_NOT_RENDER'&&interaction.work_unit.next_action[0]==='任务总结后续',scrollWidth:document.documentElement.scrollWidth};lineRoot.remove();
 const subskillTones={pending:'pending',not_started:'pending',running:'active',preparing:'active',in_progress:'active',working:'active',active:'active',started:'active',started_working:'active',completed:'completed',complete:'completed',done:'completed',success:'completed',successful:'completed',succeeded:'completed',passed:'passed',qa_passed:'passed',qa_success:'passed',workflow_ready:'passed',failed:'danger',blocked:'danger',paused:'waiting',cancelled:'pending',canceled:'pending',skipped:'pending',waiting:'waiting',waiting_user:'waiting',needs_user_confirm:'waiting',needs_revision:'revision',constructor:'unknown',['__proto__']:'unknown',toString:'unknown',unrecognized:'unknown'};
 const canonicalRoleTones={pending:'pending',running:'active',passed:'passed',blocked:'danger',needs_user_confirm:'waiting'};
 const roleTones=Object.fromEntries(Object.keys(subskillTones).map(status=>[status,Object.hasOwn(canonicalRoleTones,status)?canonicalRoleTones[status]:'unknown']));
@@ -197,7 +240,7 @@ const connectors=[...root.querySelectorAll('.sc-task-view__connector')].map(node
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches,view=root.querySelector('.sc-task-view'),active=root.querySelector('details.is-active');
 const header=root.querySelector('.sc-task-view__header'),status=root.querySelector('[data-sc-field=state]'),headerRect=header.getBoundingClientRect(),statusRect=status.getBoundingClientRect();
 const statusLayout={centerOffset:Math.abs((statusRect.left+statusRect.right)/2-(headerRect.left+headerRect.right)/2),fontSize:getComputedStyle(status).fontSize,eyebrowCount:root.querySelectorAll('.sc-task-view__root > .sc-task-view__muted').length,titleCount:root.querySelectorAll('h2').length};
-const idle=root.querySelector('[data-sc-role=req]');const result={roleTones,subskillTones,globalTones,roleColors,subskillColors,globalColors,activeRoleMotion,connectors,statusLayout,reduced,viewAnimation:getComputedStyle(view).animationName,activeAnimation:getComputedStyle(active,'::before').animationName,idleAnimation:getComputedStyle(idle,'::before').animationName,replay:active.classList.contains('is-manual-replay'),viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth};parent.postMessage({scVisualResult:result},'*');
+const idle=root.querySelector('[data-sc-role=req]');const result={roleLines,lineInteraction,lineSummary,roleTones,subskillTones,globalTones,roleColors,subskillColors,globalColors,activeRoleMotion,connectors,statusLayout,reduced,viewAnimation:getComputedStyle(view).animationName,activeAnimation:getComputedStyle(active,'::before').animationName,idleAnimation:getComputedStyle(idle,'::before').animationName,replay:active.classList.contains('is-manual-replay'),viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth};parent.postMessage({scVisualResult:result},'*');
 </script></body></html>`;
 
 function readChromeResult(pagePath, profilePath, width, reduced = false) {
@@ -256,8 +299,8 @@ try {
   for(const item of result.missingData){
     const items=missingDataExpected[item.name],metadata=["zero","false","literal","malicious"].includes(item.name)?items[0]:"";
     assert.deepEqual(item.metadata,[metadata,metadata,metadata],item.name+" must preserve supplied metadata and clear absent values");
-    assert.deepEqual(item.headings,["摘要","必要证据","风险","下一步"],item.name+" must retain detail headings");
-    assert.deepEqual(item.contents,Array.from({length:4},()=>({text:items.join(""),items,children:items.length?1:0})),item.name+" must suppress empty bullets while preserving supplied text");
+    assert.deepEqual(item.headings,["摘要","必要证据","风险"],item.name+" retains the three role headings without next action");
+    assert.deepEqual(item.contents,Array.from({length:3},()=>({text:items.join(""),items,children:items.length?1:0})),item.name+" must suppress empty bullets while preserving supplied text");
     assert.equal(item.injectedElements,0,item.name+" must use textContent instead of interpreting HTML");
     assert.equal(item.executed,false,item.name+" must not execute supplied HTML");
   }
@@ -320,6 +363,23 @@ try {
     fs.writeFileSync(page,wrapper,"utf8");
     const observed=readChromeResult(page,path.join(temp,`visual-${mode.width}-${mode.reduced}`),mode.width,mode.reduced);
     assert.equal(observed.viewport,mode.width,"responsive cases must run at the exact requested iframe viewport");
+    assert.equal(observed.roleLines.length,roleLineCases.length,"all subskill-name cases execute at each viewport");
+    for(const [index,item] of observed.roleLines.entries()){
+      const expected=roleLineCases[index];assert.equal(item.name,expected.name);
+      assert.equal(item.text,expected.text,item.name+" selects the approved single name");assert.equal(item.title,expected.text,item.name+" exposes the full tooltip");
+      assert.equal(item.count,1,item.name+" reserves exactly one name line");assert.equal(item.children,0,item.name+" keeps only safe text");
+      assert.deepEqual(item.records,expected.records,item.name+" preserves all and only valid detailed records");assert.equal(item.active,expected.active,item.name+" uses the existing role activity gate");
+      assert.equal(item.unchanged,true,item.name+" keeps authoritative snapshots unchanged");assert.equal(item.below,true,item.name+" puts the line below elapsed or status");
+      assert.ok(item.height>0&&item.height<=item.lineHeight+1,item.name+" reserves one line even when blank");
+      assert.equal(item.whiteSpace,"nowrap");assert.equal(item.overflow,"hidden");assert.equal(item.textOverflow,"ellipsis");assert.equal(item.animation,"none",item.name+" names remain static");
+      assert.equal(item.fits,true,item.name+" stays inside the role card");assert.equal(item.nextAbsent,true,item.name+" suppresses role next-action text");
+      assert.deepEqual(item.headings,expected.status==="pending"?[]:["摘要","必要证据","风险"],item.name+" removes next action without suppressing other fields");
+      if(expected.name==="long-name"&&mode.width===960)assert.equal(item.clipped,true,"the longest allowed DEV name exercises real clipping in the desktop role lane");
+    }
+    assert.deepEqual({...observed.lineSummary,scrollWidth:undefined},{inlineNextAbsent:true,previewNextAbsent:true,summaryNext:"任务总结后续",authorityRetained:true,scrollWidth:undefined},"role next actions disappear while authoritative data and summary next actions remain");
+    assert.ok(observed.lineSummary.scrollWidth<=mode.width,"name lines and summary must not cause horizontal overflow");
+    if(mode.width>560){const item=observed.lineInteraction;assert.equal(item.hovered.owner,"cr");assert.equal(item.hovered.focus,true);assert.deepEqual(item.hovered.size,item.baseline,"hover must not resize the task view");assert.equal(item.returned,"dev");assert.equal(item.focused.owner,"cr");assert.equal(item.focused.focus,true);assert.deepEqual(item.focused.size,item.baseline,"keyboard role switch must not resize the task view");}
+    else assert.equal(observed.lineInteraction,null,"narrow cards retain their inline detail interaction");
     assert.ok(observed.statusLayout.centerOffset<=1,"global status must remain centered in the header");
     assert.equal(observed.statusLayout.fontSize,"18px","global status must use enlarged type");
     assert.equal(observed.statusLayout.eyebrowCount,0,"work unit eyebrow must not render");

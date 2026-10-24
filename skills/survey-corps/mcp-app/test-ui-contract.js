@@ -89,7 +89,12 @@ assert.equal(roleStatesLiteral, '{pending:{label:"待开始",tone:"pending"},run
 assert.doesNotMatch(appTemplate, /roleStatusLabels|roleStatusTones|isActiveRoleStatus|roleStatusLabel|roleStatusTone/, "obsolete role-state helper layers must remain removed");
 assert.equal(stateText("ready_for_cr"), "审查阶段", "CR phase label must not imply waiting while CR is running");
 assert.equal(stateText("ready_for_qa"), "测试阶段", "QA phase label must not imply waiting while QA is running");
-assert.match(appTemplate, /detailField\(body,"摘要".*detailField\(body,"必要证据".*detailField\(body,"风险".*detailField\(body,"下一步"/s, "role cards must contain only the compact task fields");
+assert.match(appTemplate, /detailField\(body,"摘要".*detailField\(body,"必要证据".*detailField\(body,"风险"/s, "role cards retain summary, evidence and risks");
+assert.doesNotMatch(appTemplate, /detailField\(body,"下一步"/, "role details must omit the next-action field on desktop and narrow screens");
+assert.match(appTemplate, /\["下一步",data\.next\]/, "task summaries retain their separate next-action section");
+assert.match(appTemplate, /\.sc-task-view__role-subskill \{[^}]*min-height:1\.6em;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/, "role cards reserve a single clipped subskill-name line");
+assert.match(appTemplate, /const node=subskillNode\(role,item\)/, "left-card names and full records share the same validation boundary");
+assert.match(appTemplate, /skill\.title=skill\.textContent=renderSubskills/, "subskill names expose the full value in a tooltip");
 assert.doesNotMatch(appTemplate, /data-sc-field="resume_state"|data-sc-state-reference|复验入口/, "minimal UI must not render the state machine or resume_state");
 assertSkillMatch(/不展示状态机、状态参考集、复验入口或 `resume_state`/, "skill must keep resume_state authoritative but out of the UI");
 assertSkillDoesNotMatch(/needs_revalidation` 时必须展示 `resume_state`/, "skill must not require resume_state rendering");
