@@ -37,7 +37,8 @@ assert.match(appTemplate, /data-sc-metric="task-elapsed"/, "task metadata must e
 assert.doesNotMatch(appTemplate, /task-tokens|total_tokens|Token|formatTokens/, "task and role cards must not render or format token usage");
 assert.match(appTemplate, /function formatElapsed\(value\)/, "elapsed time must use a deterministic formatter");
 assert.match(appTemplate, /const validMetric=value=>Number\.isSafeInteger\(value\)&&value>=0/, "metrics must reject missing, fractional and negative values");
-assert.match(appTemplate, /function renderRoleMetrics\(body,value,status\)/, "role cards must expose per-role measured usage");
+assert.match(appTemplate, /elapsed\.className="sc-task-view__role-elapsed"/, "completed role elapsed must render inside its role card");
+assert.doesNotMatch(appTemplate, /data-sc-preview-role|data-sc-preview-state|data-sc-preview-metrics|sc-task-view__preview-heading|sc-task-view__preview-identity|sc-task-view__role-metrics/, "the detail preview must not retain its removed header or duplicate metrics");
 assert.match(appTemplate, /renderTaskMetrics\(root,work,state\)/, "task metrics must be refreshed on every snapshot");
 if (skill) assert.match(workUnitExample, /^  metrics:.*elapsed_ms/m, "snapshot example must nest elapsed time as a direct work_unit field");
 assert.doesNotMatch(snapshotExample, /\nwork_unit\.metrics:/, "snapshot example must not document task metrics as a root-level dotted key");
