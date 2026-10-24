@@ -15,6 +15,6 @@
 
 ## 来源与适用范围
 
-- [local:fz-spring-boot-starter · D:/workspace/fz-spring-boot-starter/fz-spring-boot-starter-generator/pom.xml · L18](D:/workspace/fz-spring-boot-starter/fz-spring-boot-starter-generator/pom.xml)：依赖声明；scope=compile(default)。
+- [local:fz-spring-boot-starter · fz-spring-boot-starter-generator/pom.xml · L18](../../../README.md#source-fz-spring-boot-starter)：依赖声明；scope=compile(default)。
 
 来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

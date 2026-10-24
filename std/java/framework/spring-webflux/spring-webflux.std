@@ -15,8 +15,8 @@
 
 ## 来源与适用范围
 
-- [local:fz-spring-boot-starter · D:/workspace/fz-spring-boot-starter/pom.xml · L194](D:/workspace/fz-spring-boot-starter/pom.xml)：依赖管理；scope=compile(default)。
-- [local:fz-spring-boot-starter · D:/workspace/fz-spring-boot-starter/fz-spring-boot-starter-webflux/pom.xml · L23](D:/workspace/fz-spring-boot-starter/fz-spring-boot-starter-webflux/pom.xml)：依赖声明；scope=compile(default)。
+- [local:fz-spring-boot-starter · pom.xml · L194](../../../README.md#source-fz-spring-boot-starter)：依赖管理；scope=compile(default)。
+- [local:fz-spring-boot-starter · fz-spring-boot-starter-webflux/pom.xml · L23](../../../README.md#source-fz-spring-boot-starter)：依赖声明；scope=compile(default)。
 - [skhatri/microservices-starter-kotlin · app/build.gradle.kts · L29](https://github.com/skhatri/microservices-starter-kotlin/blob/f2aaaeb8d15fe5661d3199cbb364005eecd57113/app/build.gradle.kts#L29)：声明上下文待解析。
 
 来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
