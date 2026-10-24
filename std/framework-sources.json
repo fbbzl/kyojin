@@ -1,0 +1,1543 @@
+{
+  "observedOn": "2026-10-24",
+  "scope": "GitHub scaffold dependency discovery; not a popularity ranking or runtime validation.",
+  "repositories": [
+    {
+      "repository": "dromara/RuoYi-Vue-Plus",
+      "url": "https://github.com/dromara/RuoYi-Vue-Plus",
+      "revision": "9227f626a3a37e1546d6c291ed398183e94df92b",
+      "commitDate": "2026-09-28T01:30:13Z",
+      "files": [
+        "pom.xml",
+        "ruoyi-admin/pom.xml",
+        "ruoyi-api/pom.xml",
+        "ruoyi-common/pom.xml",
+        "ruoyi-common/ruoyi-common-ai/pom.xml",
+        "ruoyi-common/ruoyi-common-bom/pom.xml",
+        "ruoyi-common/ruoyi-common-core/pom.xml",
+        "ruoyi-common/ruoyi-common-doc/pom.xml",
+        "ruoyi-common/ruoyi-common-elasticsearch/pom.xml",
+        "ruoyi-common/ruoyi-common-encrypt/pom.xml",
+        "ruoyi-common/ruoyi-common-excel/pom.xml",
+        "ruoyi-common/ruoyi-common-job/pom.xml",
+        "ruoyi-common/ruoyi-common-json/pom.xml",
+        "ruoyi-common/ruoyi-common-liteflow/pom.xml",
+        "ruoyi-common/ruoyi-common-log/pom.xml",
+        "ruoyi-common/ruoyi-common-mail/pom.xml",
+        "ruoyi-common/ruoyi-common-mcp/pom.xml",
+        "ruoyi-common/ruoyi-common-mqtt/pom.xml",
+        "ruoyi-common/ruoyi-common-mybatis/pom.xml",
+        "ruoyi-common/ruoyi-common-oss/pom.xml",
+        "ruoyi-common/ruoyi-common-push/pom.xml",
+        "ruoyi-common/ruoyi-common-redis/pom.xml",
+        "ruoyi-common/ruoyi-common-satoken/pom.xml",
+        "ruoyi-common/ruoyi-common-security/pom.xml",
+        "ruoyi-common/ruoyi-common-sensitive/pom.xml",
+        "ruoyi-common/ruoyi-common-sms/pom.xml",
+        "ruoyi-common/ruoyi-common-social/pom.xml",
+        "ruoyi-common/ruoyi-common-translation/pom.xml",
+        "ruoyi-common/ruoyi-common-web/pom.xml",
+        "ruoyi-extend/pom.xml",
+        "ruoyi-extend/ruoyi-monitor-admin/pom.xml",
+        "ruoyi-extend/ruoyi-snailai-server/pom.xml",
+        "ruoyi-extend/ruoyi-snailjob-server/pom.xml",
+        "ruoyi-modules/pom.xml",
+        "ruoyi-modules/ruoyi-ai/pom.xml",
+        "ruoyi-modules/ruoyi-demo/pom.xml",
+        "ruoyi-modules/ruoyi-gen/pom.xml",
+        "ruoyi-modules/ruoyi-job/pom.xml",
+        "ruoyi-modules/ruoyi-system/pom.xml",
+        "ruoyi-modules/ruoyi-workflow/pom.xml"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "pom.xml",
+          "url": "https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/pom.xml",
+          "matches": [
+            {
+              "line": 29,
+              "text": "<mybatis.version>3.5.19</mybatis.version>"
+            },
+            {
+              "line": 30,
+              "text": "<mybatis-plus.version>3.5.17</mybatis-plus.version>"
+            },
+            {
+              "line": 31,
+              "text": "<mybatis-plus-join.version>1.5.9</mybatis-plus-join.version>"
+            },
+            {
+              "line": 157,
+              "text": "<!-- sa-token-bom 依赖 -->"
+            },
+            {
+              "line": 158,
+              "text": "<!-- Sa-Token 权限认证, 在线文档：http://sa-token.dev33.cn/ -->"
+            },
+            {
+              "line": 161,
+              "text": "<artifactId>sa-token-bom</artifactId>"
+            },
+            {
+              "line": 211,
+              "text": "<!-- MyBatis 核心 -->"
+            },
+            {
+              "line": 213,
+              "text": "<groupId>org.mybatis</groupId>"
+            },
+            {
+              "line": 214,
+              "text": "<artifactId>mybatis</artifactId>"
+            },
+            {
+              "line": 215,
+              "text": "<version>${mybatis.version}</version>"
+            },
+            {
+              "line": 218,
+              "text": "<!-- MyBatis Plus 启动器 -->"
+            },
+            {
+              "line": 221,
+              "text": "<artifactId>mybatis-plus-spring-boot4-starter</artifactId>"
+            },
+            {
+              "line": 222,
+              "text": "<version>${mybatis-plus.version}</version>"
+            },
+            {
+              "line": 225,
+              "text": "<!-- MyBatis Plus JSqlParser 支持 -->"
+            },
+            {
+              "line": 228,
+              "text": "<artifactId>mybatis-plus-jsqlparser</artifactId>"
+            },
+            {
+              "line": 229,
+              "text": "<version>${mybatis-plus.version}</version>"
+            },
+            {
+              "line": 232,
+              "text": "<!-- MyBatis Plus 注解 -->"
+            },
+            {
+              "line": 235,
+              "text": "<artifactId>mybatis-plus-annotation</artifactId>"
+            }
+          ]
+        },
+        {
+          "path": "ruoyi-common/ruoyi-common-mybatis/pom.xml",
+          "url": "https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/ruoyi-common/ruoyi-common-mybatis/pom.xml",
+          "matches": [
+            {
+              "line": 12,
+              "text": "<artifactId>ruoyi-common-mybatis</artifactId>"
+            },
+            {
+              "line": 15,
+              "text": "ruoyi-common-mybatis 数据库服务"
+            },
+            {
+              "line": 43,
+              "text": "<!-- MyBatis Plus 启动器 -->"
+            },
+            {
+              "line": 46,
+              "text": "<artifactId>mybatis-plus-spring-boot4-starter</artifactId>"
+            },
+            {
+              "line": 49,
+              "text": "<!-- MyBatis Plus JSqlParser 支持 -->"
+            },
+            {
+              "line": 52,
+              "text": "<artifactId>mybatis-plus-jsqlparser</artifactId>"
+            },
+            {
+              "line": 55,
+              "text": "<!-- MyBatis Plus Join -->"
+            },
+            {
+              "line": 58,
+              "text": "<artifactId>mybatis-plus-join-boot-starter</artifactId>"
+            }
+          ]
+        },
+        {
+          "path": "ruoyi-common/ruoyi-common-satoken/pom.xml",
+          "url": "https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/ruoyi-common/ruoyi-common-satoken/pom.xml",
+          "matches": [
+            {
+              "line": 44,
+              "text": "<!-- Sa-Token 权限认证, 在线文档：http://sa-token.dev33.cn/ -->"
+            },
+            {
+              "line": 47,
+              "text": "<artifactId>sa-token-spring-boot4-starter</artifactId>"
+            },
+            {
+              "line": 50,
+              "text": "<!-- Sa-Token 整合 jwt -->"
+            },
+            {
+              "line": 53,
+              "text": "<artifactId>sa-token-jwt</artifactId>"
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "flipped-aurora/gin-vue-admin",
+      "url": "https://github.com/flipped-aurora/gin-vue-admin",
+      "revision": "f7f1009c98e6c180d6d89f897cf36907a85ecc43",
+      "commitDate": "2026-10-22T03:23:53Z",
+      "files": [
+        "server/go.mod",
+        "web/package.json"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "server/go.mod",
+          "url": "https://github.com/flipped-aurora/gin-vue-admin/blob/f7f1009c98e6c180d6d89f897cf36907a85ecc43/server/go.mod",
+          "matches": [
+            {
+              "line": 17,
+              "text": "github.com/gin-gonic/gin v1.10.0"
+            },
+            {
+              "line": 54,
+              "text": "gorm.io/datatypes v1.2.5"
+            },
+            {
+              "line": 55,
+              "text": "gorm.io/driver/mysql v1.6.0"
+            },
+            {
+              "line": 56,
+              "text": "gorm.io/driver/postgres v1.6.0"
+            },
+            {
+              "line": 57,
+              "text": "gorm.io/driver/sqlserver v1.6.3"
+            },
+            {
+              "line": 58,
+              "text": "gorm.io/gen v0.3.26"
+            },
+            {
+              "line": 59,
+              "text": "gorm.io/gorm v1.31.1"
+            },
+            {
+              "line": 110,
+              "text": "github.com/go-playground/locales v0.14.1 // indirect"
+            },
+            {
+              "line": 111,
+              "text": "github.com/go-playground/universal-translator v0.18.1 // indirect"
+            },
+            {
+              "line": 112,
+              "text": "github.com/go-playground/validator/v10 v10.24.0 // indirect"
+            },
+            {
+              "line": 199,
+              "text": "gorm.io/hints v1.1.2 // indirect"
+            },
+            {
+              "line": 200,
+              "text": "gorm.io/plugin/dbresolver v1.6.2 // indirect"
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "go-kratos/kratos-layout",
+      "url": "https://github.com/go-kratos/kratos-layout",
+      "revision": "59ad406328acba9a70c9e7f426720a75a89a6b9f",
+      "commitDate": "2026-09-01T05:43:07Z",
+      "files": [
+        "go.mod"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "go.mod",
+          "url": "https://github.com/go-kratos/kratos-layout/blob/59ad406328acba9a70c9e7f426720a75a89a6b9f/go.mod",
+          "matches": [
+            {
+              "line": 1,
+              "text": "module github.com/go-kratos/kratos-layout"
+            },
+            {
+              "line": 7,
+              "text": "github.com/go-kratos/aip-go/ents v0.0.0-20260901003907-1ab5471e605b"
+            },
+            {
+              "line": 46,
+              "text": "github.com/go-kratos/kratos/contrib/otel/v3 v3.0.0-20260515082355-1ddb58e407c5"
+            },
+            {
+              "line": 47,
+              "text": "github.com/go-kratos/kratos/v3 v3.0.0"
+            },
+            {
+              "line": 50,
+              "text": "github.com/go-playground/form/v4 v4.3.0 // indirect"
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "zeromicro/go-zero",
+      "url": "https://github.com/zeromicro/go-zero",
+      "revision": "54e7a937a73ef3493d2dc704af0e87b3951d3adc",
+      "commitDate": "2026-10-21T12:52:43Z",
+      "files": [
+        "go.mod",
+        "tools/goctl/go.mod"
+      ],
+      "readme": "readme.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "go.mod",
+          "url": "https://github.com/zeromicro/go-zero/blob/54e7a937a73ef3493d2dc704af0e87b3951d3adc/go.mod",
+          "matches": [
+            {
+              "line": 1,
+              "text": "module github.com/zeromicro/go-zero"
+            }
+          ]
+        },
+        {
+          "path": "readme.md",
+          "url": "https://github.com/zeromicro/go-zero/blob/54e7a937a73ef3493d2dc704af0e87b3951d3adc/readme.md",
+          "matches": [
+            {
+              "line": 1,
+              "text": "# go-zero"
+            },
+            {
+              "line": 3,
+              "text": "<img align=\"center\" width=\"150px\" src=\"https://raw.githubusercontent.com/zeromicro/zero-doc/main/doc/images/go-zero.png\">"
+            },
+            {
+              "line": 6,
+              "text": "go-zero is a web and rpc framework with lots of builtin engineering practices. It’s born to ensure the stability of the busy services with resilience design and has been serving sites with tens of millions of users for years."
+            },
+            {
+              "line": 10,
+              "text": "[![codecov](https://codecov.io/gh/zeromicro/go-zero/branch/master/graph/badge.svg)](https://codecov.io/gh/zeromicro/go-zero)"
+            },
+            {
+              "line": 11,
+              "text": "[![Go Report Card](https://goreportcard.com/badge/github.com/zeromicro/go-zero)](https://goreportcard.com/report/github.com/zeromicro/go-zero)"
+            },
+            {
+              "line": 12,
+              "text": "[![Release](https://img.shields.io/github/v/release/zeromicro/go-zero.svg?style=flat-square)](https://github.com/zeromicro/go-zero)"
+            },
+            {
+              "line": 13,
+              "text": "[![Go Reference](https://pkg.go.dev/badge/github.com/zeromicro/go-zero.svg)](https://pkg.go.dev/github.com/zeromicro/go-zero)"
+            },
+            {
+              "line": 21,
+              "text": "## 🤷‍ What is go-zero?"
+            },
+            {
+              "line": 24,
+              "text": "<a href=\"https://trendshift.io/repositories/3263\" target=\"_blank\"><img src=\"https://trendshift.io/api/badge/repositories/3263\" alt=\"zeromicro%2Fgo-zero | Trendshift\" style=\"width: 250px; height: 55px;\" width=\"250\" height=\"55\"/></a>"
+            },
+            {
+              "line": 25,
+              "text": "<a href=\"https://www.producthunt.com/posts/go-zero?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-go&#0045;zero\" target=\"_blank\"><img src=\"https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=334030&theme=light\" alt=\"go&#0045;zero - A&#0032;web&#003"
+            },
+            {
+              "line": 28,
+              "text": "go-zero (listed in CNCF Landscape: [https://landscape.cncf.io/?selected=go-zero](https://landscape.cncf.io/?selected=go-zero)) is a web and rpc framework with lots of builtin engineering practices. It’s born to ensure the stability of the busy services with resilience design and "
+            },
+            {
+              "line": 30,
+              "text": "go-zero contains simple API description syntax and code generation tool called `goctl`. You can generate Go, iOS, Android, Kotlin, Dart, TypeScript, JavaScript from .api files with `goctl`."
+            },
+            {
+              "line": 32,
+              "text": "#### Advantages of go-zero:"
+            },
+            {
+              "line": 43,
+              "text": "## Backgrounds of go-zero"
+            },
+            {
+              "line": 50,
+              "text": "## Design considerations on go-zero"
+            },
+            {
+              "line": 52,
+              "text": "go-zero follows these core design principles:"
+            },
+            {
+              "line": 60,
+              "text": "## The implementation and features of go-zero"
+            },
+            {
+              "line": 62,
+              "text": "go-zero integrates engineering best practices:"
+            }
+          ]
+        }
+      ],
+      "kind": "framework-with-generator",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "fastapi/full-stack-fastapi-template",
+      "url": "https://github.com/fastapi/full-stack-fastapi-template",
+      "revision": "b1125d8839482cb7bbae603ddc6d0081bf87532e",
+      "commitDate": "2026-10-15T16:04:31Z",
+      "files": [
+        "backend/pyproject.toml",
+        "frontend/package.json",
+        "package.json",
+        "packages/react-email/package.json",
+        "pyproject.toml"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "backend/pyproject.toml",
+          "url": "https://github.com/fastapi/full-stack-fastapi-template/blob/b1125d8839482cb7bbae603ddc6d0081bf87532e/backend/pyproject.toml",
+          "matches": [
+            {
+              "line": 7,
+              "text": "\"fastapi[standard]>=0.141.1,<1.0.0\","
+            },
+            {
+              "line": 16,
+              "text": "\"sqlmodel>=0.0.46,<1.0.0\","
+            },
+            {
+              "line": 18,
+              "text": "\"sentry-sdk[fastapi]>=2.70.0,<3.0.0\","
+            },
+            {
+              "line": 81,
+              "text": "[tool.fastapi]"
+            }
+          ]
+        },
+        {
+          "path": "frontend/package.json",
+          "url": "https://github.com/fastapi/full-stack-fastapi-template/blob/b1125d8839482cb7bbae603ddc6d0081bf87532e/frontend/package.json",
+          "matches": [
+            {
+              "line": 12,
+              "text": "\"test\": \"bunx playwright test\","
+            },
+            {
+              "line": 13,
+              "text": "\"test:ui\": \"bunx playwright test --ui\""
+            },
+            {
+              "line": 53,
+              "text": "\"@playwright/test\": \"1.63.0\","
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "cookiecutter-flask/cookiecutter-flask",
+      "url": "https://github.com/cookiecutter-flask/cookiecutter-flask",
+      "revision": "e5666c23a633b5b6fcb0dc2cfda2441d7f885727",
+      "commitDate": "2025-08-13T12:05:18Z",
+      "files": [
+        "requirements.txt",
+        "{{cookiecutter.app_name}}/package.json",
+        "{{cookiecutter.app_name}}/pyproject.toml",
+        "{{cookiecutter.app_name}}/requirements.txt",
+        "{{cookiecutter.app_name}}/requirements/dev.txt",
+        "{{cookiecutter.app_name}}/requirements/prod.txt"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "{{cookiecutter.app_name}}/requirements/prod.txt",
+          "url": "https://github.com/cookiecutter-flask/cookiecutter-flask/blob/e5666c23a633b5b6fcb0dc2cfda2441d7f885727/{{cookiecutter.app_name}}/requirements/prod.txt",
+          "matches": [
+            {
+              "line": 3,
+              "text": "# Flask"
+            },
+            {
+              "line": 5,
+              "text": "Flask==3.1.1"
+            },
+            {
+              "line": 9,
+              "text": "Flask-SQLAlchemy==3.1.1"
+            },
+            {
+              "line": 11,
+              "text": "SQLAlchemy==2.0.43"
+            },
+            {
+              "line": 14,
+              "text": "Flask-Migrate==4.1.0"
+            },
+            {
+              "line": 18,
+              "text": "Flask-WTF==1.2.2"
+            },
+            {
+              "line": 26,
+              "text": "# Flask Static Digest"
+            },
+            {
+              "line": 27,
+              "text": "Flask-Static-Digest==0.4.1"
+            },
+            {
+              "line": 30,
+              "text": "Flask-Bcrypt==1.0.1"
+            },
+            {
+              "line": 31,
+              "text": "Flask-Login==0.6.3"
+            },
+            {
+              "line": 34,
+              "text": "Flask-Caching>=2.0.2"
+            },
+            {
+              "line": 37,
+              "text": "Flask-DebugToolbar==0.16.0"
+            }
+          ]
+        },
+        {
+          "path": "{{cookiecutter.app_name}}/pyproject.toml",
+          "url": "https://github.com/cookiecutter-flask/cookiecutter-flask/blob/e5666c23a633b5b6fcb0dc2cfda2441d7f885727/{{cookiecutter.app_name}}/pyproject.toml",
+          "matches": []
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "t3-oss/create-t3-app",
+      "url": "https://github.com/t3-oss/create-t3-app",
+      "revision": "4709861f7e67a15564c0460c13e7b4b6cfcae40d",
+      "commitDate": "2025-12-13T10:32:30Z",
+      "files": [
+        "cli/package.json",
+        "cli/template/base/package.json",
+        "package.json",
+        "www/package.json"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "cli/template/base/package.json",
+          "url": "https://github.com/t3-oss/create-t3-app/blob/4709861f7e67a15564c0460c13e7b4b6cfcae40d/cli/template/base/package.json",
+          "matches": [
+            {
+              "line": 7,
+              "text": "\"dev\": \"next dev --turbo\","
+            },
+            {
+              "line": 8,
+              "text": "\"build\": \"next build\","
+            },
+            {
+              "line": 9,
+              "text": "\"start\": \"next start\","
+            },
+            {
+              "line": 10,
+              "text": "\"preview\": \"next build && next start\","
+            },
+            {
+              "line": 14,
+              "text": "\"@t3-oss/env-nextjs\": \"^0.12.0\","
+            },
+            {
+              "line": 15,
+              "text": "\"next\": \"^15.5.9\","
+            }
+          ]
+        },
+        {
+          "path": "README.md",
+          "url": "https://github.com/t3-oss/create-t3-app/blob/4709861f7e67a15564c0460c13e7b4b6cfcae40d/README.md",
+          "matches": [
+            {
+              "line": 13,
+              "text": "Interactive CLI to start a full-stack, typesafe Next.js app."
+            },
+            {
+              "line": 49,
+              "text": "- [Next.js](https://nextjs.org)"
+            },
+            {
+              "line": 55,
+              "text": "- [NextAuth.js](https://next-auth.js.org)"
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "nuxt/starter",
+      "url": "https://github.com/nuxt/starter",
+      "revision": "1f391e58fa5f108d2b2bd98c1d604ca625f0290e",
+      "commitDate": "2026-08-14T15:00:42Z",
+      "files": [],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/nuxt/starter/blob/1f391e58fa5f108d2b2bd98c1d604ca625f0290e/README.md",
+          "matches": [
+            {
+              "line": 1,
+              "text": "# 🪄 Nuxt Starter Templates"
+            },
+            {
+              "line": 3,
+              "text": "Quickly get started with a minimal Nuxt starter template!"
+            },
+            {
+              "line": 7,
+              "text": "Head over to [nuxt.new](https://nuxt.new) to get started quickly."
+            },
+            {
+              "line": 11,
+              "text": "You can use the `create-nuxt` CLI to clone the latest template to an empty directory:"
+            },
+            {
+              "line": 14,
+              "text": "$ npm create nuxt@latest [<dir>] -- [-t,--template=<template>]"
+            },
+            {
+              "line": 20,
+              "text": "$ npm create nuxt@latest my-app -- -t v4"
+            },
+            {
+              "line": 27,
+              "text": "[v4](https://github.com/nuxt/starter/tree/v4) | [Nuxt 4](https://nuxt.com/docs/4.x/getting-started/introduction) | `npm create nuxt@latest -- -t v4` | [Stackblitz](https://stackblitz.com/github/nuxt/starter/tree/v4) / [CodeSandbox](https://codesandbox.io/p/github/nuxt/starter/v4)"
+            },
+            {
+              "line": 28,
+              "text": "[v4-compat](https://github.com/nuxt/starter/tree/v4-compat) | [Nuxt 3 with v4 compat](https://nuxt.com/docs/3.x/getting-started/upgrade#testing-nuxt-4) | `npm create nuxt@latest -- -t v4-compat` | [Stackblitz](https://stackblitz.com/github/nuxt/starter/tree/v4-compat) / [CodeSand"
+            },
+            {
+              "line": 29,
+              "text": "[v3](https://github.com/nuxt/starter/tree/v3) | [Nuxt 3](https://nuxt.com/docs/3.x/getting-started/introduction) | `npm create nuxt@latest` | [Stackblitz](https://stackblitz.com/github/nuxt/starter/tree/v3-stackblitz) / [CodeSandbox](https://codesandbox.io/p/github/nuxt/starter/v"
+            },
+            {
+              "line": 30,
+              "text": "[module](https://github.com/nuxt/starter/tree/module) | Nuxt Module with [Module Builder](https://github.com/nuxt/module-builder) | `npm create nuxt@latest -- -t module` | - |"
+            },
+            {
+              "line": 31,
+              "text": "[module-devtools](https://github.com/nuxt/starter/tree/module-devtools) | Nuxt Module with [Nuxt DevTools](https://github.com/nuxt/devtools) integration | `npm create nuxt@latest -- -t module-devtools` | - |"
+            },
+            {
+              "line": 32,
+              "text": "[content](https://github.com/nuxt/starter/tree/content) | [Nuxt Content](https://content.nuxt.com) | `npm create nuxt@latest -- -t content` | [Stackblitz](https://stackblitz.com/github/nuxt/starter/tree/content) / [CodeSandbox](https://codesandbox.io/p/github/nuxt/starter/content"
+            },
+            {
+              "line": 33,
+              "text": "[ui](https://github.com/nuxt-ui-templates/starter) | [Nuxt UI](https://ui.nuxt.com) | `npm create nuxt@latest -- -t ui` | [Stackblitz](https://stackblitz.com/github/nuxt-ui-templates/starter) / [CodeSandbox](https://codesandbox.io/p/github/nuxt-ui-templates/starter) |"
+            },
+            {
+              "line": 37,
+              "text": "Each template is maintained in a branch (see [all branches](https://github.com/nuxt/starter/branches))."
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "vbenjs/vue-vben-admin",
+      "url": "https://github.com/vbenjs/vue-vben-admin",
+      "revision": "bd7b04d28a4c7ea87cae72b549d3eecff4643e1e",
+      "commitDate": "2026-10-21T12:00:13Z",
+      "files": [
+        "apps/backend-mock/package.json",
+        "apps/web-antd/package.json",
+        "apps/web-antdv-next/package.json",
+        "apps/web-ele/package.json",
+        "apps/web-naive/package.json",
+        "apps/web-tdesign/package.json",
+        "docs/package.json",
+        "internal/lint-configs/commitlint-config/package.json",
+        "internal/lint-configs/eslint-config/package.json",
+        "internal/lint-configs/oxfmt-config/package.json",
+        "internal/lint-configs/oxlint-config/package.json",
+        "internal/lint-configs/stylelint-config/package.json",
+        "internal/node-utils/package.json",
+        "internal/tailwind-config/package.json",
+        "internal/tsconfig/package.json",
+        "internal/vite-config/package.json",
+        "package.json",
+        "packages/@core/base/design/package.json",
+        "packages/@core/base/icons/package.json",
+        "packages/@core/base/shared/package.json",
+        "packages/@core/base/typings/package.json",
+        "packages/@core/composables/package.json",
+        "packages/@core/preferences/package.json",
+        "packages/@core/ui-kit/form-ui/package.json",
+        "packages/@core/ui-kit/layout-ui/package.json",
+        "packages/@core/ui-kit/menu-ui/package.json",
+        "packages/@core/ui-kit/popup-ui/package.json",
+        "packages/@core/ui-kit/shadcn-ui/package.json",
+        "packages/@core/ui-kit/tabs-ui/package.json",
+        "packages/constants/package.json",
+        "packages/effects/access/package.json",
+        "packages/effects/common-ui/package.json",
+        "packages/effects/hooks/package.json",
+        "packages/effects/layouts/package.json",
+        "packages/effects/plugins/package.json",
+        "packages/effects/request/package.json",
+        "packages/icons/package.json",
+        "packages/locales/package.json",
+        "packages/preferences/package.json",
+        "packages/stores/package.json",
+        "packages/styles/package.json",
+        "packages/types/package.json",
+        "packages/utils/package.json",
+        "playground/package.json",
+        "scripts/turbo-run/package.json"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "apps/web-ele/package.json",
+          "url": "https://github.com/vbenjs/vue-vben-admin/blob/bd7b04d28a4c7ea87cae72b549d3eecff4643e1e/apps/web-ele/package.json",
+          "matches": [
+            {
+              "line": 2,
+              "text": "\"name\": \"@vben/web-ele\","
+            },
+            {
+              "line": 29,
+              "text": "\"@vben/access\": \"workspace:*\","
+            },
+            {
+              "line": 30,
+              "text": "\"@vben/common-ui\": \"workspace:*\","
+            },
+            {
+              "line": 31,
+              "text": "\"@vben/constants\": \"workspace:*\","
+            },
+            {
+              "line": 32,
+              "text": "\"@vben/hooks\": \"workspace:*\","
+            },
+            {
+              "line": 33,
+              "text": "\"@vben/icons\": \"workspace:*\","
+            },
+            {
+              "line": 34,
+              "text": "\"@vben/layouts\": \"workspace:*\","
+            },
+            {
+              "line": 35,
+              "text": "\"@vben/locales\": \"workspace:*\","
+            },
+            {
+              "line": 36,
+              "text": "\"@vben/plugins\": \"workspace:*\","
+            },
+            {
+              "line": 37,
+              "text": "\"@vben/preferences\": \"workspace:*\","
+            },
+            {
+              "line": 38,
+              "text": "\"@vben/request\": \"workspace:*\","
+            },
+            {
+              "line": 39,
+              "text": "\"@vben/stores\": \"workspace:*\","
+            },
+            {
+              "line": 40,
+              "text": "\"@vben/styles\": \"workspace:*\","
+            },
+            {
+              "line": 41,
+              "text": "\"@vben/types\": \"workspace:*\","
+            },
+            {
+              "line": 42,
+              "text": "\"@vben/utils\": \"workspace:*\","
+            },
+            {
+              "line": 45,
+              "text": "\"element-plus\": \"catalog:\","
+            },
+            {
+              "line": 51,
+              "text": "\"unplugin-element-plus\": \"catalog:\""
+            }
+          ]
+        },
+        {
+          "path": "apps/web-naive/package.json",
+          "url": "https://github.com/vbenjs/vue-vben-admin/blob/bd7b04d28a4c7ea87cae72b549d3eecff4643e1e/apps/web-naive/package.json",
+          "matches": [
+            {
+              "line": 2,
+              "text": "\"name\": \"@vben/web-naive\","
+            },
+            {
+              "line": 29,
+              "text": "\"@vben/access\": \"workspace:*\","
+            },
+            {
+              "line": 30,
+              "text": "\"@vben/common-ui\": \"workspace:*\","
+            },
+            {
+              "line": 31,
+              "text": "\"@vben/constants\": \"workspace:*\","
+            },
+            {
+              "line": 32,
+              "text": "\"@vben/hooks\": \"workspace:*\","
+            },
+            {
+              "line": 33,
+              "text": "\"@vben/icons\": \"workspace:*\","
+            },
+            {
+              "line": 34,
+              "text": "\"@vben/layouts\": \"workspace:*\","
+            },
+            {
+              "line": 35,
+              "text": "\"@vben/locales\": \"workspace:*\","
+            },
+            {
+              "line": 36,
+              "text": "\"@vben/plugins\": \"workspace:*\","
+            },
+            {
+              "line": 37,
+              "text": "\"@vben/preferences\": \"workspace:*\","
+            },
+            {
+              "line": 38,
+              "text": "\"@vben/request\": \"workspace:*\","
+            },
+            {
+              "line": 39,
+              "text": "\"@vben/stores\": \"workspace:*\","
+            },
+            {
+              "line": 40,
+              "text": "\"@vben/styles\": \"workspace:*\","
+            },
+            {
+              "line": 41,
+              "text": "\"@vben/types\": \"workspace:*\","
+            },
+            {
+              "line": 42,
+              "text": "\"@vben/utils\": \"workspace:*\","
+            },
+            {
+              "line": 44,
+              "text": "\"naive-ui\": \"catalog:\","
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "ktorio/ktor-samples",
+      "url": "https://github.com/ktorio/ktor-samples",
+      "revision": "1c9df7cf102d638eadaf545fcce4c0ec5ccad334",
+      "commitDate": "2026-09-17T10:20:17Z",
+      "files": [
+        "chat/build.gradle.kts",
+        "client-mpp/androidApp/build.gradle.kts",
+        "client-mpp/build.gradle.kts",
+        "client-mpp/desktopApp/build.gradle.kts",
+        "client-mpp/jsApp/build.gradle.kts",
+        "client-mpp/shared/build.gradle.kts",
+        "client-multipart/build.gradle.kts",
+        "client-native-image/build.gradle.kts",
+        "client-tools/build.gradle.kts",
+        "di-kodein-advanced/build.gradle.kts",
+        "di-kodein/build.gradle.kts",
+        "filelisting/build.gradle.kts",
+        "fullstack-mpp/build.gradle.kts",
+        "graalvm/build.gradle.kts",
+        "h2/build.gradle.kts",
+        "httpbin/build.gradle.kts",
+        "jwt-auth-tests/build.gradle.kts",
+        "ktor-client-wasm/build.gradle.kts",
+        "ktor-client-wasm/composeApp/build.gradle.kts",
+        "kweet/build.gradle.kts",
+        "location-header/build.gradle.kts",
+        "maven-google-appengine-standard/pom.xml",
+        "mongodb/build.gradle.kts",
+        "mvc-web/build.gradle.kts",
+        "native-image-server-with-yaml-config/build.gradle.kts",
+        "openapi/build.gradle.kts",
+        "opentelemetry/build.gradle.kts",
+        "opentelemetry/client/build.gradle.kts",
+        "opentelemetry/server/build.gradle.kts",
+        "opentelemetry/shared/build.gradle.kts",
+        "postgres/build.gradle.kts",
+        "redirect-with-exception/build.gradle.kts",
+        "reverse-proxy-ws/build.gradle.kts",
+        "reverse-proxy/build.gradle.kts",
+        "rx/build.gradle.kts",
+        "sse/build.gradle.kts",
+        "structured-logging/build.gradle.kts",
+        "version-diff/build.gradle.kts",
+        "youkube/build.gradle.kts"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "jwt-auth-tests/build.gradle.kts",
+          "url": "https://github.com/ktorio/ktor-samples/blob/1c9df7cf102d638eadaf545fcce4c0ec5ccad334/jwt-auth-tests/build.gradle.kts",
+          "matches": [
+            {
+              "line": 4,
+              "text": "id(\"io.ktor.plugin\") version \"3.6.0\""
+            },
+            {
+              "line": 8,
+              "text": "mainClass.set(\"io.ktor.samples.jwtauth.MainKt\")"
+            },
+            {
+              "line": 16,
+              "text": "implementation(\"io.ktor:ktor-server-core\")"
+            },
+            {
+              "line": 17,
+              "text": "implementation(\"io.ktor:ktor-server-netty\")"
+            },
+            {
+              "line": 18,
+              "text": "implementation(\"io.ktor:ktor-server-auth\")"
+            },
+            {
+              "line": 19,
+              "text": "implementation(\"io.ktor:ktor-server-auth-jwt\")"
+            },
+            {
+              "line": 20,
+              "text": "implementation(\"io.ktor:ktor-server-content-negotiation\")"
+            },
+            {
+              "line": 21,
+              "text": "implementation(\"io.ktor:ktor-serialization-kotlinx-json\")"
+            },
+            {
+              "line": 23,
+              "text": "testImplementation(\"io.ktor:ktor-server-test-host\")"
+            }
+          ]
+        }
+      ],
+      "kind": "official-samples",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "playframework/play-scala-seed.g8",
+      "url": "https://github.com/playframework/play-scala-seed.g8",
+      "revision": "cd3ab7577fe8751567bcfbc360df383deb289c58",
+      "commitDate": "2026-10-01T06:34:18Z",
+      "files": [
+        "build.sbt",
+        "project/plugins.sbt",
+        "src/main/g8/build.sbt",
+        "src/main/g8/project/plugins.sbt"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "src/main/g8/build.sbt",
+          "url": "https://github.com/playframework/play-scala-seed.g8/blob/cd3ab7577fe8751567bcfbc360df383deb289c58/src/main/g8/build.sbt",
+          "matches": [
+            {
+              "line": 6,
+              "text": "lazy val root = (project in file(\".\")).enablePlugins(PlayScala)"
+            },
+            {
+              "line": 11,
+              "text": "libraryDependencies += \"org.scalatestplus.play\" %% \"scalatestplus-play\" % \"7.0.2\" % Test"
+            },
+            {
+              "line": 17,
+              "text": "// play.sbt.routes.RoutesKeys.routesImport += \"$organization$.binders._\""
+            }
+          ]
+        },
+        {
+          "path": "src/main/g8/project/plugins.sbt",
+          "url": "https://github.com/playframework/play-scala-seed.g8/blob/cd3ab7577fe8751567bcfbc360df383deb289c58/src/main/g8/project/plugins.sbt",
+          "matches": [
+            {
+              "line": 1,
+              "text": "addSbtPlugin(\"org.playframework\" % \"sbt-plugin\" % \"3.0.11\")"
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "loco-rs/loco",
+      "url": "https://github.com/loco-rs/loco",
+      "revision": "c8da43375bfb6542c59a69db4402757afed8eade",
+      "commitDate": "2026-10-23T11:37:16Z",
+      "files": [
+        "Cargo.toml",
+        "examples/demo/Cargo.toml",
+        "examples/demo/migration/Cargo.toml",
+        "examples/reference_spa/Cargo.toml",
+        "examples/reference_spa/frontend/package.json",
+        "examples/reference_spa/migration/Cargo.toml",
+        "loco-gen/Cargo.toml",
+        "loco-new/Cargo.toml",
+        "loco-new/base_template/frontend/package.json",
+        "website/package.json",
+        "xtask/Cargo.toml"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "Cargo.toml",
+          "url": "https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/Cargo.toml",
+          "matches": [
+            {
+              "line": 2,
+              "text": "members = [\"xtask\", \"loco-gen\"]"
+            },
+            {
+              "line": 7,
+              "text": "# MSRV floor raised for Sea-ORM 2.0 + sqlx 0.9: sea-orm 2.0.0 declares rustc"
+            },
+            {
+              "line": 14,
+              "text": "name = \"loco-rs\""
+            },
+            {
+              "line": 17,
+              "text": "homepage = \"https://loco.rs/\""
+            },
+            {
+              "line": 18,
+              "text": "documentation = \"https://docs.rs/loco-rs\""
+            },
+            {
+              "line": 19,
+              "text": "repository = \"https://github.com/loco-rs/loco\""
+            },
+            {
+              "line": 28,
+              "text": "# `xtask/`, `loco-new/` and `loco-gen/` are already left out automatically as"
+            },
+            {
+              "line": 64,
+              "text": "auth_session = [\"auth\", \"axum-extra/cookie-signed\", \"dep:cookie\"]"
+            },
+            {
+              "line": 67,
+              "text": "auth_session_encrypted = [\"auth_session\", \"axum-extra/cookie-private\"]"
+            },
+            {
+              "line": 77,
+              "text": "# of `derive_more` and `stable_deref_trait`, crates that sea-orm and url also"
+            },
+            {
+              "line": 79,
+              "text": "testing-core = [\"dep:axum-test\", \"dep:tree-fs\"]"
+            },
+            {
+              "line": 84,
+              "text": "\"dep:sea-orm\","
+            },
+            {
+              "line": 85,
+              "text": "\"dep:sea-orm-migration\","
+            },
+            {
+              "line": 87,
+              "text": "\"loco-gen?/with-db\","
+            },
+            {
+              "line": 93,
+              "text": "\"sea-orm?/sqlx-sqlite\","
+            },
+            {
+              "line": 94,
+              "text": "\"sea-orm-migration?/sqlx-sqlite\","
+            },
+            {
+              "line": 101,
+              "text": "\"sea-orm?/sqlx-postgres\","
+            },
+            {
+              "line": 102,
+              "text": "\"sea-orm-migration?/sqlx-postgres\","
+            },
+            {
+              "line": 105,
+              "text": "# `cargo loco generate` (debug builds only). Pulls `loco-gen` and, through"
+            },
+            {
+              "line": 107,
+              "text": "generators = [\"dep:loco-gen\"]"
+            },
+            {
+              "line": 114,
+              "text": "# Explicit tenant scoping for Sea-ORM models and queries."
+            },
+            {
+              "line": 157,
+              "text": "loco-gen = { version = \"1.2.0\", path = \"./loco-gen\", optional = true }"
+            }
+          ]
+        },
+        {
+          "path": "examples/demo/Cargo.toml",
+          "url": "https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/examples/demo/Cargo.toml",
+          "matches": [
+            {
+              "line": 13,
+              "text": "loco-rs = { version = \"*\", path = \"../..\" }"
+            },
+            {
+              "line": 16,
+              "text": "loco-rs = { workspace = true  }"
+            },
+            {
+              "line": 23,
+              "text": "axum = { version = \"0.8\" }"
+            },
+            {
+              "line": 28,
+              "text": "sea-orm = { version = \"2.0.0-rc\", features = ["
+            },
+            {
+              "line": 42,
+              "text": "axum-extra = { version = \"0.10\", features = [\"form\"] }"
+            },
+            {
+              "line": 50,
+              "text": "loco-rs = { workspace = true, features = [\"testing\"] }"
+            }
+          ]
+        }
+      ],
+      "kind": "framework-with-generator",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "jasontaylordev/CleanArchitecture",
+      "url": "https://github.com/jasontaylordev/CleanArchitecture",
+      "revision": "968abf7dc4884d14d558e04828dff6d3324b1775",
+      "commitDate": "2026-10-21T16:01:04Z",
+      "files": [
+        "Directory.Packages.props",
+        "src/AppHost/AppHost.csproj",
+        "src/Application/Application.csproj",
+        "src/Domain/Domain.csproj",
+        "src/Infrastructure/Infrastructure.csproj",
+        "src/ServiceDefaults/ServiceDefaults.csproj",
+        "src/Shared/Shared.csproj",
+        "src/Web/ClientApp-React/package.json",
+        "src/Web/ClientApp/package.json",
+        "src/Web/Web.csproj",
+        "tests/Application.FunctionalTests/Application.FunctionalTests.csproj",
+        "tests/Application.UnitTests/Application.UnitTests.csproj",
+        "tests/Domain.UnitTests/Domain.UnitTests.csproj",
+        "tests/Infrastructure.IntegrationTests/Infrastructure.IntegrationTests.csproj",
+        "tests/TestAppHost/TestAppHost.csproj",
+        "tests/Web.AcceptanceTests/Web.AcceptanceTests.csproj"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "src/Web/Web.csproj",
+          "url": "https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Web/Web.csproj",
+          "matches": [
+            {
+              "line": 1,
+              "text": "<Project Sdk=\"Microsoft.NET.Sdk.Web\">"
+            },
+            {
+              "line": 22,
+              "text": "<PackageReference Include=\"Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore\" />"
+            },
+            {
+              "line": 23,
+              "text": "<PackageReference Include=\"Microsoft.AspNetCore.Identity.EntityFrameworkCore\" />"
+            },
+            {
+              "line": 24,
+              "text": "<PackageReference Include=\"Microsoft.AspNetCore.OpenApi\" />"
+            },
+            {
+              "line": 31,
+              "text": "<PackageReference Include=\"Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore\" />"
+            },
+            {
+              "line": 32,
+              "text": "<PackageReference Include=\"Microsoft.EntityFrameworkCore.Design\">"
+            }
+          ]
+        },
+        {
+          "path": "src/Infrastructure/Infrastructure.csproj",
+          "url": "https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Infrastructure/Infrastructure.csproj",
+          "matches": [
+            {
+              "line": 1,
+              "text": "<Project Sdk=\"Microsoft.NET.Sdk\">"
+            },
+            {
+              "line": 9,
+              "text": "<PackageReference Include=\"Microsoft.EntityFrameworkCore\" />"
+            },
+            {
+              "line": 11,
+              "text": "<PackageReference Include=\"Aspire.Microsoft.EntityFrameworkCore.SqlServer\" />"
+            },
+            {
+              "line": 14,
+              "text": "<PackageReference Include=\"Aspire.Npgsql.EntityFrameworkCore.PostgreSQL\" />"
+            },
+            {
+              "line": 16,
+              "text": "<PackageReference Include=\"Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore\" />"
+            },
+            {
+              "line": 17,
+              "text": "<PackageReference Include=\"Microsoft.AspNetCore.Identity.EntityFrameworkCore\" />"
+            },
+            {
+              "line": 19,
+              "text": "<PackageReference Include=\"Npgsql.EntityFrameworkCore.PostgreSQL\" />"
+            },
+            {
+              "line": 22,
+              "text": "<PackageReference Include=\"Microsoft.EntityFrameworkCore.Sqlite\" />"
+            }
+          ]
+        },
+        {
+          "path": "Directory.Packages.props",
+          "url": "https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/Directory.Packages.props",
+          "matches": [
+            {
+              "line": 13,
+              "text": "<PackageVersion Include=\"FluentValidation.DependencyInjectionExtensions\" Version=\"12.2.0\" />"
+            },
+            {
+              "line": 16,
+              "text": "<PackageVersion Include=\"Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore\" Version=\"10.0.13\" />"
+            },
+            {
+              "line": 17,
+              "text": "<PackageVersion Include=\"Microsoft.AspNetCore.Identity.EntityFrameworkCore\" Version=\"10.0.13\" />"
+            },
+            {
+              "line": 18,
+              "text": "<PackageVersion Include=\"Microsoft.AspNetCore.Mvc.Testing\" Version=\"10.0.13\" />"
+            },
+            {
+              "line": 19,
+              "text": "<PackageVersion Include=\"Microsoft.AspNetCore.OpenApi\" Version=\"10.0.13\" />"
+            },
+            {
+              "line": 20,
+              "text": "<PackageVersion Include=\"Microsoft.EntityFrameworkCore\" Version=\"10.0.13\" />"
+            },
+            {
+              "line": 21,
+              "text": "<PackageVersion Include=\"Microsoft.EntityFrameworkCore.Design\" Version=\"10.0.13\" />"
+            },
+            {
+              "line": 22,
+              "text": "<PackageVersion Include=\"Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore\" Version=\"10.0.13\" />"
+            },
+            {
+              "line": 37,
+              "text": "<PackageVersion Include=\"Microsoft.Playwright\" Version=\"1.63.0\" />"
+            },
+            {
+              "line": 41,
+              "text": "<PackageVersion Include=\"Aspire.Npgsql.EntityFrameworkCore.PostgreSQL\" Version=\"13.6.2\" />"
+            },
+            {
+              "line": 43,
+              "text": "<PackageVersion Include=\"Npgsql.EntityFrameworkCore.PostgreSQL\" Version=\"10.0.3\" />"
+            },
+            {
+              "line": 46,
+              "text": "<PackageVersion Include=\"Aspire.Microsoft.EntityFrameworkCore.SqlServer\" Version=\"13.6.2\" />"
+            },
+            {
+              "line": 50,
+              "text": "<PackageVersion Include=\"Microsoft.EntityFrameworkCore.Sqlite\" Version=\"10.0.13\" />"
+            }
+          ]
+        }
+      ],
+      "kind": "scaffold-or-template",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "drogonframework/drogon",
+      "url": "https://github.com/drogonframework/drogon",
+      "revision": "c9be40f4d61df6ffbaf94b661ca86a3b46c749fb",
+      "commitDate": "2026-10-21T09:53:59Z",
+      "files": [
+        "CMakeLists.txt",
+        "drogon_ctl/CMakeLists.txt",
+        "examples/CMakeLists.txt",
+        "examples/prometheus_example/CMakeLists.txt",
+        "examples/prometheus_example/test/CMakeLists.txt",
+        "examples/redis/CMakeLists.txt",
+        "examples/redis_cache/CMakeLists.txt",
+        "examples/redis_cache/test/CMakeLists.txt",
+        "examples/redis_chat/CMakeLists.txt",
+        "examples/simple_reverse_proxy/CMakeLists.txt",
+        "lib/tests/CMakeLists.txt",
+        "nosql_lib/redis/tests/CMakeLists.txt",
+        "orm_lib/src/mysql_impl/test/CMakeLists.txt",
+        "orm_lib/src/postgresql_impl/test/CMakeLists.txt",
+        "orm_lib/src/sqlite3_impl/test/CMakeLists.txt",
+        "orm_lib/tests/CMakeLists.txt"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/drogonframework/drogon/blob/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb/README.md",
+          "matches": [
+            {
+              "line": 32,
+              "text": "* Provide a lightweight command line tool, drogon_ctl, to simplify the creation of various classes in Drogon and the generation of view code;"
+            },
+            {
+              "line": 126,
+              "text": "**Most of the above programs can be automatically generated by the command line tool `drogon_ctl` provided by drogon** (The command is `drogon_ctl create controller TestCtrl`). All the user needs to do is add their own business logic. In the example, the controller returns a `Hello, world!` string when the client accesses the `http://ip/test` URL."
+            },
+            {
+              "line": 209,
+              "text": "You can disable building options for examples and drogon_ctl by settings `BUILD_EXAMPLES` and `BUILD_CTL` to `OFF` in the toolchain file."
+            },
+            {
+              "line": 217,
+              "text": "| BUILD_CTL | Build drogon_ctl | ON |"
+            }
+          ]
+        },
+        {
+          "path": "drogon_ctl/CMakeLists.txt",
+          "url": "https://github.com/drogonframework/drogon/blob/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb/drogon_ctl/CMakeLists.txt",
+          "matches": [
+            {
+              "line": 14,
+              "text": "add_executable(_drogon_ctl"
+            },
+            {
+              "line": 19,
+              "text": "target_link_libraries(_drogon_ctl ${PROJECT_NAME})"
+            },
+            {
+              "line": 20,
+              "text": "target_compile_definitions(_drogon_ctl PRIVATE"
+            },
+            {
+              "line": 31,
+              "text": "add_custom_command(TARGET _drogon_ctl POST_BUILD"
+            },
+            {
+              "line": 34,
+              "text": "-DINSTALL_BIN_DIR=$<TARGET_FILE_DIR:_drogon_ctl>"
+            },
+            {
+              "line": 37,
+              "text": "add_custom_command(TARGET _drogon_ctl POST_BUILD"
+            },
+            {
+              "line": 40,
+              "text": "-DINSTALL_BIN_DIR=$<TARGET_FILE_DIR:_drogon_ctl>"
+            },
+            {
+              "line": 50,
+              "text": "COMMAND ${DROGON_CTL}"
+            },
+            {
+              "line": 59,
+              "text": "add_executable(drogon_ctl ${ctl_sources} ${TEMPL_SRC})"
+            },
+            {
+              "line": 60,
+              "text": "target_compile_definitions(drogon_ctl PRIVATE"
+            },
+            {
+              "line": 64,
+              "text": "target_link_libraries(drogon_ctl PRIVATE ${PROJECT_NAME})"
+            },
+            {
+              "line": 65,
+              "text": "target_include_directories(drogon_ctl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})"
+            },
+            {
+              "line": 66,
+              "text": "add_dependencies(drogon_ctl _drogon_ctl)"
+            },
+            {
+              "line": 68,
+              "text": "target_link_libraries(drogon_ctl PRIVATE ws2_32 rpcrt4 iphlpapi)"
+            },
+            {
+              "line": 71,
+              "text": "target_link_libraries(drogon_ctl PRIVATE resolv)"
+            },
+            {
+              "line": 74,
+              "text": "install(TARGETS _drogon_ctl RUNTIME DESTINATION ${INSTALL_BIN_DIR})"
+            },
+            {
+              "line": 75,
+              "text": "install(TARGETS drogon_ctl RUNTIME DESTINATION ${INSTALL_BIN_DIR})"
+            },
+            {
+              "line": 77,
+              "text": "set(CTL_FILE $<TARGET_FILE:drogon_ctl>)"
+            }
+          ]
+        }
+      ],
+      "kind": "framework-with-generator",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    },
+    {
+      "repository": "VeryGoodOpenSource/very_good_cli",
+      "url": "https://github.com/VeryGoodOpenSource/very_good_cli",
+      "revision": "a2ec7d874641c10f5aa60798f5254d44d39456a3",
+      "commitDate": "2026-10-23T17:46:53Z",
+      "files": [
+        "bricks/test_optimizer/hooks/pubspec.yaml",
+        "e2e/pubspec.yaml",
+        "e2e/test/commands/test/async_main/fixture/pubspec.yaml",
+        "e2e/test/commands/test/compilation_error/fixture/pubspec.yaml",
+        "e2e/test/commands/test/no_project/fixture/pubspec.yaml",
+        "e2e/test/commands/test/optimization_annotations/fixture/pubspec.yaml",
+        "e2e/test/commands/test/optimization_annotations/flutter_fixture/pubspec.yaml",
+        "e2e/test/commands/test/optimization_annotations/timeout_fixture/pubspec.yaml",
+        "e2e/test/commands/test/optimization_exclude/fixture/pubspec.yaml",
+        "e2e/test/commands/test/spaced_golden_file_name/fixture/pubspec.yaml",
+        "e2e/test/commands/test/very_good_config/fixture/pubspec.yaml",
+        "e2e/test/commands/test/very_good_config/malformed_fixture/pubspec.yaml",
+        "pubspec.yaml",
+        "site/package.json",
+        "tool/spdx_license/hooks/pubspec.yaml",
+        "tool/spdx_license/pubspec.yaml"
+      ],
+      "readme": "README.md",
+      "truncated": false,
+      "evidence": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/VeryGoodOpenSource/very_good_cli/blob/a2ec7d874641c10f5aa60798f5254d44d39456a3/README.md",
+          "matches": [
+            {
+              "line": 248,
+              "text": "[very_good_core_link]: site/docs/templates/core.md"
+            }
+          ]
+        },
+        {
+          "path": "pubspec.yaml",
+          "url": "https://github.com/VeryGoodOpenSource/very_good_cli/blob/a2ec7d874641c10f5aa60798f5254d44d39456a3/pubspec.yaml",
+          "matches": []
+        }
+      ],
+      "kind": "generator-catalog",
+      "observation": "Dependency declarations or generator documentation only; no install, build or runtime test performed."
+    }
+  ],
+  "integratedStandards": [
+    "std/cpp/framework/drogon/drogon.std",
+    "std/csharp/framework/aspnetcore/aspnetcore.std",
+    "std/csharp/framework/efcore/efcore.std",
+    "std/dart/framework/flutter/flutter.std",
+    "std/go/framework/gin/gin.std",
+    "std/go/framework/go-zero/go-zero.std",
+    "std/go/framework/gorm/gorm.std",
+    "std/go/framework/kratos/kratos.std",
+    "std/java/framework/mybatis-plus/mybatis-plus.std",
+    "std/java/framework/sa-token/sa-token.std",
+    "std/java/framework/spring/spring.std",
+    "std/kotlin/framework/ktor/ktor.std",
+    "std/python/framework/django/django.std",
+    "std/python/framework/fastapi/fastapi.std",
+    "std/python/framework/flask/flask.std",
+    "std/python/framework/sqlalchemy/sqlalchemy.std",
+    "std/rust/framework/axum/axum.std",
+    "std/rust/framework/loco/loco.std",
+    "std/scala/framework/play/play.std",
+    "std/typescript/framework/angular/angular.std",
+    "std/typescript/framework/nestjs/nestjs.std",
+    "std/typescript/framework/nextjs/nextjs.std",
+    "std/typescript/framework/nuxt/nuxt.std",
+    "std/typescript/framework/react/react.std",
+    "std/typescript/framework/vue/vue.std"
+  ]
+}

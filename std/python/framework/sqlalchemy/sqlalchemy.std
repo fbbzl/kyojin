@@ -1,0 +1,31 @@
+# SQLAlchemy 标准
+
+本文件补充 SQLAlchemy 特有规则；联读 [python.std](../../python.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[database.std](../../../database.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 会话与事务
+
+0. Session/AsyncSession 是有状态工作单元，不在并发线程或协程间共享；每个任务建立明确事务边界。
+1. flush 不等于 commit；失败后按状态回滚再复用，异常和取消路径关闭会话。
+
+## 查询与模型
+
+0. 核对 SQLAlchemy 主版本与同步/异步 API，不混用旧版 Query 假设和新执行结果语义。
+1. 显式选择允许写入字段；读取实体、序列化与懒加载的有效会话边界明确，提前加载必要关联。
+2. 批量 SQL 的事件、同步和版本列行为单独验证；不得假定与逐对象 ORM 操作等价。
+
+## 迁移与验证
+
+0. 模型 create_all 不替代生产迁移；变更以项目迁移工具审查生成 SQL、数据回填及恢复。
+1. 用目标数据库验证约束、隔离、并发冲突、关联加载及事务中途失败。
+
+## 参考依据
+
+0. [cookiecutter-flask/cookiecutter-flask](https://github.com/cookiecutter-flask/cookiecutter-flask/tree/e5666c23a633b5b6fcb0dc2cfda2441d7f885727)：固定观察提交 `e5666c23a633b5b6fcb0dc2cfda2441d7f885727`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [{{cookiecutter.app_name}}/requirements/prod.txt](https://github.com/cookiecutter-flask/cookiecutter-flask/blob/e5666c23a633b5b6fcb0dc2cfda2441d7f885727/{{cookiecutter.app_name}}/requirements/prod.txt)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

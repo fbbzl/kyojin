@@ -1,0 +1,20 @@
+# OpenCV 标准
+
+仅在项目实际采用相应组件时联读 [cpp.std](../../cpp.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. Mat 的共享底层存储与深拷贝边界明确，跨线程访问有所有权策略。
+1. 外部图像解码限制像素、尺寸和处理预算。
+2. 颜色空间、通道顺序和坐标约定写入处理契约。
+
+## 验证
+
+0. 验证空图、畸形文件、大图及 ROI 生命周期。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [chalmers-revere/microservice-template · CMakeLists.txt · L18](https://github.com/chalmers-revere/microservice-template/blob/d1ae6c845c9a82d620178b0a3de885c1ad8d208e/CMakeLists.txt#L18)：声明上下文待解析。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

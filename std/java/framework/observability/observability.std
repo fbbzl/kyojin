@@ -1,0 +1,22 @@
+# Micrometer / OpenTelemetry / 日志 标准
+
+仅在项目实际采用相应组件时联读 [java.std](../../java.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. 日志、指标与 trace 关联但不记录凭据和完整个人数据。
+1. 标签限制基数，不使用订单 ID 或用户 ID 作为指标标签。
+2. 采样、导出超时和队列设上限，观测失败不阻塞主业务。
+
+## 验证
+
+0. 验证 trace 跨线程传播、导出端不可达与脱敏。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [jhipster/jhipster-sample-app · pom.xml · L233](https://github.com/jhipster/jhipster-sample-app/blob/6b000b5d23a36c45e01472471b84a44fa2464044/pom.xml#L233)：依赖声明；scope=compile(default)。
+- [YunaiV/ruoyi-vue-pro · yudao-dependencies/pom.xml · L387](https://github.com/YunaiV/ruoyi-vue-pro/blob/48809cbd4d4cb5253d4f153640af803981ff3a80/yudao-dependencies/pom.xml#L387)：依赖管理；scope=compile(default)。
+- [mateaix/matecloud · pom.xml · L498](https://github.com/mateaix/matecloud/blob/580562917197e9ecabfc1c0a20f2f0eea8265a83/pom.xml#L498)：依赖管理；scope=compile(default)。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

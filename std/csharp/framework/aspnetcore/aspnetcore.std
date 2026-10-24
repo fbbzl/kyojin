@@ -1,0 +1,32 @@
+# ASP.NET Core 标准
+
+本文件补充 ASP.NET Core 特有规则；联读 [csharp.std](../../csharp.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 管线与依赖
+
+0. SDK、Target Framework、ASP.NET Core 和包版本以项目及中心包管理为准；不沿用模板版本推定部署能力。
+1. 异常处理、认证、授权、CORS、转发头和端点映射按所用管线验证顺序。
+2. Scoped 服务不直接注入长期 Singleton 或后台任务；后台工作通过明确 scope 获取依赖并正确释放。
+
+## 契约与运行
+
+0. DTO 绑定与验证不代替对象级授权；Minimal API 与 Controller 的验证能力按实际版本核对。
+1. CancellationToken 传播到数据库和外部调用；取消不等于已发生写入回滚。
+2. 转发头和 HTTPS 信任边界明确；秘密不写入客户端配置、日志或默认 appsettings。
+
+## 验证
+
+0. 使用真实宿主测试认证策略、资源越权、异常映射、取消和后台服务停止。
+
+## 参考依据
+
+0. [jasontaylordev/CleanArchitecture](https://github.com/jasontaylordev/CleanArchitecture/tree/968abf7dc4884d14d558e04828dff6d3324b1775)：固定观察提交 `968abf7dc4884d14d558e04828dff6d3324b1775`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [src/Web/Web.csproj](https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Web/Web.csproj)：用于核对实际依赖或生成入口。
+2. [src/Infrastructure/Infrastructure.csproj](https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Infrastructure/Infrastructure.csproj)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

@@ -1,0 +1,36 @@
+# MyBatis-Plus 标准
+
+本文件补充 MyBatis-Plus 特有规则；联读 [java.std](../../java.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[database.std](../../../database.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 依赖与插件
+
+0. MyBatis、MyBatis-Plus、Starter 和 JSQLParser 的组合以实际依赖树为准；Spring Boot 不同主版本的 Starter 不混用。
+1. 分页、租户、数据权限及乐观锁插件按项目版本验证拦截顺序；自定义 SQL、批量和插件忽略入口逐项验证覆盖。
+
+## Mapper 与 SQL
+
+0. 参数值使用绑定，动态列名、排序与片段使用允许清单；Wrapper 的原始 SQL 接口不接收外部字符串。
+1. 条件更新、删除必须限制业务与租户范围；空 Wrapper 不得静默扩大为全表操作。
+2. Entity、请求和响应分离；自动填充字段不能让客户端覆盖。
+
+## 并发与返回值
+
+0. 更新返回行数和乐观锁冲突进入业务判定；逻辑删除不自动解决唯一性与恢复冲突。
+1. 分页带稳定排序和批量上限；联表验证行数、重复、总数与数据权限。
+
+## 验证
+
+0. 在真实数据库验证分页、租户隔离、逻辑删除、乐观锁冲突及批量回滚；不能只 Mock Mapper。
+
+## 参考依据
+
+0. [dromara/RuoYi-Vue-Plus](https://github.com/dromara/RuoYi-Vue-Plus/tree/9227f626a3a37e1546d6c291ed398183e94df92b)：固定观察提交 `9227f626a3a37e1546d6c291ed398183e94df92b`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [pom.xml](https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/pom.xml)：用于核对实际依赖或生成入口。
+2. [ruoyi-common/ruoyi-common-mybatis/pom.xml](https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/ruoyi-common/ruoyi-common-mybatis/pom.xml)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

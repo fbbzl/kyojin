@@ -1,0 +1,26 @@
+# Dapr（Rust / WASI 集成） 标准
+
+仅在项目实际采用时联读 [rust 基础规范](../../rust.std)。具体 API 与默认行为以项目采用版本为准。
+
+## 依赖与运行边界
+
+0. Rust SDK、WASI/WasmEdge 运行时和 Dapr sidecar 分别锁定版本；样例 SDK 使用未指定 revision 的 git 依赖，新项目应锁定 commit 并核验兼容性。
+1. Dapr app-id、应用端口、协议和组件命名按环境配置；SDK 依赖不证明 sidecar 已启动或组件可访问。
+
+## 状态与消息
+
+0. state store 的一致性、ETag 并发控制和事务能力以具体组件为准，不把 state.redis 声明当作跨服务事务保证。
+1. 服务调用设置超时并处理重试后的重复副作用；发布订阅须核对 broker、确认、死信与重投行为。
+2. 组件 YAML 与秘密存储分离；示例 localhost Redis 和空口令不能照搬到生产；限制 sidecar API 的网络与调用权限。
+
+## 验证
+
+0. 覆盖 sidecar 未启动、组件不可达、状态写冲突、重复消息和进程重启；分别验证原生与 WASI 目标，不假设第三方 WASI SDK 等同官方 Rust SDK。
+
+## 参考依据
+
+0. [second-state/dapr-wasm · events-service/Cargo.toml](https://github.com/second-state/dapr-wasm/blob/84c66d7ee19aa9844c642724461883ff6e5e6bba/events-service/Cargo.toml)：用于核对构建或资源配置。
+1. [second-state/dapr-wasm · image-api-grayscale/Cargo.toml](https://github.com/second-state/dapr-wasm/blob/84c66d7ee19aa9844c642724461883ff6e5e6bba/image-api-grayscale/Cargo.toml)：用于核对构建或资源配置。
+2. [second-state/dapr-wasm · config/statestore.yaml](https://github.com/second-state/dapr-wasm/blob/84c66d7ee19aa9844c642724461883ff6e5e6bba/config/statestore.yaml)：用于核对构建或资源配置。
+
+来源未经本仓库构建或运行验证；以上约束不表示来源已实现所有恢复机制。

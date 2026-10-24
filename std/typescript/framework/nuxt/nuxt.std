@@ -1,0 +1,30 @@
+# Nuxt 标准
+
+本文件补充 Nuxt 特有规则；联读 [typescript.std](../../typescript.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[frontend.std](../../../frontend.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 版本与目录
+
+0. Nuxt 主版本、模板分支、Nitro 运行环境和模块版本记录在项目依赖中；不同主版本目录约定不混用。
+1. SSR 与客户端生命周期区分，浏览器 API 只在客户端有效阶段使用；插件按运行端及清理需求注册。
+
+## 数据与安全
+
+0. SSR 的用户状态按请求隔离，不使用模块级可变单例保存用户数据；序列化状态不包含秘密。
+1. runtimeConfig 中公开配置会进入客户端；私密配置仅在服务端使用并验证部署注入。
+2. 路由中间件不能替代服务端 API 授权；useFetch/useAsyncData 的 key、缓存、刷新与错误语义按版本验证。
+
+## 验证
+
+0. 覆盖首次 SSR、客户端导航、水合、跨请求数据隔离、私密配置泄露与 Nitro 目标部署。
+
+## 参考依据
+
+0. [nuxt/starter](https://github.com/nuxt/starter/tree/1f391e58fa5f108d2b2bd98c1d604ca625f0290e)：固定观察提交 `1f391e58fa5f108d2b2bd98c1d604ca625f0290e`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [README.md](https://github.com/nuxt/starter/blob/1f391e58fa5f108d2b2bd98c1d604ca625f0290e/README.md)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

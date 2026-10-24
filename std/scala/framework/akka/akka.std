@@ -1,0 +1,34 @@
+# Akka 与 Akka gRPC 标准
+
+仅在项目实际采用时联读 [scala.std](../../scala.std)。本文件约束工程行为；具体 API、默认值与协议能力以项目锁定版本为准。
+
+## 构建与契约
+
+0. Scala、Akka、Akka gRPC 和 sbt 插件版本保持兼容；模板变量需在生成结果中落实，不从样例固定旧版本。
+1. 以 protobuf 定义跨进程契约，维护字段编号与兼容性；生成代码和插件纳入可重复构建。
+2. actor-typed、stream、discovery 依赖不证明 Cluster、Sharding 或 Persistence 已启用；采用这些模块时另核对实际依赖与配置。
+
+## 并发与传输
+
+0. Actor 状态由消息驱动，避免向外暴露可变对象；阻塞 I/O 使用专用 dispatcher，不能堵塞 actor 或 stream 执行线程。
+1. gRPC 调用传递 deadline、取消和身份上下文；流建立有界缓冲与背压，连接中断不能被当作业务已回滚。
+2. 监督重启不等于消息重放或业务恢复；持久化与重试必须定义幂等、状态恢复和兼容策略。
+
+## Cluster、Sharding 与 Persistence
+
+0. 仅在实际依赖与配置启用时使用集群能力；实体 ID、shard 分配和序列化契约保持跨版本兼容。
+1. 持久化 journal、snapshot 与 projection offset 分别定义存储、恢复及保留策略；projection 重放和故障恢复会重复执行副作用，需幂等或去重。
+2. 配置集群发现、split-brain 处理和停机排空；不要把节点发现成功当作分区后仍能保持单写者的保证。
+
+## 验证
+
+0. 覆盖契约兼容、慢消费者、流中断、deadline、节点不可达和 Coordinated Shutdown；本地 actor 测试不能证明跨节点行为。
+
+## 参考依据
+
+- [Akka microservices seed 构建](https://github.com/akka/akka-microservices-seed-scala.g8/blob/76524eeb0152dee5bbeaadd2073cd78b2de100ae/src/main/g8/build.sbt)：直接声明 Cluster、Sharding、Persistence、Projection 和 Kafka；与仅 gRPC quickstart 的能力范围分别核对。
+
+0. [akka/akka-grpc-quickstart-scala.g8 · src/main/g8/build.sbt](https://github.com/akka/akka-grpc-quickstart-scala.g8/blob/8a4248b63c0cdf90c2518cfeb07f83f3f457224a/src/main/g8/build.sbt)：用于核对构建、插件或编排声明。
+1. [akka/akka-grpc-quickstart-scala.g8 · src/main/g8/project/plugins.sbt](https://github.com/akka/akka-grpc-quickstart-scala.g8/blob/8a4248b63c0cdf90c2518cfeb07f83f3f457224a/src/main/g8/project/plugins.sbt)：用于核对构建、插件或编排声明。
+
+来源未经过本仓库构建或运行验证；样例版本不构成版本推荐，以上规则不代表来源已实现所有故障处理。

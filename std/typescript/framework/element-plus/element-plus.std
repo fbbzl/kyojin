@@ -1,0 +1,31 @@
+# Element Plus 标准
+
+本文件补充 Element Plus 特有规则；联读 [typescript.std](../../typescript.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[frontend.std](../../../frontend.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 组件与表单
+
+0. Vue、Element Plus、样式、图标及自动导入插件版本按工作区 catalog 与锁文件解析，不能把 catalog 占位当版本。
+1. 表单模型只含客户端允许编辑字段，前端校验不能替代服务端校验和授权。
+2. 组件输入、事件、受控状态和业务转换职责清楚，不以组件内部值作为服务端身份或价格依据。
+
+## 交互与资源
+
+0. 表格与分页明确服务端和客户端的排序、筛选及总数语义，异步请求避免旧结果回写。
+1. 对话框、浮层、日期、上传和富文本交互验证键盘、焦点、时区与输入边界；渲染 HTML 仅限已审查内容。
+2. 全局主题、语言和按需样式加载保持一致，SSR 场景检查客户端 API 与水合。
+
+## 验证
+
+0. 覆盖表单失败、上传拒绝、权限变化、空数据、分页竞争、键盘操作和组件升级后的事件契约。
+
+## 参考依据
+
+0. [vbenjs/vue-vben-admin 的构建文件](https://github.com/vbenjs/vue-vben-admin/blob/bd7b04d28a4c7ea87cae72b549d3eecff4643e1e/apps/web-ele/package.json)：固定提交 `bd7b04d28a4c7ea87cae72b549d3eecff4643e1e`，路径 `apps/web-ele/package.json`。
+1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

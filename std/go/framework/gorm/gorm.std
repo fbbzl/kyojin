@@ -1,0 +1,31 @@
+# GORM 标准
+
+本文件补充 GORM 特有规则；联读 [go.std](../../go.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[database.std](../../../database.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 查询与模型
+
+0. 结构体条件和 Updates 对零值的处理以当前 API 为准；需要写入 false、0 或空值时显式选择字段。
+1. 请求对象不直接传给 Model 更新；主键、租户、审计与权限字段使用允许清单。
+2. 查询预加载按真实访问模式选择并检查 SQL 数量，不让关联访问形成 N+1。
+
+## 事务与并发
+
+0. 事务回调内统一使用事务句柄，不能回落到外层 DB；检查每步 Error 与 RowsAffected。
+1. Context、超时和锁传播到实际 SQL；Session/DB 链对象的复用范围明确，避免条件串入其他查询。
+2. AutoMigrate 不能替代生产迁移审核、回填、索引锁影响与恢复方案。
+
+## 验证
+
+0. 在目标数据库验证唯一冲突、零值更新、软删除、锁、事务回滚及并发写入。
+
+## 参考依据
+
+0. [flipped-aurora/gin-vue-admin](https://github.com/flipped-aurora/gin-vue-admin/tree/f7f1009c98e6c180d6d89f897cf36907a85ecc43)：固定观察提交 `f7f1009c98e6c180d6d89f897cf36907a85ecc43`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [server/go.mod](https://github.com/flipped-aurora/gin-vue-admin/blob/f7f1009c98e6c180d6d89f897cf36907a85ecc43/server/go.mod)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

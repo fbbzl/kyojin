@@ -1,0 +1,30 @@
+# Flask 标准
+
+本文件补充 Flask 特有规则；联读 [python.std](../../python.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 应用与扩展
+
+0. 使用应用工厂和 Blueprint 组织既有项目；扩展初始化与实例配置分离，避免导入时连接外部服务。
+1. request、g、current_app 等代理的有效期限于相应上下文；不把请求对象交给脱离请求的后台工作。
+
+## 异步与部署
+
+0. async 视图不自动使 WSGI 部署获得 ASGI 并发模型；核对服务器与扩展兼容性。
+1. 请求中创建的后台协程不作为可靠任务系统；长任务采用项目已批准的任务执行机制。
+2. 代理头、秘密、会话 Cookie 和 CSRF 按部署边界配置；生产不启用调试器或开发服务器。
+
+## 验证
+
+0. 通过测试客户端验证工厂隔离、登录与资源授权、CSRF、错误转换和上传大小限制。
+
+## 参考依据
+
+0. [cookiecutter-flask/cookiecutter-flask](https://github.com/cookiecutter-flask/cookiecutter-flask/tree/e5666c23a633b5b6fcb0dc2cfda2441d7f885727)：固定观察提交 `e5666c23a633b5b6fcb0dc2cfda2441d7f885727`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [{{cookiecutter.app_name}}/requirements/prod.txt](https://github.com/cookiecutter-flask/cookiecutter-flask/blob/e5666c23a633b5b6fcb0dc2cfda2441d7f885727/{{cookiecutter.app_name}}/requirements/prod.txt)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

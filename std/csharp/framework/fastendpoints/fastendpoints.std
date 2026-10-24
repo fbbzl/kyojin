@@ -1,0 +1,31 @@
+# FastEndpoints 标准
+
+本文件补充 FastEndpoints 特有规则；联读 [csharp.std](../../csharp.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 端点与绑定
+
+0. FastEndpoints、Swagger/OpenAPI、ASP.NET Core 和验证器版本匹配，端点配置与实际注册保持一致。
+1. 请求 DTO、命令和持久化实体职责分离，允许绑定和输出字段显式限定。
+2. 匿名、角色、权限声明、策略和资源授权分别配置，不以端点类存在推定受到保护。
+
+## 处理与错误
+
+0. 验证失败、业务错误及异常使用项目稳定响应契约，文档与 HTTP 状态一致。
+1. 处理链传播 CancellationToken；幂等写入和外部副作用在超时后可核验。
+2. 预处理、后处理和过滤器不得重复发送响应或在响应完成后静默改写业务状态。
+
+## 验证
+
+0. 使用真实宿主验证端点发现、绑定、验证器、策略、跨资源访问、错误状态及取消。
+
+## 参考依据
+
+0. [ardalis/CleanArchitecture 的构建文件](https://github.com/ardalis/CleanArchitecture/blob/e7c79be54ba0b001a5b332c1efe935f520b9db4b/src/Clean.Architecture.Web/Clean.Architecture.Web.csproj)：固定提交 `e7c79be54ba0b001a5b332c1efe935f520b9db4b`，路径 `src/Clean.Architecture.Web/Clean.Architecture.Web.csproj`。
+1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

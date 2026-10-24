@@ -1,0 +1,31 @@
+# ABP Framework 标准
+
+本文件补充 ABP Framework 特有规则；联读 [csharp.std](../../csharp.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 模块与服务
+
+0. ABP 模块、依赖声明、包版本和启动模板按项目组合锁定，不直接采用源码模板的预览版本。
+1. Application Service、Domain Service、Repository 与权限职责清楚，公共端点不因自动生成而免除审查。
+2. DTO 映射只写入允许字段，租户和审计身份由可信服务端上下文提供。
+
+## 工作单元与租户
+
+0. Unit of Work、事务传播和自动保存规则在实际代理边界验证，不把注解等同跨系统原子性。
+1. 多租户、数据过滤器禁用、跨租户管理和后台任务逐项授权，切换上下文后及时恢复。
+2. 本地事件、分布式事件及任务的投递、幂等和失败恢复分别定义。
+
+## 验证
+
+0. 覆盖自动 API、权限提供者、跨租户、过滤器绕过、工作单元失败、事件重复及升级迁移。
+
+## 参考依据
+
+0. [abpframework/abp 的构建文件](https://github.com/abpframework/abp/blob/ec3203128fa3520161efe240663b34b146dfe23b/templates/app/aspnet-core/src/MyCompanyName.MyProjectName.Web/MyCompanyName.MyProjectName.Web.csproj)：固定提交 `ec3203128fa3520161efe240663b34b146dfe23b`，路径 `templates/app/aspnet-core/src/MyCompanyName.MyProjectName.Web/MyCompanyName.MyProjectName.Web.csproj`。
+1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

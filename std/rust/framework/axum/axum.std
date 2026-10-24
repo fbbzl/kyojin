@@ -1,0 +1,31 @@
+# Axum 标准
+
+本文件补充 Axum 特有规则；联读 [rust.std](../../rust.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 路由与提取
+
+0. Axum、Tower、Tokio 和 HTTP 类型版本以锁文件为准；提取器按当前版本要求排列，消费 Body 的提取器不重复读取。
+1. State 是受控共享依赖，不在全局可变状态保存请求身份；Extension 和层注册范围必须与路由匹配。
+
+## 异步与中间件
+
+0. Tower 层的顺序、超时、错误和追踪边界在 Router 层验证；路由合并不默认继承所有期望控制。
+1. 异步任务不持有阻塞锁跨 await；CPU 密集或阻塞工作使用有界隔离，spawn 任务跟踪取消与关闭。
+2. 响应错误实现稳定协议映射，内部 cause 进入受控日志；上传限制和资源授权在实际入口生效。
+
+## 验证
+
+0. 验证提取失败、Body 限制、中间件顺序、超时取消、共享状态隔离及优雅关闭。
+
+## 参考依据
+
+0. [loco-rs/loco](https://github.com/loco-rs/loco/tree/c8da43375bfb6542c59a69db4402757afed8eade)：固定观察提交 `c8da43375bfb6542c59a69db4402757afed8eade`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [Cargo.toml](https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/Cargo.toml)：用于核对实际依赖或生成入口。
+2. [examples/demo/Cargo.toml](https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/examples/demo/Cargo.toml)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

@@ -1,0 +1,25 @@
+# Drift 标准
+
+本文件补充 Drift 特有规则；联读 [Flutter 标准](../flutter/flutter.std)、[general.std](../../../general.std)、[security.std](../../../security.std)及实际触及的专项规范。
+
+## 适用基线
+
+0. 只对实际采用该组件的项目应用；版本与部署能力以项目依赖和锁文件为准，不复制历史模板默认配置。
+1. 来源构建文件于 2026-10-24 读取，依赖存在不等于所有功能已启用。
+
+## Schema 与生成
+
+0. Drift、drift_dev、SQLite 运行库及生成工具版本按依赖声明匹配，表声明与生成文件保持同步。
+1. 查询参数使用绑定，动态 SQL 标识符与排序受控；数据库层约束保护唯一性与字段完整性。
+2. 升级 schema 明确版本、迁移顺序、旧数据回填及恢复策略，不删除用户数据库规避升级问题。
+
+## 连接与响应式
+
+0. 数据库实例、isolate 和关闭责任明确，不共享不支持跨 isolate 的连接或请求对象。
+1. watch 查询的订阅在失效时取消，登出或切换数据库时不能继续展示上一账号数据。
+2. 事务与 reactive 更新通知按所用版本验证，覆盖多步失败、并发写入、迁移前后数据及关闭时残余订阅。
+
+## 参考依据
+
+0. [wednesday-solutions/flutter_template 构建文件](https://github.com/wednesday-solutions/flutter_template/blob/41ccdc52b8004bef01469a31f0086cf5ce19c417/pubspec.yaml)，固定提交 `41ccdc52b8004bef01469a31f0086cf5ce19c417`。
+1. [逐语言脚手架证据](../../../scaffold-inventory.json)：含声明行及范围说明；具体 API 按项目版本核对官方实现或文档。

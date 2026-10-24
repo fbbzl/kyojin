@@ -1,0 +1,74 @@
+# Rust 开发标准
+
+本文件是 Rust 开发变更的主入口：涉及源代码、测试、Cargo/feature 配置、async/并发、unsafe/FFI 或公共 crate API 时读取。始终联读 [general.std](../general.std)；仅在实际触及输入/权限/秘密、持久化、日志与可观测性时分别联读 [security.std](../security.std)、[database.std](../database.std) 和 [logging.std](../logging.std)。
+
+## 适用基线
+
+0. Edition、最低 Rust 版本和 toolchain 以 `Cargo.toml`、`rust-toolchain` 与发布目标为准。
+1. 异步运行时、序列化、错误库和 lint 配置沿用项目已有选择，不默认绑定 Tokio、Serde 或特定 crate。
+
+## 类型与所有权
+
+0. 可见性从最小范围开始，公共类型和 trait 只暴露稳定契约。
+1. `Option` 表达缺失，`Result` 表达可恢复失败；只有不变量被证明时才使用 `unwrap` / `expect`。
+2. 借用、值传递、`Clone`、`Arc` 和锁根据真实所有权选择，不用复制绕开设计问题。
+3. 生命周期标注只表达必要关系；复杂泛型和 trait bound 是审查信号，不设统一数量限制。
+4. 状态集合优先用 enum 表达，避免多个 bool 组合出非法状态。
+
+## 函数、trait 与公共契约
+
+0. 接口按实际能力接受参数：只读文本和连续序列通常接受 `&str` / `&[T]`，需要消费所有权时接收拥有型值；泛型 reader/writer 等接口按具体能力选择，不机械规定所有参数借用。
+1. 转换名称按成本与所有权区分：`as_` 通常提供低成本借用视图，`to_` 可执行非平凡转换，`into_` 消费接收者；迭代区分 `iter`、`iter_mut`、`into_iter`，标准转换 trait 只在语义匹配时实现。
+2. 易混淆 ID、单位和有约束值用 newtype 与校验构造函数隔离；字段可见性不得绕过不变量，不为简单封装引入无收益的类型状态层级。
+3. trait 描述真实能力，泛型 bound 保持最小；静态派发与 `dyn Trait` 根据 API、代码体积和动态组合需求选择，不把动态派发视为一律禁止。
+4. `derive` 按字段语义选择；`Eq` / `Hash` / `Ord`、手写实现与内部可变性保持契约一致，不能只因可派生就承诺错误的值语义。
+5. rustdoc 记录 Errors、Panics 和 Safety 的适用条件，示例覆盖正常调用；调试与错误输出不得通过自动派生泄漏秘密。
+
+## 模块、迭代与分配
+
+0. 模块默认隐藏实现，通过受控 `pub use` 暴露稳定入口；公共返回类型与 trait bound 引入的依赖是兼容性承诺，不能只看函数名是否改变。
+1. 迭代器管线用于清晰变换，需要复杂控制流时用循环；`collect` 只在需要拥有集合或明确求值边界时使用，返回惰性值需说明其借用与执行时机。
+2. `Clone` 表达真实复制需求，不能为绕开借用检查盲目复制大对象；`Rc` / `Arc` 表达单线程/可跨线程的引用计数所有权，`Arc` 不自动让内部值线程安全，共享修改仍需正确同步。
+3. 优先安全的标准库操作；只有性能测量或 FFI 契约确实需要时才进入 unsafe，不用 unchecked 访问替代正常边界建模。
+4. feature 表达可组合能力，不随意隐藏改变公共契约的互斥模式；新增 feature、依赖和公开项需检查 MSRV 与实际支持组合。
+
+## 错误与资源
+
+0. 错误类型保留稳定分类和 source 链；库与应用可选择不同错误表示，但边界必须明确。
+1. `?` 用于传播时补充责任边界需要的上下文，不在每层重复记录。
+2. RAII 和 `Drop` 覆盖资源释放；需要显式确认提交或关闭结果时不能只依赖析构。
+3. 可能 panic 的公共 API 记录前置条件；不可信输入不得轻易触发 panic。
+4. `unsafe` 块保持最小，并记录调用者与实现必须共同维护的安全不变量。
+
+## 异步与并发
+
+0. Future 必须被等待、返回或交给有生命周期管理的任务集合；不能用丢弃 JoinHandle 代表完成，任务集合必须汇聚 `Err`/panic 并定义同级任务处置。
+1. 不持有同步锁跨越 `.await`；共享状态先评估消息传递、所有权转移或更小锁域。
+2. 正确标注和验证 `Send` / `Sync` 边界，FFI 与回调线程模型必须显式说明。
+3. 取消、超时和任务 panic 的处理方式沿调用链一致；可能被丢弃的 Future/等待点必须说明 cancel-safe，不满足时提供幂等、补偿或恢复边界。
+
+## 工具与测试
+
+0. 使用 `cargo fmt`、`cargo clippy` 和项目锁定的工具链；lint 豁免局部化并说明理由。
+1. 单元测试与集成测试按公共边界组织；异步测试覆盖部分 spawn、取消点、panic、有界排空/等待、部分副作用恢复及声明的 MSRV/feature 组合。
+2. 涉及内存、并发或 unsafe 时，根据风险使用 Miri、sanitizer、loom 或压力测试。
+3. 公共示例可用 doctest 验证；有约束构造、转换、相等性和错误分类用行为测试保护，编译失败约束按风险验证，不把通过 borrow checker 等同于业务正确。
+
+## 常见陷阱
+
+0. async 代码持有同步锁、借用或大对象跨越 `.await`。
+1. `clone`、`collect` 和中间分配掩盖不必要的复制。
+2. 忘记自定义资源的关闭结果，或误以为 `Drop` 可以执行可靠异步清理。
+3. 字符串按字节与字符索引混淆，切片边界落在非 UTF-8 字符边界。
+4. unsafe、FFI 或自引用结构的不变量未被测试和文档共同约束。
+
+## 框架规范导航
+
+仅在实际采用时联读以下框架及生态组件规范：[Actix Web](framework/actix-web/actix-web.std)、[Axum 标准](framework/axum/axum.std)、[Cap’n Proto RPC 标准](framework/capnp/capnp.std)、[Clap / 配置与错误](framework/clap/clap.std)、[Dapr（Rust / WASI 集成） 标准](framework/dapr/dapr.std)、[Diesel](framework/diesel/diesel.std)、[Loco 标准](framework/loco/loco.std)、[OpenDAL / 对象存储](framework/opendal/opendal.std)、[Redis Rust / 连接池](framework/redis/redis.std)、[Reqwest / Hyper](framework/reqwest/reqwest.std)、[SeaORM 标准](framework/sea-orm/sea-orm.std)、[Rust 验证 / JWT / Argon2](framework/security/security.std)、[Serde / JSON](framework/serde/serde.std)、[SQLx 标准](framework/sqlx/sqlx.std)、[Tera / Fluent Templates](framework/tera/tera.std)、[rstest / insta / Testcontainers](framework/test-stack/test-stack.std)、[Tokio](framework/tokio/tokio.std)、[Tonic / Prost](framework/tonic/tonic.std)、[Tower / Tower HTTP](framework/tower/tower.std)、[tracing / OpenTelemetry](framework/tracing/tracing.std)、[Utoipa / OpenAPI](framework/utoipa/utoipa.std)。来源与声明范围见 [规范导航](../README.md)。
+
+
+## 参考依据
+
+0. Jon Gjengset《Rust for Rustaceans》作者介绍、更新与勘误：所有权、trait、公共接口、兼容与测试的设计关注面。来源：<https://rust-for-rustaceans.com/>。
+1. Rust library team《Rust API Guidelines》清单：转换、迭代、newtype、可见性、文档与公共依赖。来源：<https://rust-lang.github.io/api-guidelines/checklist.html>。按本地契约择取，不无条件派生 trait、绑定序列化库或引入 builder。
+2. 转换成本与 Cargo feature 组合分别核对官方说明：<https://rust-lang.github.io/api-guidelines/naming.html>、<https://doc.rust-lang.org/cargo/reference/features.html>。

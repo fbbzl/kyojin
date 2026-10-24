@@ -1,0 +1,31 @@
+# Compose Multiplatform 标准
+
+本文件补充 Compose Multiplatform 特有规则；联读 [kotlin.std](../../kotlin.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[frontend.std](../../../frontend.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 平台与状态
+
+0. Kotlin、Compose 插件、Android/iOS/Desktop 工具链和各源集版本按项目配置核对，不复制旧模板版本。
+1. 共享状态有明确所有者，UI 接收状态并上报事件；可保存状态与持久化状态分开设计。
+2. Composable 保持可重复执行，不在组合主体直接执行请求、写文件或注册无清理监听。
+
+## 副作用与平台边界
+
+0. Effect 使用能表达生命周期的 key，并明确取消、重启和释放；长任务不能依附于已销毁界面。
+1. 平台资源和权限在对应 source set 封装，公共层不依赖某个平台偶然存在的 API。
+2. 导航、无障碍、资源、字体及错误处理在目标平台分别验证，不能以单一桌面预览替代。
+
+## 验证
+
+0. 覆盖重组、旋转或状态恢复、快速导航、取消、平台权限失败和最低支持设备。
+
+## 参考依据
+
+0. [JetBrains/compose-multiplatform-template 的构建文件](https://github.com/JetBrains/compose-multiplatform-template/blob/7acca3fe58ae19c8f61d4b315f2998cb69be0dce/shared/build.gradle.kts)：固定提交 `7acca3fe58ae19c8f61d4b315f2998cb69be0dce`，路径 `shared/build.gradle.kts`。
+1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

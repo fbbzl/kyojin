@@ -1,0 +1,37 @@
+# Spring Cloud 标准
+
+本文件补充 Spring Cloud 微服务组件的边界与运行规则；仅在项目的模块构建配置中实际启用 Spring Cloud 组件时联读 [java.std](../../java.std) 和 [spring.std](../spring/spring.std)，并按需读取 [api-design.std](../../../api-design.std)、[security.std](../../../security.std)、[logging.std](../../../logging.std)。BOM 或 dependencyManagement 声明只代表版本管理，不代表运行时功能已启用。
+
+## 依赖与边界
+
+0. Spring Boot、Spring Cloud、Spring Cloud Alibaba 及第三方组件版本按官方兼容矩阵成组锁定；升级前检查 BOM 覆盖、传递依赖和已部署基础设施版本，不从脚手架直接复制版本号。
+1. 一个 Spring Cloud 组件只在对应服务确有发现、配置、路由、容错或负载均衡需求时引入；不要为了“微服务化”同时启用功能重叠的组件。
+2. 服务边界由业务能力和数据所有权决定；网关负责协议边界与路由，不能代替服务内身份授权、输入校验或领域规则。
+
+## 远程调用与失败
+
+0. 每次远程调用都设置连接、响应和总调用预算，并传播 deadline、取消、追踪与必要的身份上下文；避免逐项串行调用造成级联延迟。
+1. 仅对可重试的暂时性错误重试；配置最大次数、退避与抖动，重试预算受原始 deadline 限制，写操作须具备幂等键或等价去重机制。
+2. 熔断、限流和隔离舱的阈值应基于服务容量和故障影响配置；降级结果必须保留业务语义，不用静态成功响应掩盖依赖故障。
+3. 服务发现使用稳定服务标识并明确实例摘除和健康检查行为；本地缓存的注册信息不得绕过过期与故障处理策略。
+
+## 配置、网关与观测
+
+0. 配置区分非敏感运行参数与秘密；秘密由受控凭据来源注入，不写入仓库、镜像、日志或普通配置中心明文。
+1. 动态配置变更须定义校验、原子切换、回滚和生效范围；不能在配置刷新期间暴露半更新状态。
+2. 网关只承载明确的横切职责；对外入口执行认证、授权边界、请求大小和速率限制，并避免信任可由外部伪造的转发头。
+3. Trace、指标和日志使用一致的服务标识与关联上下文；健康检查区分存活与就绪，避免短暂依赖故障引发全体实例重启。
+
+## 数据与验证
+
+0. 分布式事务不是本地事务的透明替代；优先定义服务数据所有权、幂等消息、Outbox、补偿或对账边界，确需事务协调器时单独评估锁持有、超时和恢复语义。
+1. 验证超时、取消、重试边界、重复请求、服务发现变更、配置回滚、熔断恢复和依赖部分故障；测试环境应覆盖与生产一致的协议和关键版本组合。
+
+## 参考依据
+
+- [spacecloud 实际应用模块 POM](https://github.com/javahongxi/spacecloud/blob/2d01dd8aa570eeddd2ba98bdd2bc1393c20b28c1/cloud-nacos-discovery-sample/pom.xml)：直接依赖 Nacos discovery starter。根 POM 的 dependencyManagement 仅负责管理，不能单独证明启用。
+
+0. [javahongxi/spacecloud 根 Maven 构建](https://github.com/javahongxi/spacecloud/blob/2d01dd8aa570eeddd2ba98bdd2bc1393c20b28c1/pom.xml)：模块声明包含 Nacos 配置、Nacos 服务发现及 gRPC 示例；根 POM 管理 Spring Cloud 与 Spring Cloud Alibaba 版本。
+1. [mateaix/matecloud Maven 构建](https://github.com/mateaix/matecloud/blob/580562917197e9ecabfc1c0a20f2f0eea8265a83/pom.xml)：用于核对 Spring Cloud 与 Spring Cloud Alibaba BOM、Nacos、Seata、Sentinel 相关声明；具体模块是否启用以对应模块构建文件为准。
+
+来源只证明脚手架构建声明和模块命名，不证明本规范中的运行效果或生产配置；项目应按实际采用的组件版本核对官方兼容矩阵与行为。

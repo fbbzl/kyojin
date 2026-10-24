@@ -1,0 +1,32 @@
+# Entity Framework Core 标准
+
+本文件补充 Entity Framework Core 特有规则；联读 [csharp.std](../../csharp.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[database.std](../../../database.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 上下文与模型
+
+0. DbContext 为有状态工作单元，不并发复用；后台任务独立建立 scope 或使用项目批准的工厂。
+1. Provider、EF Core 与工具版本匹配；InMemory 或 SQLite 测试不证明其他数据库的 SQL、锁和约束行为。
+
+## 查询与写入
+
+0. 读取按实际需要选择投影、跟踪与关联加载；检查 N+1、笛卡尔膨胀、排序及查询数量。
+1. 并发令牌、SaveChanges 冲突和事务边界进入业务判定；重试与手工事务组合验证完整工作单元幂等。
+2. 全局过滤器不等于完整授权，IgnoreQueryFilters、原生 SQL、批量更新删除和后台任务逐项审查。
+
+## 迁移与验证
+
+0. 生产不无条件自动执行迁移；审查 SQL、锁、数据回填与兼容窗口，不用删除数据库证明恢复。
+1. 在目标 Provider 验证并发冲突、事务回滚、过滤绕过及迁移失败恢复。
+
+## 参考依据
+
+0. [jasontaylordev/CleanArchitecture](https://github.com/jasontaylordev/CleanArchitecture/tree/968abf7dc4884d14d558e04828dff6d3324b1775)：固定观察提交 `968abf7dc4884d14d558e04828dff6d3324b1775`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [src/Web/Web.csproj](https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Web/Web.csproj)：用于核对实际依赖或生成入口。
+2. [src/Infrastructure/Infrastructure.csproj](https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Infrastructure/Infrastructure.csproj)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

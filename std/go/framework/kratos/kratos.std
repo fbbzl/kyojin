@@ -1,0 +1,30 @@
+# Kratos 标准
+
+本文件补充 Kratos 特有规则；联读 [go.std](../../go.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)、[logging.std](../../../logging.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 契约与生成
+
+0. 区分 Kratos v2、v3 和生成器版本；Proto、生成插件与运行库组合由项目锁定。
+1. Proto 是 RPC 契约来源，HTTP 映射、校验和错误映射保持一致；生成文件不承载手工业务修改。
+
+## 生命周期与调用
+
+0. 服务、存储和客户端的创建与 cleanup 成对；启动失败释放已初始化资源，关闭先停止接收再排空并释放依赖。
+1. Context 传播 deadline、取消和追踪；重试仅用于可重试且幂等操作，并受总预算限制。
+2. transport 中间件处理协议与身份，业务层保留资源授权和不变量；不以目录模板强制全部项目同一分层。
+
+## 验证
+
+0. 覆盖 HTTP/gRPC 契约一致性、超时取消、多次投递、错误映射及关闭时未完成请求。
+
+## 参考依据
+
+0. [go-kratos/kratos-layout](https://github.com/go-kratos/kratos-layout/tree/59ad406328acba9a70c9e7f426720a75a89a6b9f)：固定观察提交 `59ad406328acba9a70c9e7f426720a75a89a6b9f`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+1. [go.mod](https://github.com/go-kratos/kratos-layout/blob/59ad406328acba9a70c9e7f426720a75a89a6b9f/go.mod)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

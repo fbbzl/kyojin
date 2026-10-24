@@ -1,0 +1,31 @@
+# http4s 标准
+
+本文件补充 http4s 特有规则；联读 [scala.std](../../scala.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 路由与编码
+
+0. HttpRoutes、HttpApp、挂载和 not-found 的组合语义按项目版本表达，测试各前缀及未匹配路径。
+1. EntityDecoder/Encoder 明确媒体类型、失败和体积限制，不能只依赖静态类型接受外部 JSON。
+2. 鉴权中间件与服务端资源授权分层，CORS 和路由组合不隐式改变授权范围。
+
+## 资源与效果
+
+0. 服务端、客户端和连接池以受控 Resource 或同等生命周期管理，启动失败和退出均释放。
+1. 效果运行时、阻塞隔离、流背压及取消传播明确；不用非受控 unsafe 运行切断生命周期。
+2. 流式响应在断连后停止生产并关闭资源，错误转换与日志不泄露内部实现。
+
+## 验证
+
+0. 覆盖路由组合、解码拒绝、权限、流中断、超时、客户端资源泄漏和服务停止。
+
+## 参考依据
+
+0. [http4s/http4s.g8 的构建文件](https://github.com/http4s/http4s.g8/blob/3a4b4cfffac2f95897babc1a48523efef28c33db/src/main/g8/build.sbt)：固定提交 `3a4b4cfffac2f95897babc1a48523efef28c33db`，路径 `src/main/g8/build.sbt`。
+1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

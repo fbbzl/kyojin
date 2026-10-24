@@ -1,0 +1,31 @@
+# Celery 标准
+
+本文件补充 Celery 特有规则；联读 [python.std](../../python.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[logging.std](../../../logging.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 任务契约
+
+0. 仅在项目启用任务队列时应用；broker、result backend、序列化、超时与 worker 池类型按部署记录。
+1. 消息参数只包含必要且获准数据，不使用不可信 Pickle 或把秘密写入任务日志。
+2. 任务传递标识与业务范围，不假定提交时权限在执行时永久有效。
+
+## 交付与恢复
+
+0. 确认时机、重试、重复投递、worker 崩溃和任务丢失语义分别定义，不宣称 exactly-once。
+1. 数据库事务提交与任务发送之间有明确可靠性策略；on_commit 解决时序但不能单独保证消息持久交付。
+2. 任务幂等、退避、最大预算和补偿可验证，定时调度在多实例下避免重复执行。
+
+## 验证
+
+0. 测试 broker 断连、提交后发送失败、worker 中断、重复投递、重试耗尽及关闭排空；eager 测试不能替代真实队列。
+
+## 参考依据
+
+0. [cookiecutter/cookiecutter-django 的构建文件](https://github.com/cookiecutter/cookiecutter-django/blob/33aca01e5a46c5cf8eb9e405ce133452ba387595/{{cookiecutter.project_slug}}/requirements/base.txt)：固定提交 `33aca01e5a46c5cf8eb9e405ce133452ba387595`，路径 `{{cookiecutter.project_slug}}/requirements/base.txt`。
+1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

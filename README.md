@@ -97,12 +97,16 @@ REQ、DEV、CR、QA 分别负责需求、实现、静态审查和独立测试。
 
 从通用基线开始，再叠加实际使用的语言、框架与专项规范。
 
+完整框架目录、每类语言至少三个 GitHub 脚手架的构建文件对照及扩展规则见 [规范导航](std/README.md)；本轮固定提交与依赖摘录见 [来源记录](std/scaffold-inventory.json)，各语言补漏的行号、依赖范围与内容校验值见 [补漏审计](std/catalog-audit.json)。
+
+语言规范统一放在 `std/{语言}/{语言}.std`，框架规范放在 `std/{语言}/framework/{框架}/{框架}.std`。国内外框架使用相同目录规则，按项目实际采用情况逐项补充，不预建空规范。React、Vue、Angular 与 NestJS 当前归入 TypeScript，Flutter 归入 Dart；跨语言框架只维护一份规范，由其他语言规范交叉引用。新增框架规范需写明适用基线、继承规范、特有约束及验证方式。
+
 | 类别 | 规范 |
 |---|---|
 | 通用与协作 | [通用原则](std/general.std)、[Git](std/git.std) |
-| 后端与系统语言 | [Java](std/java.std)、[Kotlin](std/kotlin.std)、[Scala](std/scala.std)、[Python](std/python.std)、[Go](std/go.std)、[Rust](std/rust.std)、[C#](std/csharp.std)、[C++](std/cpp.std) |
-| 前端与跨端 | [前端通用](std/frontend.std)、[TypeScript](std/typescript.std)、[React](std/react.std)、[Vue](std/vue.std)、[Angular](std/angular.std)、[Flutter](std/flutter.std) |
-| 后端框架 | [Spring](std/spring.std)、[FastAPI](std/fastapi.std)、[Django](std/django.std)、[NestJS](std/nestjs.std) |
+| 后端与系统语言 | [Java](std/java/java.std)、[Kotlin](std/kotlin/kotlin.std)、[Scala](std/scala/scala.std)、[Python](std/python/python.std)、[Go](std/go/go.std)、[Rust](std/rust/rust.std)、[C#](std/csharp/csharp.std)、[C++](std/cpp/cpp.std) |
+| 前端与跨端 | [前端通用](std/frontend.std)、[TypeScript](std/typescript/typescript.std)、[React](std/typescript/framework/react/react.std)、[Vue](std/typescript/framework/vue/vue.std)、[Angular](std/typescript/framework/angular/angular.std)、[Flutter](std/dart/framework/flutter/flutter.std) |
+| 后端框架 | [Spring](std/java/framework/spring/spring.std)、[FastAPI](std/python/framework/fastapi/fastapi.std)、[Django](std/python/framework/django/django.std)、[NestJS](std/typescript/framework/nestjs/nestjs.std) |
 | 专项 | [API 设计](std/api-design.std)、[数据库](std/database.std)、[安全](std/security.std)、[日志](std/logging.std)、[DevOps](std/devops.std) |
 
 规则冲突时，按以下优先级处理：
@@ -115,7 +119,11 @@ REQ、DEV、CR、QA 分别负责需求、实现、静态审查和独立测试。
 
 ```text
 kyojin/
-├── std/                       # 工程规范
+├── std/                       # 通用、语言、框架与专项规范
+│   ├── general.std            # 跨语言共同基线
+│   ├── java/java.std          # Java 语言规范
+│   ├── java/framework/spring/ # Spring 框架规范
+│   └── …                      # 其他语言及其 framework 子目录
 ├── skills/                    # 角色与专项 Skills
 │   ├── survey-corps/mcp-app/   # 协作任务视图插件
 │   ├── subskills/             # 角色内专项能力
@@ -130,7 +138,7 @@ kyojin/
 
 ## 维护与贡献
 
-- 跨语言规则放在 `std/general.std`，语言或框架规则放在各自文件中。
+- 跨语言规则放在 `std/general.std`，语言规则放在 `std/{语言}/{语言}.std`，框架规则放在 `std/{语言}/framework/{框架}/{框架}.std`；跨语言专项规范保留在 `std/` 根目录。
 - 新增 Skill 时，保持一个目录对应一个 `SKILL.md` 的结构，写明适用条件、交付物与验证依据。
 - 修改 Skill 后，在仓库根目录运行结构校验：
 

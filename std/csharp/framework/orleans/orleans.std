@@ -1,0 +1,27 @@
+# Orleans 标准
+
+仅在项目实际采用时联读 [csharp.std](../../csharp.std)。本文件约束工程行为；具体 API、默认值与协议能力以项目锁定版本为准。
+
+## Grain 与状态
+
+0. Grain 身份与接口是跨进程契约，按兼容策略演进；不把内存字段视为持久状态。
+1. 默认调度下的单 activation 串行处理不提供跨 Grain 事务或 exactly-once；启用 reentrancy 等特性时重新分析交错与不变量。
+2. 持久状态必须明确 storage provider、写入时机和冲突/失败处理；调用超时不证明状态没有写入。
+
+## 集群与调用
+
+0. 集群成员管理与 Grain 持久化是不同职责，即使共用 Redis，也分别核对配置、故障域和恢复策略。
+1. 跨 Grain 调用设置超时与取消，写操作设计幂等；避免无界调用扇出和循环依赖造成拥塞。
+2. 部署时明确 cluster/service 标识、silo/gateway 网络、版本兼容和优雅退出，不把开发环境集群设置复制到生产。
+
+## 验证
+
+0. 覆盖 activation 重建、silo 中断、存储失败、重复请求、并发交错和版本混部；多副本启动只证明拓扑声明，不证明一致性或故障恢复。
+
+## 参考依据
+
+0. [dotnet/aspire-samples · samples/orleans-voting/OrleansVoting.AppHost/OrleansVoting.AppHost.csproj](https://github.com/dotnet/aspire-samples/blob/53725d5f255d876f4450e228f9df8a343587eb2f/samples/orleans-voting/OrleansVoting.AppHost/OrleansVoting.AppHost.csproj)：用于核对构建、插件或编排声明。
+1. [dotnet/aspire-samples · samples/orleans-voting/OrleansVoting.Service/OrleansVoting.Service.csproj](https://github.com/dotnet/aspire-samples/blob/53725d5f255d876f4450e228f9df8a343587eb2f/samples/orleans-voting/OrleansVoting.Service/OrleansVoting.Service.csproj)：用于核对构建、插件或编排声明。
+2. [dotnet/aspire-samples · samples/orleans-voting/OrleansVoting.AppHost/AppHost.cs](https://github.com/dotnet/aspire-samples/blob/53725d5f255d876f4450e228f9df8a343587eb2f/samples/orleans-voting/OrleansVoting.AppHost/AppHost.cs)：用于核对构建、插件或编排声明。
+
+来源未经过本仓库构建或运行验证；样例版本不构成版本推荐，以上规则不代表来源已实现所有故障处理。
