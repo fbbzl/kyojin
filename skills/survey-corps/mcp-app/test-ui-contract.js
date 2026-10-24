@@ -91,7 +91,8 @@ assert.equal(stateText("ready_for_cr"), "审查阶段", "CR phase label must not
 assert.equal(stateText("ready_for_qa"), "测试阶段", "QA phase label must not imply waiting while QA is running");
 assert.match(appTemplate, /detailField\(body,"摘要".*detailField\(body,"必要证据".*detailField\(body,"风险"/s, "role cards retain summary, evidence and risks");
 assert.doesNotMatch(appTemplate, /detailField\(body,"下一步"/, "role details must omit the next-action field on desktop and narrow screens");
-assert.match(appTemplate, /\["下一步",data\.next\]/, "task summaries retain their separate next-action section");
+assert.doesNotMatch(appTemplate, /\["下一步",data\.next\]|next:stringList\(work\.next_action\)/, "task summaries must omit the complete next-action section and its presentation data");
+assert.match(appTemplate, /\[\["结果",data\.result\],\["已验证",data\.verified\],\["注意事项",data\.notes\]\]/, "task summaries retain result, verified scope and notes");
 assert.match(appTemplate, /\.sc-task-view__role-subskill \{[^}]*min-height:1\.6em;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/, "role cards reserve a single clipped subskill-name line");
 assert.match(appTemplate, /function selectRoleSubskill\(role,value,active\)/, "left-card subskill selection stays independent of detail DOM");
 assert.match(appTemplate, /skill\.title=skill\.textContent=selectedSkill\?\.name\|\|""/, "the selected subskill name exposes its full value in a tooltip");

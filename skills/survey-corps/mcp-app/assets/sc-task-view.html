@@ -213,14 +213,13 @@
         selectedNode.classList.toggle("sc-task-view__placeholder",!selected.length);
         root.__scTaskSummary={
           result:optionalText(work.summary),verified:stringList(work.verified_scope),
-          notes:[...stringList(work.unverified_scope).map(text=>`未验证：${text}`),...stringList(work.risks).map(text=>`风险：${text}`)],
-          next:Array.isArray(work.next_action)?stringList(work.next_action):optionalText(work.next_action)
+          notes:[...stringList(work.unverified_scope).map(text=>`未验证：${text}`),...stringList(work.risks).map(text=>`风险：${text}`)]
         };
       }
       function taskSummaryNode(root) {
         const summary=document.createElement("div"),data=root.__scTaskSummary;
         summary.className="sc-task-view__summary-content";
-        [["结果",data.result],["已验证",data.verified],["注意事项",data.notes],["下一步",data.next]].forEach(([label,value])=>{
+        [["结果",data.result],["已验证",data.verified],["注意事项",data.notes]].forEach(([label,value])=>{
           if (!value.length) return;
           const section=document.createElement("section"),heading=document.createElement("h4"),content=document.createElement(Array.isArray(value)?"ul":"p");
           heading.textContent=label;
