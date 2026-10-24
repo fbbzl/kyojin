@@ -109,7 +109,10 @@ assert.match(appTemplate, /\.sc-task-view__role-preview, \.sc-task-view__preview
 assert.match(appTemplate, /sc-task-view__role-preview \{[^}]*align-self:stretch;[^}]*justify-self:end; width:90%/, "the independent preview must reserve the role chain height, align its right edge and use ninety percent of its column");
 assert.match(appTemplate, /data-sc-preview-size inert aria-hidden="true"/, "natural-size reserve copies must be inert and absent from the accessible tree");
 assert.match(appTemplate, /sc-task-view__preview-size \{[^}]*visibility:hidden; pointer-events:none/, "size reserve copies must never display or intercept a pointer");
-assert.match(appTemplate, /attribute\.name\.startsWith\("data-sc-"\)\|\|attribute\.name==="id"/, "size reserve copies must not duplicate source markers or ids");
+assert.match(appTemplate, /function cloneRoleDetail\(source,preview=false\)/, "role detail copies must share one clone helper");
+assert.match(appTemplate, /renderPreviewSize\(root\)[\s\S]*?cloneRoleDetail\(source\)/, "size reserve copies must use the shared clone helper without preview markers");
+assert.match(appTemplate, /cloneRoleDetail\(source,true\)/, "preview copies must use the shared clone helper with preview markers");
+assert.match(appTemplate, /if \(\(attribute\.name\.startsWith\("data-sc-"\)&&!retained\.includes\(attribute\.name\)\)\|\|\(!preview&&attribute\.name==="id"\)\) node\.removeAttribute\(attribute\.name\)/, "detail copies must remove source markers and ids while retaining only preview identity markers");
 assert.match(appTemplate, /sc-task-view__preview-link \{[^}]*height:1px; background:var\(--focus\); box-shadow:0 0 4px/, "the preview owner must connect to the detail with a thin softly highlighted line");
 assert.match(appTemplate, /sc-task-view__preview-link::after \{[^}]*border-left:3px solid var\(--focus\)/, "the preview line must end in a small right-facing arrow");
 assert.match(appTemplate, /link\.hidden=link\.closest\("\[data-sc-role\]"\)\.dataset\.scRole!==role/, "the horizontal link must follow the preview owner");

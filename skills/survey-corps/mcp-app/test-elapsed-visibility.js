@@ -14,16 +14,20 @@ assert.ok(chrome, "Chrome is required for elapsed visibility validation");
 const template = fs.readFileSync(path.join(__dirname, "assets", "sc-task-view.html"), "utf8");
 const evidence = fs.mkdtempSync(path.join(os.tmpdir(), "sc-elapsed-visibility-"));
 const page = path.join(evidence, "test.html");
-const harness = `<!doctype html><meta charset="utf-8"><body><main id="root">${template}</main><script>
+const harness = `<!doctype html><meta charset="utf-8"><body><button id="focus-reset" type="button" tabindex="-1" aria-hidden="true" style="position:fixed;left:-10000px;opacity:0"></button><main id="root">${template}</main><script>
 window.onerror=message=>document.body.dataset.testError=String(message);
-const root=document.getElementById('root'),observations=[];
-const snapshot=(state,roleStatus,elapsed=2000)=>({view_id:'qa-elapsed',state,
+const root=document.getElementById('root'),observations=[];let observationSequence=0;
+const snapshot=(state,roleStatus,elapsed=2000)=>({view_id:'qa-elapsed-'+(++observationSequence)+'-'+String(state)+'-'+String(roleStatus),state,
   work_unit:{work_unit_id:'QA-SC-ELAPSED-VISIBILITY',roles:['cr','qa'],metrics:{elapsed_ms:elapsed}},
   role_details:{cr:{status:'passed'},qa:{status:roleStatus,metrics:{elapsed_ms:elapsed}}},handoffs:[]});
 function observe(name,input){
+  document.getElementById('focus-reset').focus();
   window.renderSurveyCorpsTaskView(root,input);
-  const role=root.querySelector('[data-sc-role=qa]');role.open=true;
-  const metrics=role.querySelector('.sc-task-view__role-metrics');
+  const role=root.querySelector('[data-sc-role=qa]');
+  const detail=innerWidth<=560?role:root.querySelector('[data-sc-preview-body]');
+  if(innerWidth<=560) role.open=true;
+  else { const summary=role.querySelector(':scope > summary'); summary.focus(); summary.dispatchEvent(new FocusEvent('focusin',{bubbles:true})); }
+  const metrics=detail.querySelector('.sc-task-view__role-metrics');
   const task=root.querySelector('[data-sc-metric=task-elapsed]');
   const label=root.querySelector('[data-sc-task-elapsed-label]');
   const term=metrics.querySelector('dt'),value=metrics.querySelector('dd');
@@ -31,7 +35,7 @@ function observe(name,input){
     roleVisible:metrics.checkVisibility(),taskHidden:task.hidden,labelHidden:label.hidden,
     taskDisplay:getComputedStyle(task).display,term:term.textContent,value:value.textContent,
     sameLine:metrics.hidden||Math.abs(term.getBoundingClientRect().top-value.getBoundingClientRect().top)<2,
-    titleCount:[...role.querySelectorAll('h3')].filter(n=>n.textContent==='执行耗时').length});
+    titleCount:[...detail.querySelectorAll('h3')].filter(n=>n.textContent==='执行耗时').length});
 }
 const unfinished=[undefined,null,'','pending','not_started','running','preparing','in_progress',
   'paused','waiting','waiting_user','needs_user_confirm','blocked','unknown','future_status',

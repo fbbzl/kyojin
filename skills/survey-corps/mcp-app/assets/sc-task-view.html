@@ -20,7 +20,8 @@
     .sc-task-view__status { justify-self:end; max-width:100%; padding:4px 10px; border:1px solid var(--line); border-radius:6px; color:var(--muted); font-size:18px; font-weight:700; text-align:center; overflow-wrap:anywhere; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:1px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
-    .sc-task-view__root { padding:14px; text-align:center; }
+    .sc-task-view__root, .sc-task-view__task-summary { padding:14px; }
+    .sc-task-view__root { text-align:center; }
     .sc-task-view__target { margin-top:4px !important; overflow-wrap:anywhere; font-size:16px; font-weight:700; }
     .sc-task-view__metadata { display:grid; grid-template-columns:6em minmax(0,1fr); align-items:baseline; column-gap:12px; row-gap:6px; width:min(100%,560px); margin:12px auto 0; text-align:left; }
     .sc-task-view__metadata dt { color:var(--muted); text-align:right; }
@@ -106,6 +107,12 @@
     @keyframes sc-detail-reveal { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
     @keyframes sc-preview-reveal { from { opacity:0; } to { opacity:1; } }
     @keyframes sc-preview-flow { 0% { left:0; transform:translateX(0); opacity:0; } 15%,85% { opacity:.92; } 100% { left:100%; transform:translateX(-100%); opacity:0; } }
+    @keyframes sc-status-shimmer { from { background-position:100% 0; } to { background-position:0% 0; } }
+    @media (prefers-reduced-motion:no-preference) {
+      @supports (background-clip:text) or (-webkit-background-clip:text) {
+        .sc-task-view .sc-task-view__preview-state.is-status-running { color:transparent; -webkit-text-fill-color:transparent; background-image:linear-gradient(100deg,var(--active) 38%,var(--focus) 47%,#fff 50%,var(--focus) 53%,var(--active) 62%); background-size:250% 100%; background-clip:text; -webkit-background-clip:text; animation:sc-status-shimmer 1.8s linear infinite; }
+      }
+    }
     @media (max-width:560px) { .sc-task-view { padding:14px; } .sc-task-view__header { flex-direction:column; } .sc-task-view__project-mcps, .sc-task-view__header-controls { position:static; align-self:flex-start; max-width:100%; } .sc-task-view__header-controls { align-self:flex-end; } .sc-task-view summary { flex-direction:column; gap:3px; } .sc-task-view__project-mcps > summary { flex-direction:row; } .sc-task-view__role-state { text-align:left; } .sc-task-view__workspace { display:flex; flex-direction:column; gap:0; } .sc-task-view__role-lane, .sc-task-view__roles { width:100%; } .sc-task-view__connector { flex:none; height:24px; min-height:24px; } .sc-task-view__role-preview, .sc-task-view__preview-link { display:none; } .sc-task-view details[data-sc-role] > [data-sc-detail-body] { display:block; } }
     @media (prefers-reduced-motion:reduce) { .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { animation:none !important; transition:none !important; } }
   </style>
@@ -138,7 +145,7 @@
       </aside>
     </div>
   </section>
-  <section class="sc-task-view__task-summary" aria-label="任务总结">
+  <section class="sc-task-view__node sc-task-view__task-summary" aria-label="任务总结">
     <h3>任务总结</h3><p data-sc-task-summary>暂无总结</p>
   </section>
   <script>
@@ -290,17 +297,22 @@
         try { body.replaceChildren(content); }
         finally { root.__scReplacingPreview=false; }
       }
+      function cloneRoleDetail(source,preview=false) {
+        const copy=source.cloneNode(true),retained=preview?["data-sc-detail-body","data-sc-preview-subskill"]:[];
+        if (preview) copy.querySelectorAll("[data-sc-subskill]").forEach(skill=>{ skill.dataset.scPreviewSubskill=skill.dataset.scSubskill; });
+        // Copies preserve disclosures without source identity or transient motion ownership.
+        [copy,...copy.querySelectorAll("*")].forEach(node=>{
+          node.classList.remove("is-detail-revealing");
+          [...node.attributes].forEach(attribute=>{
+            if ((attribute.name.startsWith("data-sc-")&&!retained.includes(attribute.name))||(!preview&&attribute.name==="id")) node.removeAttribute(attribute.name);
+          });
+          if (!preview&&node.matches("details")) node.classList.replace("sc-task-view__subskill","sc-task-view__size-subskill");
+        });
+        return copy;
+      }
       function renderPreviewSize(root) {
         // Natural-size copies retain each role's disclosures so preview changes cannot drop expanded space.
-        const copies=[...root.querySelectorAll("[data-sc-role] > [data-sc-detail-body]")].map(source=>{
-          const copy=source.cloneNode(true);
-          [copy,...copy.querySelectorAll("*")].forEach(node=>{
-            [...node.attributes].forEach(attribute=>{ if (attribute.name.startsWith("data-sc-")||attribute.name==="id") node.removeAttribute(attribute.name); });
-            node.classList.remove("is-detail-revealing");
-            if (node.matches("details")) node.classList.replace("sc-task-view__subskill","sc-task-view__size-subskill");
-          });
-          return copy;
-        });
+        const copies=[...root.querySelectorAll("[data-sc-role] > [data-sc-detail-body]")].map(source=>cloneRoleDetail(source));
         root.querySelector("[data-sc-preview-size]").replaceChildren(...copies);
       }
       function syncPreviewSubskills(root) {
@@ -344,15 +356,8 @@
         title.textContent=roleLabels[role];
         status.textContent=state.label;
         status.className=`sc-task-view__preview-state sc-task-view__state--${state.tone}`;
-        const source=root.querySelector(`[data-sc-role="${role}"] > [data-sc-detail-body]`),preview=source.cloneNode(true);
-        preview.querySelectorAll("[data-sc-subskill]").forEach(subskill=>{ subskill.dataset.scPreviewSubskill=subskill.dataset.scSubskill; });
-        // Preview copies retain disclosures without source identity or transient motion ownership.
-        [preview,...preview.querySelectorAll("*")].forEach(node=>{
-          node.classList.remove("is-detail-revealing");
-          [...node.attributes].forEach(attribute=>{
-            if (attribute.name.startsWith("data-sc-")&&!["data-sc-detail-body","data-sc-preview-subskill"].includes(attribute.name)) node.removeAttribute(attribute.name);
-          });
-        });
+        status.classList.toggle("is-status-running",role===root.__scResolvedActiveRole);
+        const source=root.querySelector(`[data-sc-role="${role}"] > [data-sc-detail-body]`),preview=cloneRoleDetail(source,true);
         replacePreviewBody(root,body,preview);
         const restored=selector?body.querySelectorAll(`${selector} > summary`)[focusIndex]:null;
         if (focused) {
@@ -401,14 +406,14 @@
             if (target) { event.preventDefault(); target.focus(); }
           }
         };
-        lane.addEventListener("pointerover",onPointerOver);
-        lane.addEventListener("pointerout",onPointerOut);
-        lane.addEventListener("focusin",onFocusIn);
-        lane.addEventListener("focusout",onFocusOut);
-        lane.addEventListener("keydown",onKeyDown);
-        lane.addEventListener("toggle",onToggle,true);
+        const listeners=[
+          ["pointerover",onPointerOver],["pointerout",onPointerOut],
+          ["focusin",onFocusIn],["focusout",onFocusOut],
+          ["keydown",onKeyDown],["toggle",onToggle,true]
+        ];
+        listeners.forEach(args=>lane.addEventListener(...args));
         root.__scRolePreviewBound=true;
-        root.__scRolePreviewCleanup=()=>{ lane.removeEventListener("pointerover",onPointerOver); lane.removeEventListener("pointerout",onPointerOut); lane.removeEventListener("focusin",onFocusIn); lane.removeEventListener("focusout",onFocusOut); lane.removeEventListener("keydown",onKeyDown); lane.removeEventListener("toggle",onToggle,true); };
+        root.__scRolePreviewCleanup=()=>listeners.forEach(args=>lane.removeEventListener(...args));
       }
       function roleNode(role,detail,activeRole,openRole) {
         const node=document.createElement("details"),summary=document.createElement("summary"),name=document.createElement("span"),status=document.createElement("span"),body=document.createElement("div");
