@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const vm = require("node:vm");
 const { spawn } = require("node:child_process");
 const { setTimeout: delay } = require("node:timers/promises");
 
@@ -32,7 +33,7 @@ const fresh=()=>{const root=makeRoot(),value=snapshot();render(root,value);retur
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const settle=async()=>{await wait(0);await new Promise(requestAnimationFrame);await wait(0);};
 const revealAnimations=root=>root.getAnimations({subtree:true}).filter(animation=>['sc-detail-reveal','sc-preview-reveal'].includes(animation.animationName)&&animation.effect.target.checkVisibility()&&getComputedStyle(animation.effect.target).animationName===animation.animationName);
-const revealState=root=>({marked:root.querySelectorAll('.is-detail-revealing').length,animations:revealAnimations(root).map(animation=>({name:animation.animationName,transform:getComputedStyle(animation.effect.target).transform,duration:animation.effect.getTiming().duration,iterations:animation.effect.getTiming().iterations,role:animation.effect.target.closest('[data-sc-role]')?.dataset.scRole||null,skill:animation.effect.target.closest('[data-sc-preview-subskill]')?.dataset.scPreviewSubskill||animation.effect.target.closest('[data-sc-subskill]')?.dataset.scSubskill||null}))});
+const revealState=root=>({marked:root.querySelectorAll('.is-detail-revealing').length,animations:revealAnimations(root).map(animation=>({name:animation.animationName,transform:getComputedStyle(animation.effect.target).transform,duration:animation.effect.getTiming().duration,iterations:animation.effect.getTiming().iterations,role:animation.effect.target.closest('[data-sc-role]')?.dataset.scRole||null}))});
 let keySequence=0;
 const nativeKey=key=>new Promise(resolve=>{const id=++keySequence;const done=event=>{if(event.source!==parent||event.data.scInputDone!==id)return;window.removeEventListener('message',done);resolve();};window.addEventListener('message',done);parent.postMessage({scInputKey:{id,key}},'*');});
 (async()=>{
@@ -92,58 +93,36 @@ const nativeKey=key=>new Promise(resolve=>{const id=++keySequence;const done=eve
   await new Promise(requestAnimationFrame);await wait(0);results.afterCancel=marked(cancel.root);
   // Requirement source: approved detail opening transition; use native details toggles and real CSS events.
   const detail=fresh(),detailResult=results.detail={starts:[],ends:[]};
-  detail.value.role_details.dev.subskills=[{name:'tech-select',summary:'方案记录'},{name:'refactor-with-goal',summary:'等价证据'}];render(detail.root,detail.value);
-  if(innerWidth>560){
-    // Desktop details live in the independent preview; native disclosures must remain operable there.
-    detail.value.role_details.cr.subskills=[{name:'review-with-goal',summary:'审查记录'}];render(detail.root,detail.value);
-    const preview=()=>detail.root.querySelector('[data-sc-role-preview]'),body=()=>detail.root.querySelector('[data-sc-preview-body]'),skills=()=>[...preview().querySelectorAll('[data-sc-preview-subskill]')];
-    const eventName=event=>event.target.closest('[data-sc-preview-subskill]')?.dataset.scPreviewSubskill||detail.root.querySelector('[data-sc-preview-link]:not([hidden])').closest('[data-sc-role]').dataset.scRole;
-    detail.root.addEventListener('animationstart',event=>{if(['sc-detail-reveal','sc-preview-reveal'].includes(event.animationName))detailResult.starts.push(eventName(event));});
-    detail.root.addEventListener('animationend',event=>{if(['sc-detail-reveal','sc-preview-reveal'].includes(event.animationName))detailResult.ends.push(eventName(event));});
-    detail.root.scrollIntoView({block:'start'});await settle();detailResult.initial=revealState(preview());detailResult.initialStarts=detailResult.starts.length;
-    detail.root.querySelector('[data-sc-role=dev] > summary').focus();await settle();detailResult.manual=revealState(preview());detailResult.manualFocus=document.activeElement===detail.root.querySelector('[data-sc-role=dev] > summary');
-    const parentAnimation=revealAnimations(preview())[0];if(parentAnimation){parentAnimation.pause();await parentAnimation.ready;}
-    skills()[0].querySelector('summary').click();await settle();detailResult.child=revealState(skills()[0]);
-    await Promise.all(revealAnimations(skills()[0]).map(animation=>animation.finished));await settle();detailResult.childEndKeepsParent=body().classList.contains('is-detail-revealing')===!reduced;
-    if(parentAnimation&&body().classList.contains('is-detail-revealing')){parentAnimation.play();await parentAnimation.finished;}await settle();detailResult.afterEnd=revealState(preview());detailResult.firstStarts=[...detailResult.starts];detailResult.firstEnds=[...detailResult.ends];
-    skills()[0].querySelector('summary').focus();await nativeKey('Enter');await settle();detailResult.enterClosed=!skills()[0].open&&revealState(preview()).marked===0;
-    await nativeKey('Space');await settle();detailResult.keyboard=revealState(preview());detailResult.keyboardFocus=document.activeElement===skills()[0].querySelector('summary');detailResult.spaceOpened=skills()[0].open;
-    await Promise.all(revealAnimations(preview()).map(animation=>animation.finished));await settle();
-    skills()[1].querySelector('summary').click();await settle();detailResult.secondChild=revealState(skills()[1]);detailResult.independentSkills=skills().every(node=>node.open);await Promise.all(revealAnimations(preview()).map(animation=>animation.finished));await settle();
-    skills()[0].querySelector('summary').focus();const oldBody=body();render(detail.root,detail.value);await settle();detailResult.refresh={...revealState(preview()),oldClean:!oldBody.classList.contains('is-detail-revealing'),open:skills()[0].open,focus:document.activeElement===skills()[0].querySelector('summary')};
-    detail.root.querySelector('[data-sc-role=req] > summary').focus();await settle();detail.root.querySelector('[data-sc-role=cr] > summary').focus();await settle();detailResult.switch={...revealState(preview()),role:detail.root.querySelector('[data-sc-preview-link]:not([hidden])').closest('[data-sc-role]').dataset.scRole.toUpperCase()};await Promise.all(revealAnimations(preview()).map(animation=>animation.finished));await settle();
-    skills()[0].querySelector('summary').focus();await nativeKey('Enter');await settle();await Promise.all(revealAnimations(preview()).map(animation=>animation.finished));await settle();await nativeKey('Enter');detailResult.closeImmediate=!skills()[0].open;await settle();detailResult.closed=revealState(preview());const closedBody=skills()[0].querySelector(':scope > [data-sc-detail-body]');detailResult.closedHidden=!closedBody.checkVisibility();detailResult.closedAnimation=getComputedStyle(closedBody).animationName;
-    const coexist=fresh();coexist.value.role_details.cr.subskills=[{name:'review-with-goal',summary:'交接审查'}];render(coexist.root,coexist.value);coexist.value.handoffs.push(handoff('detail-coexist'));render(coexist.root,coexist.value);coexist.root.scrollIntoView({block:'start'});coexist.root.querySelector('[data-sc-preview-subskill] > summary').click();await settle();detailResult.coexist={...revealState(coexist.root.querySelector('[data-sc-role-preview]')),handoff:inspect(coexist.root)};
-    detailResult.sourceHidden=!detail.root.querySelector('[data-sc-role=cr] > [data-sc-detail-body]').checkVisibility();
-  } else {
-  detail.root.addEventListener('animationstart',event=>{if(event.animationName==='sc-detail-reveal')detailResult.starts.push(event.target.closest('[data-sc-subskill]')?.dataset.scSubskill||event.target.closest('[data-sc-role]')?.dataset.scRole);});
-  detail.root.addEventListener('animationend',event=>{if(event.animationName==='sc-detail-reveal')detailResult.ends.push(event.target.closest('[data-sc-subskill]')?.dataset.scSubskill||event.target.closest('[data-sc-role]')?.dataset.scRole);});
-  detail.root.scrollIntoView({block:'start'});await settle();detailResult.initial=revealState(detail.root);detailResult.initialStarts=detailResult.starts.length;
-  const role=()=>detail.root.querySelector('[data-sc-role=dev]'),summary=()=>role().querySelector(':scope > summary'),skills=()=>[...role().querySelectorAll('[data-sc-subskill]')];
-  const finishReveal=async()=>{await Promise.all(revealAnimations(detail.root).map(animation=>animation.finished));await settle();};
-  summary().focus();summary().click();await settle();detailResult.manual=revealState(detail.root);detailResult.manualStarts=detailResult.starts.length;detailResult.manualFocus=document.activeElement===summary();
-  const parentAnimation=revealAnimations(detail.root)[0];if(parentAnimation){parentAnimation.pause();await parentAnimation.ready;}
-  skills()[0].querySelector('summary').click();await settle();detailResult.child=revealState(skills()[0]);
-  await Promise.all(revealAnimations(skills()[0]).map(animation=>animation.finished));await settle();
-  detailResult.childEndKeepsParent=revealState(role()).marked===(reduced?0:1);
-  if(parentAnimation&&role().querySelector(':scope > [data-sc-detail-body]').classList.contains('is-detail-revealing')){parentAnimation.play();await parentAnimation.finished;}await settle();
-  detailResult.afterEnd=revealState(detail.root);detailResult.firstStarts=[...detailResult.starts];detailResult.firstEnds=[...detailResult.ends];
-  summary().focus();await nativeKey('Enter');await settle();detailResult.enterClosed=!role().open&&revealState(detail.root).marked===0;if(role().open)throw new Error('Native Enter did not close the focused DEV summary');
-  await nativeKey('Space');await settle();detailResult.keyboard=revealState(detail.root);detailResult.keyboardFocus=document.activeElement===summary();detailResult.spaceOpened=role().open;if(!role().open)throw new Error('Native Space did not open the focused DEV summary');await finishReveal();
-  skills()[1].querySelector('summary').click();await settle();detailResult.secondChild=revealState(skills()[1]);detailResult.independentSkills=skills().every(node=>node.open);await finishReveal();
-  summary().click();await settle();summary().click();await settle();const oldBody=role().querySelector(':scope > [data-sc-detail-body]');summary().focus();render(detail.root,detail.value);await settle();
-  detailResult.refresh={...revealState(detail.root),oldClean:!oldBody.classList.contains('is-detail-revealing'),open:role().open,focus:document.activeElement===summary()};
-  detail.root.querySelector('[data-sc-role=req] > summary').click();await settle();detail.root.querySelector('[data-sc-role=cr] > summary').click();await settle();
-  detailResult.switch={...revealState(detail.root),open:[...detail.root.querySelectorAll('[data-sc-role][open]')].map(node=>node.dataset.scRole)};
-  detail.root.querySelector('[data-sc-role=cr] > summary').click();detailResult.closeImmediate=!detail.root.querySelector('[data-sc-role=cr]').open;await settle();detailResult.closed=revealState(detail.root);
-  const closedBody=detail.root.querySelector('[data-sc-role=cr] > [data-sc-detail-body]');detailResult.closedHidden=!closedBody.checkVisibility();detailResult.closedAnimation=getComputedStyle(closedBody).animationName;
-  const coexist=fresh();coexist.value.handoffs.push(handoff('detail-coexist'));render(coexist.root,coexist.value);coexist.root.scrollIntoView({block:'start'});
-  coexist.root.querySelector('[data-sc-role=cr] > summary').click();await settle();coexist.root.querySelector('[data-sc-role=cr] > summary').click();await settle();detailResult.coexist={...revealState(coexist.root),handoff:inspect(coexist.root)};
-  detailResult.hiddenPreview={visible:detail.root.querySelector('[data-sc-role-preview]').checkVisibility({visibilityProperty:true}),marked:detail.root.querySelectorAll('[data-sc-role-preview] .is-detail-revealing').length,animations:revealAnimations(detail.root.querySelector('[data-sc-role-preview]')).length};
-  }
+  const preview=()=>detail.root.querySelector('[data-sc-role-preview]'),body=()=>detail.root.querySelector('[data-sc-preview-body]'),role=()=>detail.root.querySelector('[data-sc-role=dev]'),summary=()=>role().querySelector(':scope > summary');
+  const area=()=>innerWidth>560?preview():detail.root,finishReveal=async()=>{await Promise.all(revealAnimations(area()).map(animation=>animation.finished));await settle();};
+  const eventRole=event=>event.target.closest('[data-sc-role]')?.dataset.scRole||detail.root.querySelector('[data-sc-preview-link]:not([hidden])')?.closest('[data-sc-role]').dataset.scRole;
+  for(const [event,key] of [['animationstart','starts'],['animationend','ends']])detail.root.addEventListener(event,event=>{if(['sc-detail-reveal','sc-preview-reveal'].includes(event.animationName))detailResult[key].push(eventRole(event));});
+  detail.root.scrollIntoView({block:'start'});await settle();detailResult.initial=revealState(area());detailResult.initialStarts=detailResult.starts.length;
+  summary().focus();if(innerWidth<=560)summary().click();await settle();detailResult.manual=revealState(area());detailResult.manualFocus=document.activeElement===summary();await finishReveal();detailResult.afterEnd=revealState(area());detailResult.firstStarts=[...detailResult.starts];detailResult.firstEnds=[...detailResult.ends];
+  if(innerWidth>560){await nativeKey('ArrowRight');await settle();detailResult.bodyFocused=document.activeElement===body();await nativeKey('ShiftTab');await settle();detailResult.shiftReturned=document.activeElement===summary();await nativeKey('ArrowRight');await nativeKey('Escape');await settle();detailResult.escapeReturned=document.activeElement===summary();}
+  else{await nativeKey('Enter');await settle();detailResult.enterClosed=!role().open;await nativeKey('Space');await settle();detailResult.spaceOpened=role().open;detailResult.keyboard=revealState(area());await finishReveal();}
+  summary().focus();const oldBody=innerWidth>560?body():role().querySelector(':scope > [data-sc-detail-body]');render(detail.root,detail.value);await settle();detailResult.refresh={...revealState(area()),oldClean:!oldBody.classList.contains('is-detail-revealing'),focus:document.activeElement===summary()};
+  const req=detail.root.querySelector('[data-sc-role=req] > summary'),cr=detail.root.querySelector('[data-sc-role=cr] > summary');if(innerWidth>560){req.focus();await settle();cr.focus();}else{req.click();await settle();cr.click();}await settle();detailResult.switch=revealState(area());await finishReveal();
+  if(innerWidth<=560){cr.click();detailResult.closeImmediate=!cr.closest('[data-sc-role]').open;await settle();detailResult.closed=revealState(area());detailResult.closedHidden=!detail.root.querySelector('[data-sc-role=cr] > [data-sc-detail-body]').checkVisibility();}
+  const coexist=fresh();coexist.value.handoffs.push(handoff('detail-coexist'));render(coexist.root,coexist.value);coexist.root.scrollIntoView({block:'start'});await settle();const coexistSummary=coexist.root.querySelector('[data-sc-role=dev] > summary');if(innerWidth>560)coexistSummary.focus();else coexistSummary.click();await settle();detailResult.coexist={...revealState(innerWidth>560?coexist.root.querySelector('[data-sc-role-preview]'):coexist.root),handoff:inspect(coexist.root)};
+  detailResult.removedControls=detail.root.querySelectorAll('[data-sc-role-preview] details,[data-sc-role] > [data-sc-detail-body] details,[data-sc-subskills],[data-sc-preview-subskill]').length;
+  // QA role-subskill-shimmer, P1: measure the real compositor clock after both effects start.
+  const shimmer=fresh();shimmer.value.role_details.cr.subskills=[{name:'review-with-goal',status:'running',summary:'同步流光'}];render(shimmer.root,shimmer.value);shimmer.root.scrollIntoView({block:'start'});await settle();
+  const shimmerNodes=()=>[shimmer.root.querySelector('[data-sc-role=cr] > summary .sc-task-view__role-state'),shimmer.root.querySelector('[data-sc-role=cr] > summary .sc-task-view__role-subskill')];
+  const shimmerAnimation=node=>node.getAnimations().find(animation=>animation.animationName==='sc-status-shimmer');
+  const readyShimmer=async()=>{await Promise.all(shimmerNodes().map(shimmerAnimation).filter(Boolean).map(animation=>animation.ready));await wait(80);await settle();};
+  const shimmerClock=()=>shimmerNodes().map(node=>{const animation=shimmerAnimation(node),timing=animation?.effect.getTiming();return {name:getComputedStyle(node).animationName,marked:node.classList.contains('is-status-running'),duration:timing?.duration??null,easing:timing?.easing??null,delay:timing?.delay??null,iterations:timing?String(timing.iterations):null,rate:animation?.playbackRate??null,current:animation?.currentTime??null,start:animation?.startTime??null,state:animation?.playState??null,position:getComputedStyle(node).backgroundPosition};});
+  await readyShimmer();const mounted=shimmerNodes().map(shimmerAnimation);results.shimmer={initial:shimmerClock(),identity:[]};
+  for(const action of ['hover','focus-away','focus-back']){const target=shimmer.root.querySelector('[data-sc-role='+(action==='focus-back'?'cr':'dev')+'] > summary');if(action==='hover')target.dispatchEvent(new PointerEvent('pointerover',{bubbles:true}));else target.focus();await settle();results.shimmer[action]=shimmerClock();results.shimmer.identity.push(shimmerNodes().every((node,index)=>shimmerAnimation(node)===mounted[index]));}
+  render(shimmer.root,shimmer.value);await readyShimmer();results.shimmer.refresh=shimmerClock();
   results.reduced=reduced;parent.postMessage({scHandoffResult:results},'*');
 })().catch(error=>{document.body.dataset.scTestError=error.stack;parent.postMessage({scHandoffError:error.stack},'*');});
 </script></body></html>`;
+
+// Compile the expanded browser scripts so template-only syntax errors fail before Chrome starts.
+for (const [index, script] of [...harness.matchAll(/<script>([\s\S]*?)<\/script>/g)].entries()) {
+  new vm.Script(script[1], { filename: `sc-handoff-inline-${index}.js` });
+}
 
 async function readResult(width, reduced) {
   const srcdoc = harness.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -205,15 +184,15 @@ async function readResult(width, reduced) {
       if (value?.result) return JSON.parse(value.result);
       const input=value?.input&&JSON.parse(value.input);
       if(input&&input.id!==lastInput){
-        assert.ok(Number.isSafeInteger(input.id)&&input.id>lastInput&&['Enter','Space'].includes(input.key),'keyboard bridge accepts only ordered native Enter/Space requests from this fixture');lastInput=input.id;
-        const key=input.key==='Enter'?{key:'Enter',code:'Enter',windowsVirtualKeyCode:13}:{key:' ',code:'Space',windowsVirtualKeyCode:32};
-        const text=input.key==='Enter'?'\r':' ';
+        assert.ok(Number.isSafeInteger(input.id)&&input.id>lastInput&&['Enter','Space','ArrowRight','ShiftTab','Escape'].includes(input.key),'keyboard bridge accepts only ordered fixture key requests');lastInput=input.id;
+        const key={Enter:{key:'Enter',code:'Enter',windowsVirtualKeyCode:13},Space:{key:' ',code:'Space',windowsVirtualKeyCode:32},ArrowRight:{key:'ArrowRight',code:'ArrowRight',windowsVirtualKeyCode:39},ShiftTab:{key:'Tab',code:'Tab',windowsVirtualKeyCode:9,modifiers:8},Escape:{key:'Escape',code:'Escape',windowsVirtualKeyCode:27}}[input.key];
+        const text=input.key==='Enter'?'\r':input.key==='Space'?' ':undefined;
         await send('Input.dispatchKeyEvent',{type:'keyDown',...key,text,unmodifiedText:text},sessionId);await send('Input.dispatchKeyEvent',{type:'keyUp',...key},sessionId);
         await send('Runtime.evaluate',{expression:"document.querySelector('iframe').contentWindow.postMessage({scInputDone:"+input.id+"},'*')"},sessionId);
       }
       await delay(20);
     }
-    const diagnostic=await send('Runtime.evaluate',{expression:"JSON.stringify({input:document.body.dataset.scTestInput,focus:document.querySelector('iframe').contentDocument.activeElement?.outerHTML,animations:document.querySelector('iframe').contentDocument.getAnimations().filter(a=>a.animationName==='sc-detail-reveal').map(a=>({state:a.playState,time:a.currentTime,role:a.effect.target.closest('[data-sc-role]')?.dataset.scRole,skill:a.effect.target.closest('[data-sc-subskill]')?.dataset.scSubskill}))})",returnByValue:true},sessionId);
+    const diagnostic=await send('Runtime.evaluate',{expression:"JSON.stringify({input:document.body.dataset.scTestInput,focus:document.querySelector('iframe').contentDocument.activeElement?.outerHTML,animations:document.querySelector('iframe').contentDocument.getAnimations().filter(a=>a.animationName==='sc-detail-reveal').map(a=>({state:a.playState,time:a.currentTime,role:a.effect.target.closest('[data-sc-role]')?.dataset.scRole}))})",returnByValue:true},sessionId);
     throw new Error("Chrome did not emit the handoff behavior result within 15 seconds: "+diagnostic.result.value);
   } finally {
     if (!processClosed && !terminalError) await send("Browser.close").catch(() => {});
@@ -246,21 +225,18 @@ function assertFlow(value, receiver, reverse, name) {
     assert.equal(result.layout.viewport, mode.width, "layout must run at the exact requested iframe viewport");
     assert.ok(result.layout.scrollWidth <= mode.width, "handoff feedback must not overflow narrow or wide task views");
     assert.equal(result.layout.roleCount, 4, "handoff feedback must not insert synthetic role cards");
-    const detail=result.detail,staticReveal={marked:0,animations:[]};
-    assert.deepEqual(detail.initial,staticReveal,'initially open role and queued native toggles must stay static');assert.equal(detail.initialStarts,0);
-    for(const field of ['manualFocus','childEndKeepsParent','enterClosed','keyboardFocus','spaceOpened','independentSkills','closeImmediate','closedHidden'])assert.equal(detail[field],true,field+' must retain native detail semantics '+JSON.stringify({mode,detail}));
-    assert.equal(detail.closedAnimation,'none','closed detail bodies must have no computed CSS animation');
-    assert.deepEqual(detail.afterEnd,staticReveal,'finite detail motion must clear after actual CSS animationend');assert.deepEqual(detail.closed,staticReveal,'closing details must immediately clear transient motion');
-    assert.deepEqual(detail.refresh,{...staticReveal,oldClean:true,open:true,focus:true},'same-task refresh must remove old motion, keep manual role selection and focus, and remain static');
-    if(mode.width>560){assert.equal(detail.switch.role,'CR','desktop focus switching must update the independent preview');assert.equal(detail.sourceHidden,true,'desktop source detail bodies must remain hidden');}
-    else {assert.deepEqual(detail.switch.open,['cr'],'rapid role switching must preserve one-open accordion semantics');assert.deepEqual(detail.hiddenPreview,{visible:false,marked:0,animations:0},'hidden narrow preview must not retain transient reveal markers or animations');}
-    for(const field of ['manual','child','keyboard','secondChild','switch','coexist']){
-      assert.equal(detail[field].marked,mode.reduced?0:1,field+' must animate only one opened detail body');
-      assert.equal(detail[field].animations.length,mode.reduced?0:1,field+' must create exactly one finite detail animation');
-      for(const animation of detail[field].animations){assert.ok(animation.duration>=140&&animation.duration<=200,field+' must use the approved 140–200 ms duration');assert.equal(animation.iterations,1);const preview=mode.width>560&&['manual','switch'].includes(field);assert.equal(animation.name,preview?'sc-preview-reveal':'sc-detail-reveal',field+' must use its dedicated reveal animation');if(preview)assert.equal(animation.transform,'none','shared preview reveal must not translate its body');}
+    assert.deepEqual(result.shimmer.identity,[true,true,true],"hover and keyboard preview changes retain both original animation objects");
+    for(const phase of ["initial","hover","focus-away","focus-back","refresh"]){
+      const pair=result.shimmer[phase];assert.equal(pair.length,2);
+      for(const clock of pair){assert.equal(clock.marked,true);assert.equal(clock.name,mode.reduced?"none":"sc-status-shimmer");if(mode.reduced){assert.equal(clock.current,null);assert.equal(clock.start,null);continue;}assert.equal(clock.duration,1800);assert.equal(clock.easing,"linear");assert.equal(clock.delay,0);assert.equal(clock.iterations,"Infinity");assert.equal(clock.rate,1);assert.equal(clock.state,"running");assert.ok(Number.isFinite(clock.start)&&clock.current>0,phase+" samples a genuinely started animation");}
+      if(!mode.reduced){assert.ok(Math.abs(pair[0].current-pair[1].current)<=1,phase+" keeps both shimmer clocks in phase");assert.ok(Math.abs(pair[0].start-pair[1].start)<=1,phase+" starts both effects together");assert.equal(pair[0].position,pair[1].position,phase+" keeps the visible gradient sweep in sync");if(phase!=="initial"&&phase!=="refresh")for(const [index,clock] of pair.entries()){assert.equal(clock.start,result.shimmer.initial[index].start,phase+" does not restart either shimmer");assert.ok(clock.current>=result.shimmer.initial[index].current,phase+" preserves advancing playback");}}
     }
-    if(!mode.reduced){assert.deepEqual(detail.firstStarts.sort(),['dev','tech-select'],'manual role and child openings must each start only once');assert.deepEqual(detail.firstEnds.sort(),['dev','tech-select'],'child completion must not consume the parent completion listener');assertFlow(detail.coexist.handoff,'cr',false,'detail/handoff coexistence');assert.equal(detail.coexist.handoff.activeAnimation,'sc-running-pulse','detail reveal must preserve the running pulse');}
-    else {assert.deepEqual(detail.starts,[],'reduced motion must not create detail animationstart events');assert.deepEqual(detail.ends,[]);assertQuiet({flows:detail.coexist.handoff.flows,receivers:detail.coexist.handoff.receivers,reverse:detail.coexist.handoff.reverse},'reduced detail/handoff coexistence');}
+    const detail=result.detail,staticReveal={marked:0,animations:[]};
+    assert.deepEqual(detail.initial,staticReveal);assert.equal(detail.initialStarts,0);assert.equal(detail.manualFocus,true);assert.equal(detail.removedControls,0);
+    assert.deepEqual(detail.afterEnd,staticReveal,'role reveal clears after actual animationend');assert.deepEqual(detail.refresh,{...staticReveal,oldClean:true,focus:true},'refresh preserves role focus and clears transient motion');
+    const animated=['manual','switch','coexist'];if(mode.width>560){for(const field of ['bodyFocused','shiftReturned','escapeReturned'])assert.equal(detail[field],true,field+' retains role keyboard navigation');}else{for(const field of ['enterClosed','spaceOpened','closeImmediate','closedHidden'])assert.equal(detail[field],true,field+' retains native role disclosures');assert.deepEqual(detail.closed,staticReveal);animated.push('keyboard');}
+    for(const field of animated){assert.equal(detail[field].marked,mode.reduced?0:1,field+' marks one role detail');assert.equal(detail[field].animations.length,mode.reduced?0:1);for(const animation of detail[field].animations){assert.ok(animation.duration>=140&&animation.duration<=200);assert.equal(animation.iterations,1);assert.equal(animation.name,mode.width>560?'sc-preview-reveal':'sc-detail-reveal');if(mode.width>560)assert.equal(animation.transform,'none');}}
+    if(!mode.reduced){assert.deepEqual(detail.firstStarts,['dev']);assert.deepEqual(detail.firstEnds,['dev']);assertFlow(detail.coexist.handoff,'cr',false,'role/handoff coexistence');assert.equal(detail.coexist.handoff.activeAnimation,'sc-running-pulse');}else{assert.deepEqual(detail.starts,[]);assert.deepEqual(detail.ends,[]);}
     if (mode.reduced) {
       for (const field of ["forward", "reverse", "qaForward", "beforeCleanup"]) assertQuiet({ flows: result[field].flows, receivers: result[field].receivers, reverse: result[field].reverse }, field);
       assertQuiet(result.acceptedTransition, "acceptedTransition");

@@ -8,8 +8,8 @@ const { startServer } = require("./test-stdio-helper");
 const template = fs.readFileSync(path.join(__dirname, "assets", "sc-task-view.html"), "utf8");
 const script = template.match(/<script>([\s\S]*?)<\/script>/)[1];
 const context = { window: {} };
-vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.serialUnits={roleStatus,roleStates,subskillStatusText,resolveActiveRole};})();"), context);
-const { roleStatus, roleStates, subskillStatusText, resolveActiveRole } = context.window.serialUnits;
+vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.serialUnits={roleStatus,roleStates,resolveActiveRole};})();"), context);
+const { roleStatus, roleStates, resolveActiveRole } = context.window.serialUnits;
 const roleStatusText = value => roleStatus(value).label;
 
 assert.equal(roleStatusText("running"), "进行中");
@@ -20,7 +20,6 @@ assert.deepEqual(Object.keys(roleStates), statuses);
 for (const [status, label] of Object.entries({pending:"待开始",running:"进行中",passed:"通过",blocked:"阻断",needs_user_confirm:"待用户确认"})) assert.equal(roleStatusText(status), label);
 for (const status of ["completed", "failed", "preparing", "working", "active", "in_progress", "waiting_user", "skipped", "paused", "cancelled"]) assert.equal(roleStatusText(status), "未知状态");
 assert.equal(roleStatusText(undefined), "状态未提供");
-for (const [status,label] of Object.entries({waiting_user:"等待用户确认",needs_revision:"需要修订",running:"进行中",completed:"已完成"})) assert.equal(subskillStatusText(status), label);
 assert.doesNotMatch(template, /rolePhases|rolePhaseText|预审中|测试准备中|等待审查通过|测试中/);
 assert.match(template, /state=roleStatus\(detail\.status\)/, "role title must render from status only");
 

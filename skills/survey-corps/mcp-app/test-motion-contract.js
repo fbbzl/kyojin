@@ -11,7 +11,10 @@ assert.doesNotMatch(appTemplate, /activeRoleStates=new Set/, "legacy aliases mus
 assert.match(appTemplate, /--motion-period:1\.8s;/, "persistent effects must share the approved 1.8 second period");
 assert.match(appTemplate, /details\[data-sc-role\]\.is-active \{[^}]*animation:sc-running-pulse var\(--motion-period\) ease-in-out infinite/, "an active role card must visibly pulse continuously using the shared period");
 assert.match(appTemplate, /preview-link:not\(\[hidden\]\)::before \{[^}]*animation:sc-preview-flow var\(--motion-period\) linear infinite/, "the ownership line flow must share the period while keeping linear travel");
-assert.match(appTemplate, /role-state\.is-status-running \{[^}]*animation:sc-status-shimmer var\(--motion-period\) linear infinite/, "the status shimmer must share the period while retaining its own keyframes");
+assert.match(appTemplate, /role-state\.is-status-running,\s*\.sc-task-view \.sc-task-view__role-subskill\.is-status-running \{[^}]*animation:sc-status-shimmer var\(--motion-period\) linear infinite/, "role state and selected running subskill must share the same shimmer rule and timing");
+assert.match(appTemplate, /role-elapsed, \.sc-task-view__role-subskill \{[^}]*color:var\(--muted\)/, "subskill names retain the default muted color");
+assert.match(appTemplate, /role-subskill\.is-status-running \{ background-image:linear-gradient\(100deg,var\(--muted\) 38%,var\(--text\) 47%,#fff 50%,var\(--text\) 53%,var\(--muted\) 62%\); \}/, "running name shimmer overrides only the gradient with neutral colors");
+assert.match(appTemplate, /role-state\.is-status-running,[^}]*background-image:linear-gradient\(100deg,var\(--active\) 38%,var\(--focus\) 47%,#fff 50%,var\(--focus\) 53%,var\(--active\) 62%\)/, "running status retains its original blue gradient");
 assert.doesNotMatch(appTemplate, /sc-task-view__preview-link::after/, "the horizontal ownership line must have no arrowhead");
 assert.match(appTemplate, /@keyframes sc-running-pulse \{[^}]*box-shadow:0 0 0 1px[^}]*/s, "the active role pulse must retain a visible resting glow");
 assert.match(appTemplate, /50% \{ box-shadow:0 0 0 5px[^}]*0 0 26px/s, "the active role pulse must reach a pronounced card glow");
@@ -55,11 +58,10 @@ function eventNode() {
 }
 function detailNode(open = false) {
   const body = eventNode();
-  return { open, body, children: [], checkVisibility: () => true, matches: () => true, querySelector: () => body, contains(target) { return target === body || this.children.some(child => child.contains(target)); } };
+  return { open, body, checkVisibility: () => true, matches: () => true, querySelector: () => body, contains: target => target === body };
 }
-const role = detailNode(true), skill = detailNode();
-role.children.push(skill);
-const root = Object.assign(eventNode(), { querySelectorAll: () => [role, skill] });
+const role = detailNode(true);
+const root = Object.assign(eventNode(), { querySelectorAll: () => [role] });
 const reveal = node => node.body.classList.contains("is-detail-revealing");
 const toggle = (node, open) => { node.open = open; root.emit("toggle", node); };
 context.window.testDetailReveal(root);
@@ -67,14 +69,12 @@ root.emit("toggle", role);
 assert.equal(reveal(role), false, "queued initial-open toggles must stay static");
 toggle(role, false); toggle(role, true);
 assert.equal(reveal(role), true, "opening a previously closed role must reveal its content");
-role.body.emit("animationend", skill.body);
+role.body.emit("animationend", {});
 assert.equal(reveal(role), true, "a nested animation end must not clean the parent");
 role.body.emit("animationend");
 assert.equal(reveal(role), false, "the body's own end must remove its transient class");
-toggle(skill, true);
-assert.equal(reveal(skill), true, "subskill content must reveal independently");
 toggle(role, false);
-assert.equal(reveal(skill), false, "closing the role must clean descendant transient motion");
+assert.equal(reveal(role), false, "closing the role clears its transient motion");
 toggle(role, true);
 role.body.emit("animationcancel");
 assert.equal(reveal(role), false, "cancellation must leave ordinary visible body styles");

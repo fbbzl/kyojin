@@ -12,8 +12,8 @@ assert.ok(!isSourceTree || fs.existsSync(skillPath), "repository Skill is missin
 const skill = isSourceTree ? fs.readFileSync(skillPath, "utf8") : null;
 const script = appTemplate.match(/<script>([\s\S]*?)<\/script>/)[1];
 const context = { window: {} };
-vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,subskillStatusText,subskillStatusClass};})();"), context, { timeout: 1000 });
-const { stateText, stateClass, subskillStatusText, subskillStatusClass } = context.window.statusContract;
+vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass};})();"), context, { timeout: 1000 });
+const { stateText, stateClass } = context.window.statusContract;
 const roleStatesLiteral = appTemplate.match(/const roleStates=(\{[^\r\n]+\});/)?.[1] || "";
 const assertSkillMatch = (pattern, message) => { if (skill) assert.match(skill, pattern, message); };
 const assertSkillDoesNotMatch = (pattern, message) => { if (skill) assert.doesNotMatch(skill, pattern, message); };
@@ -68,7 +68,7 @@ assert.match(appTemplate, /@media \(max-width:560px\)[\s\S]*?\.sc-task-view__hea
 assertSkillMatch(/project_name:\s+# 可选；当前会话所属项目名称，UI 不展示，不得猜测/, "the optional project name must remain in the snapshot contract without rendering");
 assert.doesNotMatch(appTemplate, /data-sc-agent-name|sc-task-view__agent-name/, "subagent names must not render in role cards");
 assert.match(appTemplate, /data-sc-play-animation hidden/, "animation replay is a hidden debug control by default");
-assert.match(appTemplate, /data-sc-subskill-field|dataset\.scSubskillField/, "called subskills must expose their read-only fields");
+assert.doesNotMatch(appTemplate, /data-sc-subskill|data-sc-preview-subskill|sc-task-view__subskills|sc-task-view__size-subskill|subskillNode|renderSubskills|syncPreviewSubskills/, "detail views must not retain removed subskill DOM, controls or mirror logic");
 assert.doesNotMatch(appTemplate, /data-sc-subskill-submit|data-sc-subskill-approve|data-sc-subskill-choice/, "subskill records must not imply a reply or approval channel");
 assert.doesNotMatch(appTemplate, /data-sc-tree-gate|回到 SC|data-sc-state-reference|sc-task-view__console|data-sc-events|Session log/, "nonessential or post-QA views must not be rendered");
 assert.match(appTemplate, /const active=selectedRoles\.filter/, "activity must be resolved only from selected roles");
@@ -93,8 +93,8 @@ assert.match(appTemplate, /detailField\(body,"摘要".*detailField\(body,"必要
 assert.doesNotMatch(appTemplate, /detailField\(body,"下一步"/, "role details must omit the next-action field on desktop and narrow screens");
 assert.match(appTemplate, /\["下一步",data\.next\]/, "task summaries retain their separate next-action section");
 assert.match(appTemplate, /\.sc-task-view__role-subskill \{[^}]*min-height:1\.6em;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/, "role cards reserve a single clipped subskill-name line");
-assert.match(appTemplate, /const node=subskillNode\(role,item\)/, "left-card names and full records share the same validation boundary");
-assert.match(appTemplate, /skill\.title=skill\.textContent=renderSubskills/, "subskill names expose the full value in a tooltip");
+assert.match(appTemplate, /function selectRoleSubskill\(role,value,active\)/, "left-card subskill selection stays independent of detail DOM");
+assert.match(appTemplate, /skill\.title=skill\.textContent=selectedSkill\?\.name\|\|""/, "the selected subskill name exposes its full value in a tooltip");
 assert.doesNotMatch(appTemplate, /data-sc-field="resume_state"|data-sc-state-reference|复验入口/, "minimal UI must not render the state machine or resume_state");
 assertSkillMatch(/不展示状态机、状态参考集、复验入口或 `resume_state`/, "skill must keep resume_state authoritative but out of the UI");
 assertSkillDoesNotMatch(/needs_revalidation` 时必须展示 `resume_state`/, "skill must not require resume_state rendering");
@@ -117,10 +117,10 @@ assert.match(appTemplate, /\.sc-task-view__role-preview, \.sc-task-view__preview
 assert.match(appTemplate, /sc-task-view__role-preview \{[^}]*align-self:stretch;[^}]*justify-self:end; width:90%/, "the independent preview must reserve the role chain height, align its right edge and use ninety percent of its column");
 assert.match(appTemplate, /data-sc-preview-size inert aria-hidden="true"/, "natural-size reserve copies must be inert and absent from the accessible tree");
 assert.match(appTemplate, /sc-task-view__preview-size \{[^}]*visibility:hidden; pointer-events:none/, "size reserve copies must never display or intercept a pointer");
-assert.match(appTemplate, /function cloneRoleDetail\(source,preview=false\)/, "role detail copies must share one clone helper");
+assert.match(appTemplate, /function cloneRoleDetail\(source\)/, "visible and natural-size detail copies share one clone helper");
 assert.match(appTemplate, /renderPreviewSize\(root\)[\s\S]*?cloneRoleDetail\(source\)/, "size reserve copies must use the shared clone helper without preview markers");
-assert.match(appTemplate, /cloneRoleDetail\(source,true\)/, "preview copies must use the shared clone helper with preview markers");
-assert.match(appTemplate, /if \(\(attribute\.name\.startsWith\("data-sc-"\)&&!retained\.includes\(attribute\.name\)\)\|\|\(!preview&&attribute\.name==="id"\)\) node\.removeAttribute\(attribute\.name\)/, "detail copies must remove source markers and ids while retaining only preview identity markers");
+assert.match(appTemplate, /source=root\.querySelector[\s\S]*?preview=cloneRoleDetail\(source\)/, "visible preview uses the same natural-size clone");
+assert.match(appTemplate, /copy\.removeAttribute\("data-sc-detail-body"\)/, "natural-size and visible copies drop their source detail marker");
 assert.match(appTemplate, /sc-task-view__preview-link \{[^}]*height:2px; background:var\(--focus\); box-shadow:0 0 4px/, "the preview owner must connect to the detail with a thin softly highlighted line");
 assert.doesNotMatch(appTemplate, /sc-task-view__preview-link::after/, "the horizontal ownership line must have no arrowhead");
 assert.match(appTemplate, /link\.hidden=link\.closest\("\[data-sc-role\]"\)\.dataset\.scRole!==role/, "the horizontal link must follow the preview owner");
@@ -140,7 +140,5 @@ assert.match(appTemplate, /--motion-period:1\.8s;/, "persistent motion must shar
 assert.match(appTemplate, /\.sc-task-view details\[data-sc-role\]\.is-active \{[^}]*border-color:var\(--role-accent\);[^}]*animation:sc-running-pulse var\(--motion-period\) ease-in-out infinite/, "active role cards must retain a visible persistent running animation");
 assert.match(appTemplate, /@keyframes sc-running-pulse/, "the running role animation must be defined");
 assert.equal(stateText("workflow_ready"), "任务完成", "workflow_ready must present completion without changing its state semantics");
-assert.equal(subskillStatusText("workflow_ready"), "已通过", "legacy workflow_ready mapping must remain available for subskills");
-assert.equal(subskillStatusClass("workflow_ready"), "sc-task-view__state--passed", "legacy workflow_ready subskill tone must remain passed");
 
 console.log(skill ? "SC minimal task-flow UI contract passed." : "SC minimal task-flow UI contract passed (repository Skill checks skipped outside the source tree).");
