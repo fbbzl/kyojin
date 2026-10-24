@@ -30,11 +30,11 @@ function observe(name,input){
   const metrics=detail.querySelector('.sc-task-view__role-metrics');
   const task=root.querySelector('[data-sc-metric=task-elapsed]');
   const label=root.querySelector('[data-sc-task-elapsed-label]');
-  const term=metrics.querySelector('dt'),value=metrics.querySelector('dd');
-  observations.push({name,roleHidden:metrics.hidden,roleDisplay:getComputedStyle(metrics).display,
-    roleVisible:metrics.checkVisibility(),taskHidden:task.hidden,labelHidden:label.hidden,
-    taskDisplay:getComputedStyle(task).display,term:term.textContent,value:value.textContent,
-    sameLine:metrics.hidden||Math.abs(term.getBoundingClientRect().top-value.getBoundingClientRect().top)<2,
+  const term=metrics?.querySelector('dt'),value=metrics?.querySelector('dd');
+  observations.push({name,rolePresent:!!metrics,roleHidden:metrics?.hidden??true,roleDisplay:metrics?getComputedStyle(metrics).display:'none',
+    roleVisible:metrics?.checkVisibility()??false,taskHidden:task.hidden,labelHidden:label.hidden,
+    taskDisplay:getComputedStyle(task).display,term:term?.textContent??null,value:value?.textContent??null,
+    sameLine:!metrics||metrics.hidden||Math.abs(term.getBoundingClientRect().top-value.getBoundingClientRect().top)<2,
     titleCount:[...detail.querySelectorAll('h3')].filter(n=>n.textContent==='执行耗时').length});
 }
 const unfinished=[undefined,null,'','pending','not_started','running','preparing','in_progress',
@@ -79,12 +79,14 @@ for (const item of observations) {
   assert.equal(item.taskHidden, !taskExpected, item.name);
   assert.equal(item.labelHidden, !taskExpected, item.name);
   assert.equal(item.taskDisplay === "none", !taskExpected, item.name);
-  assert.equal(item.term, "执行耗时:", item.name);
+  const pendingBody=item.name==='unfinished:pending'||item.name.startsWith('task-finished:');
+  assert.equal(item.rolePresent,!pendingBody,item.name);
+  assert.equal(item.term, pendingBody?null:"执行耗时:", item.name);
   assert.equal(item.titleCount, 0, item.name);
   assert.ok(item.sameLine, item.name);
   const expectedValue = item.name === "zero-finished" ? "0毫秒" :
     ["absent-metrics-finished", "negative-finished", "string-finished"].includes(item.name) ? "未提供" : "2秒";
-  assert.equal(item.value, expectedValue, item.name);
+  assert.equal(item.value, pendingBody?null:expectedValue, item.name);
 }
 fs.writeFileSync(path.join(evidence, "observations.json"), JSON.stringify(observations, null, 2), "utf8");
 console.log(`Elapsed visibility Chrome behavior passed (${observations.length} cases); evidence: ${evidence}`);

@@ -8,7 +8,11 @@ const appTemplate = fs.readFileSync(path.join(__dirname, "assets", "sc-task-view
 assert.doesNotMatch(appTemplate, /is-entering|is-connection-entering|is-state-updated/, "mounting and ordinary state updates must not add entrance or state animations");
 assert.match(appTemplate, /selectedRoles\.filter\(role=>asObject\(details\[role\]\)\.status==="running"\)/, "only exact running in the selected chain may activate role motion");
 assert.doesNotMatch(appTemplate, /activeRoleStates=new Set/, "legacy aliases must not activate role cards");
-assert.match(appTemplate, /details\[data-sc-role\]\.is-active \{[^}]*animation:sc-running-pulse 1\.6s ease-in-out infinite/, "an active role card must visibly pulse continuously at the requested faster cadence");
+assert.match(appTemplate, /--motion-period:1\.8s;/, "persistent effects must share the approved 1.8 second period");
+assert.match(appTemplate, /details\[data-sc-role\]\.is-active \{[^}]*animation:sc-running-pulse var\(--motion-period\) ease-in-out infinite/, "an active role card must visibly pulse continuously using the shared period");
+assert.match(appTemplate, /preview-link:not\(\[hidden\]\)::before \{[^}]*animation:sc-preview-flow var\(--motion-period\) linear infinite/, "the ownership line flow must share the period while keeping linear travel");
+assert.match(appTemplate, /preview-state\.is-status-running \{[^}]*animation:sc-status-shimmer var\(--motion-period\) linear infinite/, "the status shimmer must share the period while retaining its own keyframes");
+assert.doesNotMatch(appTemplate, /sc-task-view__preview-link::after/, "the horizontal ownership line must have no arrowhead");
 assert.match(appTemplate, /@keyframes sc-running-pulse \{[^}]*box-shadow:0 0 0 1px[^}]*/s, "the active role pulse must retain a visible resting glow");
 assert.match(appTemplate, /50% \{ box-shadow:0 0 0 5px[^}]*0 0 26px/s, "the active role pulse must reach a pronounced card glow");
 assert.doesNotMatch(appTemplate, /sc-thinking-border|details\[data-sc-role\]\.is-active::before/, "role cards must not render a rotating geometric border effect");

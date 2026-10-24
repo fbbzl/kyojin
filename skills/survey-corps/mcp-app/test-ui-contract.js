@@ -26,7 +26,9 @@ assert.match(appTemplate, /const roles=\["req","dev","cr","qa"\]/, "task flow mu
 assert.match(appTemplate, /selectedRoles\.forEach\(\(role,index\)=>/, "task flow must render selected roles in declared order");
 assert.doesNotMatch(appTemplate, /data-sc-exit|sc-task-view__exit|QA · 唯一任务出口/, "QA exit must not render a separate node or retain its styles");
 assert.match(appTemplate, /roleName\.textContent=roleLabels\[role\]/, "role titles must use the plain role label without a QA exit suffix");
-assert.match(appTemplate, /data-sc-task-summary>暂无总结</, "task summary must default to no supplied summary");
+assert.match(appTemplate, /<aside[^>]*data-sc-role-preview[\s\S]*?<div class="sc-task-view__preview-summary" data-sc-preview-summary><\/div>[\s\S]*?<\/aside>/, "task summary must use the same aside and start with no summary DOM");
+assert.doesNotMatch(appTemplate, /data-sc-task-summary|sc-task-view__task-summary/, "the removed bottom summary must not remain in DOM or styles");
+assert.match(appTemplate, /replaceChildren\(\.\.\.\(root\.__scSummaryInPreview\?\[taskSummaryNode\(root\)\]:\[\]\)\)/, "only a finished task without selected running roles may populate the summary");
 assert.doesNotMatch(appTemplate, /任务上下文|data-sc-context|sc-task-view__context/, "the task context panel must be removed from the view");
 assert.match(appTemplate, /data-sc-selected-roles>尚未选择</, "the view must not infer all roles as selected");
 assert.doesNotMatch(appTemplate, /SC TASK FLOW|<h2\b/, "the redundant visual task-flow title must not render");
@@ -114,7 +116,7 @@ assert.match(appTemplate, /renderPreviewSize\(root\)[\s\S]*?cloneRoleDetail\(sou
 assert.match(appTemplate, /cloneRoleDetail\(source,true\)/, "preview copies must use the shared clone helper with preview markers");
 assert.match(appTemplate, /if \(\(attribute\.name\.startsWith\("data-sc-"\)&&!retained\.includes\(attribute\.name\)\)\|\|\(!preview&&attribute\.name==="id"\)\) node\.removeAttribute\(attribute\.name\)/, "detail copies must remove source markers and ids while retaining only preview identity markers");
 assert.match(appTemplate, /sc-task-view__preview-link \{[^}]*height:1px; background:var\(--focus\); box-shadow:0 0 4px/, "the preview owner must connect to the detail with a thin softly highlighted line");
-assert.match(appTemplate, /sc-task-view__preview-link::after \{[^}]*border-left:3px solid var\(--focus\)/, "the preview line must end in a small right-facing arrow");
+assert.doesNotMatch(appTemplate, /sc-task-view__preview-link::after/, "the horizontal ownership line must have no arrowhead");
 assert.match(appTemplate, /link\.hidden=link\.closest\("\[data-sc-role\]"\)\.dataset\.scRole!==role/, "the horizontal link must follow the preview owner");
 assert.doesNotMatch(appTemplate, /details\[data-sc-role\]:hover \{[^}]*transform:/, "role hover must not move its hit target");
 assert.match(appTemplate, /@keyframes sc-preview-reveal \{ from \{ opacity:0; \} to \{ opacity:1; \} \}/, "preview switching must fade without moving its content");
@@ -128,7 +130,8 @@ assert.match(appTemplate, /sc-task-view__connector::before/, "role connectors mu
 assert.match(appTemplate, /sc-task-view__connector::after/, "role connectors must render a downward arrowhead");
 assert.match(appTemplate, /sc-task-view__connector::after \{[^}]*border-top:7px solid currentColor/, "connector arrowhead must be a filled downward triangle");
 assert.doesNotMatch(appTemplate, /sc-task-view__progress|role="progressbar"|任务进度：|progress-label/, "role cards must not render progress bars or percentages");
-assert.match(appTemplate, /\.sc-task-view details\[data-sc-role\]\.is-active \{[^}]*border-color:var\(--role-accent\);[^}]*animation:sc-running-pulse 1\.6s ease-in-out infinite/, "active role cards must retain a visible persistent running animation");
+assert.match(appTemplate, /--motion-period:1\.8s;/, "persistent motion must share the approved 1.8 second period");
+assert.match(appTemplate, /\.sc-task-view details\[data-sc-role\]\.is-active \{[^}]*border-color:var\(--role-accent\);[^}]*animation:sc-running-pulse var\(--motion-period\) ease-in-out infinite/, "active role cards must retain a visible persistent running animation");
 assert.match(appTemplate, /@keyframes sc-running-pulse/, "the running role animation must be defined");
 assert.equal(stateText("workflow_ready"), "任务完成", "workflow_ready must present completion without changing its state semantics");
 assert.equal(subskillStatusText("workflow_ready"), "已通过", "legacy workflow_ready mapping must remain available for subskills");

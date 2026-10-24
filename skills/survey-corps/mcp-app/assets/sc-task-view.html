@@ -4,7 +4,7 @@
 -->
 <section class="sc-task-view" aria-label="SC 任务流程">
   <style>
-    .sc-task-view { --bg:#080b10; --panel:#0d1219; --panel-active:#101923; --line:#4b5869; --text:#e8edf3; --muted:#9ba8b8; --focus:#b9e2ff; --pending:#95a3b5; --active:#46b8ee; --completed:#27c9b0; --ok:#4bd882; --warn:#e9c85c; --revision:#ec9b4f; --danger:#ed7589; --unknown:#fff; box-sizing:border-box; width:min(680px,100%); margin:0 auto; padding:20px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font:13px/1.6 "Segoe UI Variable","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif; }
+    .sc-task-view { --bg:#080b10; --panel:#0d1219; --panel-active:#101923; --line:#4b5869; --text:#e8edf3; --muted:#9ba8b8; --focus:#b9e2ff; --pending:#95a3b5; --active:#46b8ee; --completed:#27c9b0; --ok:#4bd882; --warn:#e9c85c; --revision:#ec9b4f; --danger:#ed7589; --unknown:#fff; --motion-period:1.8s; box-sizing:border-box; width:min(680px,100%); margin:0 auto; padding:20px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font:13px/1.6 "Segoe UI Variable","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif; }
     .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { box-sizing:inherit; }
     .sc-task-view h3, .sc-task-view p { margin:0; }
     .sc-task-view h3 { margin-top:10px; color:var(--muted); font-size:11px; text-transform:uppercase; }
@@ -20,7 +20,7 @@
     .sc-task-view__status { justify-self:end; max-width:100%; padding:4px 10px; border:1px solid var(--line); border-radius:6px; color:var(--muted); font-size:18px; font-weight:700; text-align:center; overflow-wrap:anywhere; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:1px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
-    .sc-task-view__root, .sc-task-view__task-summary { padding:14px; }
+    .sc-task-view__root { padding:14px; }
     .sc-task-view__root { text-align:center; }
     .sc-task-view__target { margin-top:4px !important; overflow-wrap:anywhere; font-size:16px; font-weight:700; }
     .sc-task-view__metadata { display:grid; grid-template-columns:6em minmax(0,1fr); align-items:baseline; column-gap:12px; row-gap:6px; width:min(100%,560px); margin:12px auto 0; text-align:left; }
@@ -30,10 +30,11 @@
     .sc-task-view__role-metrics dt { color:var(--muted); }
     .sc-task-view__role-metrics dd { min-width:0; margin:0; overflow-wrap:anywhere; }
     .sc-task-view__role-name { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; min-width:0; }
-    .sc-task-view__task-summary { margin-top:18px; overflow-wrap:anywhere; }
-    .sc-task-view__task-summary p { margin-top:4px; }
-    .sc-task-view__task-summary.is-preview-summary { display:none; }
-    @media (max-width:560px) { .sc-task-view__task-summary.is-preview-summary { display:block; } }
+    .sc-task-view__summary-content { margin-top:4px; }
+    .sc-task-view__summary-content > section + section { margin-top:12px; }
+    .sc-task-view__summary-content h4 { margin:0; color:var(--muted); font-size:11px; }
+    .sc-task-view__summary-content p, .sc-task-view__summary-content ul { margin:4px 0 0; }
+    .sc-task-view__summary-content ul { padding-left:18px; }
     .sc-task-view [hidden] { display:none !important; }
     .sc-task-view__connector { position:relative; flex:1 0 36px; width:12px; min-height:36px; margin:0 auto; color:var(--muted); transform-origin:top; }
     .sc-task-view__connector::before { content:""; position:absolute; top:0; left:50%; width:1.5px; height:calc(100% - 9px); transform:translateX(-50%); background:currentColor; box-shadow:0 0 4px color-mix(in srgb,currentColor 35%,transparent); }
@@ -53,6 +54,10 @@
     .sc-task-view__preview-body { grid-area:1/1; align-self:start; min-width:0; padding-top:10px; }
     .sc-task-view__preview-size { display:grid; grid-area:1/1; align-self:start; min-width:0; padding-top:10px; visibility:hidden; pointer-events:none; user-select:none; }
     .sc-task-view__preview-size > * { grid-area:1/1; align-self:start; min-width:0; }
+    .sc-task-view__preview-summary, .sc-task-view__summary-title { display:none; }
+    .sc-task-view__preview-summary { grid-area:1/1; align-self:start; min-width:0; padding-top:10px; }
+    .sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-summary { display:block; }
+    .sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-body { display:none; }
     .sc-task-view__preview-body:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
     .sc-task-view__preview-empty { color:var(--muted); }
     .sc-task-view details { min-width:0; border:1px solid var(--line); border-radius:6px; background:var(--panel); transition:border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease; }
@@ -63,13 +68,12 @@
     .sc-task-view details[data-sc-role="dev"].is-active { --role-accent:#4bd882; }
     .sc-task-view details[data-sc-role="cr"].is-active { --role-accent:#e9c85c; }
     .sc-task-view details[data-sc-role="qa"].is-active { --role-accent:#ed7589; }
-    .sc-task-view details[data-sc-role].is-active { border-color:var(--role-accent); background:var(--panel-active); animation:sc-running-pulse 1.6s ease-in-out infinite; }
+    .sc-task-view details[data-sc-role].is-active { border-color:var(--role-accent); background:var(--panel-active); animation:sc-running-pulse var(--motion-period) ease-in-out infinite; }
     .sc-task-view details[data-sc-role].is-active > * { position:relative; z-index:1; }
     .sc-task-view details[data-sc-role] > summary { position:relative; }
     /* The right column leaves .3 card widths before the preview; summary excludes two 1px borders. */
     .sc-task-view__preview-link { position:absolute; left:calc(100% + 1px); top:50%; width:calc(12px + 30% + .6px); height:1px; background:var(--focus); box-shadow:0 0 4px color-mix(in srgb,var(--focus) 45%,transparent); pointer-events:none; }
-    .sc-task-view__preview-link:not([hidden])::before { content:""; position:absolute; top:-1px; left:0; width:25%; height:3px; border-radius:2px; background:linear-gradient(to right,transparent,var(--focus) 35%,#fff 55%,transparent); box-shadow:0 0 6px 1px color-mix(in srgb,var(--focus) 55%,transparent); opacity:0; animation:sc-preview-flow 1.4s linear infinite; }
-    .sc-task-view__preview-link::after { content:""; position:absolute; right:0; top:-2px; border-top:2.5px solid transparent; border-bottom:2.5px solid transparent; border-left:3px solid var(--focus); }
+    .sc-task-view__preview-link:not([hidden])::before { content:""; position:absolute; top:-1px; left:0; width:25%; height:3px; border-radius:2px; background:linear-gradient(to right,transparent,var(--focus) 35%,#fff 55%,transparent); box-shadow:0 0 6px 1px color-mix(in srgb,var(--focus) 55%,transparent); opacity:0; animation:sc-preview-flow var(--motion-period) linear infinite; }
     .sc-task-view details[data-sc-role].is-handoff-receiving::after { content:""; position:absolute; inset:-1px; border:1px solid var(--focus); border-radius:inherit; pointer-events:none; animation:sc-handoff-receive 420ms ease-out 650ms 1 both; }
     .sc-task-view summary { display:flex; justify-content:space-between; gap:12px; padding:11px 12px; border-radius:5px; cursor:pointer; font-weight:700; list-style-position:inside; overflow-wrap:anywhere; transition:background-color 160ms ease; }
     .sc-task-view summary:hover { background:color-mix(in srgb,var(--focus) 7%,transparent); }
@@ -112,10 +116,11 @@
     @keyframes sc-status-shimmer { from { background-position:100% 0; } to { background-position:0% 0; } }
     @media (prefers-reduced-motion:no-preference) {
       @supports (background-clip:text) or (-webkit-background-clip:text) {
-        .sc-task-view .sc-task-view__preview-state.is-status-running { color:transparent; -webkit-text-fill-color:transparent; background-image:linear-gradient(100deg,var(--active) 38%,var(--focus) 47%,#fff 50%,var(--focus) 53%,var(--active) 62%); background-size:250% 100%; background-clip:text; -webkit-background-clip:text; animation:sc-status-shimmer 1.8s linear infinite; }
+        .sc-task-view .sc-task-view__preview-state.is-status-running { color:transparent; -webkit-text-fill-color:transparent; background-image:linear-gradient(100deg,var(--active) 38%,var(--focus) 47%,#fff 50%,var(--focus) 53%,var(--active) 62%); background-size:250% 100%; background-clip:text; -webkit-background-clip:text; animation:sc-status-shimmer var(--motion-period) linear infinite; }
       }
     }
     @media (max-width:560px) { .sc-task-view { padding:14px; } .sc-task-view__header { flex-direction:column; } .sc-task-view__project-mcps, .sc-task-view__header-controls { position:static; align-self:flex-start; max-width:100%; } .sc-task-view__header-controls { align-self:flex-end; } .sc-task-view summary { flex-direction:column; gap:3px; } .sc-task-view__project-mcps > summary { flex-direction:row; } .sc-task-view__role-state { text-align:left; } .sc-task-view__workspace { display:flex; flex-direction:column; gap:0; } .sc-task-view__role-lane, .sc-task-view__roles { width:100%; } .sc-task-view__connector { flex:none; height:24px; min-height:24px; } .sc-task-view__role-preview, .sc-task-view__preview-link { display:none; } .sc-task-view details[data-sc-role] > [data-sc-detail-body] { display:block; } }
+    @media (max-width:560px) { .sc-task-view.is-finished .sc-task-view__role-preview { display:grid; width:100%; margin-top:18px; } .sc-task-view.is-finished .sc-task-view__preview-summary, .sc-task-view.is-finished .sc-task-view__summary-title { display:block; } .sc-task-view.is-finished [data-sc-preview-role], .sc-task-view.is-finished .sc-task-view__preview-state, .sc-task-view.is-finished .sc-task-view__preview-body, .sc-task-view.is-finished .sc-task-view__preview-size { display:none; } }
     @media (prefers-reduced-motion:reduce) { .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { animation:none !important; transition:none !important; } }
   </style>
   <header class="sc-task-view__header">
@@ -138,17 +143,15 @@
     </article>
     <div class="sc-task-view__workspace" data-sc-workspace>
       <div class="sc-task-view__role-lane"><div class="sc-task-view__roles" data-sc-roles aria-label="REQ、DEV、CR、QA 顺序任务"></div></div>
-      <aside class="sc-task-view__role-preview" data-sc-role-preview aria-label="角色详情">
-        <div class="sc-task-view__preview-heading"><strong data-sc-preview-role>角色详情</strong><span class="sc-task-view__preview-state" data-sc-preview-state></span></div>
+      <aside class="sc-task-view__role-preview" data-sc-role-preview aria-label="任务信息">
+        <div class="sc-task-view__preview-heading"><strong><span data-sc-preview-role>角色详情</span><span class="sc-task-view__summary-title">任务总结</span></strong><span class="sc-task-view__preview-state" data-sc-preview-state></span></div>
         <div class="sc-task-view__preview-content">
           <div class="sc-task-view__preview-size" data-sc-preview-size inert aria-hidden="true"></div>
           <div class="sc-task-view__preview-body" data-sc-preview-body tabindex="-1"></div>
+          <div class="sc-task-view__preview-summary" data-sc-preview-summary></div>
         </div>
       </aside>
     </div>
-  </section>
-  <section class="sc-task-view__node sc-task-view__task-summary" aria-label="任务总结">
-    <h3>任务总结</h3><p data-sc-task-summary>暂无总结</p>
   </section>
   <script>
     "use strict";
@@ -209,17 +212,33 @@
         list.replaceChildren(...mcps.map(name=>{ const item=document.createElement("li"); item.textContent=name; return item; }));
       }
       function renderRootMetadata(root,work,selected) {
-        const selectedNode=root.querySelector("[data-sc-selected-roles]"),summaryNode=root.querySelector("[data-sc-task-summary]"),summary=optionalText(work.summary);
+        const selectedNode=root.querySelector("[data-sc-selected-roles]");
         selectedNode.textContent=selected.length?selected.map(role=>roleLabels[role]).join(" → "):"尚未选择";
         selectedNode.classList.toggle("sc-task-view__placeholder",!selected.length);
-        summaryNode.textContent=summary||"暂无总结";
-        summaryNode.classList.toggle("sc-task-view__placeholder",!summary);
-        root.__scTaskSummary=summary;
+        root.__scTaskSummary={
+          result:optionalText(work.summary),verified:stringList(work.verified_scope),
+          notes:[...stringList(work.unverified_scope).map(text=>`未验证：${text}`),...stringList(work.risks).map(text=>`风险：${text}`)],
+          next:Array.isArray(work.next_action)?stringList(work.next_action):optionalText(work.next_action)
+        };
       }
       function taskSummaryNode(root) {
-        const summary=document.createElement("p");
-        summary.textContent=root.__scTaskSummary||"暂无总结";
-        summary.classList.toggle("sc-task-view__placeholder",!root.__scTaskSummary);
+        const summary=document.createElement("div"),data=root.__scTaskSummary;
+        summary.className="sc-task-view__summary-content";
+        [["结果",data.result],["已验证",data.verified],["注意事项",data.notes],["下一步",data.next]].forEach(([label,value])=>{
+          if (!value.length) return;
+          const section=document.createElement("section"),heading=document.createElement("h4"),content=document.createElement(Array.isArray(value)?"ul":"p");
+          heading.textContent=label;
+          if (Array.isArray(value)) value.forEach(text=>{ const item=document.createElement("li"); item.textContent=text; content.append(item); });
+          else content.textContent=value;
+          section.append(heading,content);
+          summary.append(section);
+        });
+        if (!summary.childElementCount) {
+          const empty=document.createElement("p");
+          empty.className="sc-task-view__placeholder";
+          empty.textContent="暂无总结";
+          summary.append(empty);
+        }
         return summary;
       }
       function resolveActiveRole(details,state,selectedRoles) {
@@ -348,6 +367,7 @@
         const selector=focused?.closest("[data-sc-preview-subskill]")?`[data-sc-preview-subskill="${focused.closest("[data-sc-preview-subskill]").dataset.scPreviewSubskill}"]`:null;
         const focusIndex=selector?[...body.querySelectorAll(`${selector} > summary`)].indexOf(focused):-1;
         root.__scPreviewRole=role;
+        root.querySelector("[data-sc-role-preview]").classList.toggle("is-showing-summary",!role&&root.__scSummaryInPreview);
         root.querySelectorAll("[data-sc-preview-link]").forEach(link=>{ link.hidden=link.closest("[data-sc-role]").dataset.scRole!==role; });
         if (!preserveFocus&&body.contains(document.activeElement)) document.activeElement.blur();
         root.__scRolePreviewMotionCleanup?.();
@@ -357,7 +377,7 @@
             title.textContent="任务总结";
             status.textContent="";
             status.className="sc-task-view__preview-state";
-            replacePreviewBody(root,body,taskSummaryNode(root));
+            replacePreviewBody(root,body,document.createDocumentFragment());
             return;
           }
           title.textContent="角色详情";
@@ -402,7 +422,7 @@
           }
         };
         const onKeyDown=event=>{
-          if (!preview.checkVisibility({visibilityProperty:true})) return;
+          if (!preview.checkVisibility({visibilityProperty:true})||!root.querySelector("[data-sc-preview-body]").checkVisibility({visibilityProperty:true})) return;
           const card=event.target.closest?.("[data-sc-role]"),summary=card?.querySelector(":scope > summary");
           const controls=()=>[...preview.querySelectorAll("summary,button,a[href],input,select,textarea,[tabindex]")].filter(node=>node.tabIndex>=0&&node.checkVisibility({visibilityProperty:true}));
           if (event.target===summary&&(event.key==="ArrowRight"||(event.key==="Tab"&&!event.shiftKey))) {
@@ -456,6 +476,7 @@
         node.append(summary);
         body.className="sc-task-view__detail";
         body.dataset.scDetailBody="";
+        if (detail.status==="pending") { node.append(body); return node; }
         renderRoleMetrics(body,detail.metrics,detail.status);
         detailField(body,"摘要",detail.summary);
         detailField(body,"必要证据",detail.evidence);
@@ -562,7 +583,9 @@
         root.__scSelectedRoles=selectedRoles;
         root.__scResolvedActiveRole=activeRole;
         root.__scSummaryInPreview=finishedStatuses.has(normalizedStatus(state))&&!selectedRoles.some(role=>asObject(details[role]).status==="running");
-        root.querySelector(".sc-task-view__task-summary").classList.toggle("is-preview-summary",root.__scSummaryInPreview);
+        const view=root.matches(".sc-task-view")?root:root.querySelector(".sc-task-view");
+        view.classList.toggle("is-finished",root.__scSummaryInPreview);
+        root.querySelector("[data-sc-preview-summary]").replaceChildren(...(root.__scSummaryInPreview?[taskSummaryNode(root)]:[]));
         bindRolePreview(root);
         renderRoles(root,details,activeRole,openRole,selectedRoles,sameView);
         renderPreviewSize(root);
