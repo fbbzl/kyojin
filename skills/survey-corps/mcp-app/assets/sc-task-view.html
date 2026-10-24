@@ -4,23 +4,23 @@
 -->
 <section class="sc-task-view" aria-label="SC 任务流程">
   <style>
-    .sc-task-view { --bg:#080b10; --panel:#0d1219; --panel-active:#101923; --line:#4b5869; --text:#e8edf3; --muted:#9ba8b8; --focus:#b9e2ff; --pending:#95a3b5; --active:#46b8ee; --completed:#27c9b0; --ok:#4bd882; --warn:#e9c85c; --revision:#ec9b4f; --danger:#ed7589; --unknown:#fff; --motion-period:1.8s; box-sizing:border-box; width:min(680px,100%); margin:0 auto; padding:20px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font:13px/1.6 "Segoe UI Variable","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif; }
+    .sc-task-view { --bg:#080b10; --panel:#0d1219; --panel-active:#101923; --line:#4b5869; --text:#e8edf3; --muted:#9ba8b8; --focus:#b9e2ff; --pending:#95a3b5; --active:#46b8ee; --completed:#27c9b0; --ok:#4bd882; --warn:#e9c85c; --revision:#ec9b4f; --danger:#ed7589; --unknown:#fff; --motion-period:1.8s; box-sizing:border-box; width:min(680px,100%); margin:0 auto; padding:20px; border:2px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font:13px/1.6 "Segoe UI Variable","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif; }
     .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { box-sizing:inherit; }
     .sc-task-view h3, .sc-task-view p { margin:0; }
     .sc-task-view h3 { margin-top:10px; color:var(--muted); font-size:11px; text-transform:uppercase; }
-    .sc-task-view__header { position:relative; display:flex; justify-content:center; align-items:center; min-height:34px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+    .sc-task-view__header { position:relative; display:flex; justify-content:center; align-items:center; min-height:34px; padding-bottom:14px; border-bottom:2px solid var(--line); }
     .sc-task-view__project-mcps { position:absolute; left:0; top:0; max-width:min(48%,260px); border:0; background:transparent; }
     .sc-task-view__project-mcps > summary { display:flex; align-items:center; gap:6px; padding:5px 0; color:var(--muted); font-weight:400; }
     .sc-task-view__project-mcps > summary:hover { color:var(--focus); }
     .sc-task-view__project-mcp-count { color:var(--text); }
-    .sc-task-view__project-mcp-list { display:grid; gap:4px; margin:4px 0 0; padding:8px 10px; border:1px solid var(--line); background:var(--panel); list-style:none; }
+    .sc-task-view__project-mcp-list { display:grid; gap:4px; margin:4px 0 0; padding:8px 10px; border:2px solid var(--line); background:var(--panel); list-style:none; }
     .sc-task-view__project-mcp-list li { overflow-wrap:anywhere; }
     .sc-task-view__header-controls { position:absolute; right:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
     .sc-task-view__muted { color:var(--muted); }
-    .sc-task-view__status { justify-self:end; max-width:100%; padding:4px 10px; border:1px solid var(--line); border-radius:6px; color:var(--muted); font-size:18px; font-weight:700; text-align:center; overflow-wrap:anywhere; }
+    .sc-task-view__status { justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:18px; font-weight:700; text-align:center; overflow-wrap:anywhere; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
-    .sc-task-view__node { min-width:0; border:1px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
-    .sc-task-view__root { padding:14px; border-width:3px; }
+    .sc-task-view__node { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
+    .sc-task-view__root { padding:14px; border-width:2px; }
     .sc-task-view__root { text-align:center; }
     .sc-task-view__target { margin-top:4px !important; overflow-wrap:anywhere; font-size:16px; font-weight:700; }
     .sc-task-view__metadata { display:grid; grid-template-columns:6em minmax(0,1fr); align-items:baseline; column-gap:12px; row-gap:6px; width:min(100%,560px); margin:12px auto 0; text-align:left; }
@@ -37,17 +37,17 @@
     .sc-task-view__summary-content ul { padding-left:18px; }
     .sc-task-view [hidden] { display:none !important; }
     .sc-task-view__connector { position:relative; flex:1 0 36px; width:12px; min-height:36px; margin:0 auto; color:var(--muted); transform-origin:top; }
-    .sc-task-view__connector::before { content:""; position:absolute; top:0; left:50%; width:1.5px; height:calc(100% - 9px); transform:translateX(-50%); background:currentColor; box-shadow:0 0 4px color-mix(in srgb,currentColor 35%,transparent); }
+    .sc-task-view__connector::before { content:""; position:absolute; top:0; left:50%; width:2px; height:calc(100% - 9px); transform:translateX(-50%); background:currentColor; box-shadow:0 0 4px color-mix(in srgb,currentColor 35%,transparent); }
     .sc-task-view__connector::after { content:""; position:absolute; left:50%; bottom:3px; width:0; height:0; transform:translateX(-50%); border-left:4px solid transparent; border-right:4px solid transparent; border-top:7px solid currentColor; }
     .sc-task-view__connector.is-handoff-flow { color:var(--active); }
-    .sc-task-view__connector.is-handoff-flow::before { width:4px; background-color:currentColor; background-image:linear-gradient(transparent 30%,var(--focus) 48%,transparent 66%); background-size:100% 300%; animation:sc-handoff-flow 650ms ease-in-out 1 both; }
+    .sc-task-view__connector.is-handoff-flow::before { background-color:currentColor; background-image:linear-gradient(transparent 30%,var(--focus) 48%,transparent 66%); background-size:100% 300%; animation:sc-handoff-flow 650ms ease-in-out 1 both; }
     .sc-task-view__connector.is-handoff-reverse::before { animation-direction:reverse; }
     .sc-task-view__connector.is-handoff-reverse::after { top:0; bottom:auto; border-top:0; border-bottom:7px solid currentColor; }
     .sc-task-view__workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,3fr); gap:12px; align-items:start; padding-top:20px; }
     .sc-task-view__role-lane { display:flex; align-self:stretch; min-width:0; }
     .sc-task-view__roles { display:flex; flex:1; flex-direction:column; align-items:stretch; }
-    .sc-task-view__role-preview { display:grid; grid-template-rows:auto 1fr; align-self:stretch; justify-self:end; width:90%; min-width:0; padding:14px; border:3px solid var(--line); border-radius:6px; background:var(--panel); }
-    .sc-task-view__preview-heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding-bottom:8px; border-bottom:1px solid #273241; }
+    .sc-task-view__role-preview { display:grid; grid-template-rows:auto 1fr; align-self:stretch; justify-self:end; width:90%; min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
+    .sc-task-view__preview-heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding-bottom:8px; border-bottom:2px solid #273241; }
     .sc-task-view__preview-identity { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; min-width:0; }
     .sc-task-view__preview-identity .sc-task-view__role-metrics { margin:0; font-weight:400; }
     .sc-task-view__preview-state { color:var(--muted); text-align:right; }
@@ -60,11 +60,11 @@
     .sc-task-view__preview-summary { grid-area:1/1; align-self:start; min-width:0; padding-top:10px; }
     .sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-summary { display:block; }
     .sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-body { display:none; }
-    .sc-task-view__preview-body:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+    .sc-task-view__preview-body:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
     .sc-task-view__preview-empty { color:var(--muted); }
-    .sc-task-view details { min-width:0; border:1px solid var(--line); border-radius:6px; background:var(--panel); transition:border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease; }
+    .sc-task-view details { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease; }
     .sc-task-view details[data-sc-role]:hover { box-shadow:0 3px 12px color-mix(in srgb,#000 28%,transparent); }
-    .sc-task-view details[data-sc-role] { position:relative; width:100%; border-width:3px; border-color:var(--line); }
+    .sc-task-view details[data-sc-role] { position:relative; width:100%; border-width:2px; border-color:var(--line); }
     .sc-task-view details[data-sc-role] > [data-sc-detail-body] { display:none; }
     .sc-task-view details[data-sc-role="req"].is-active { --role-accent:#bd9bea; }
     .sc-task-view details[data-sc-role="dev"].is-active { --role-accent:#4bd882; }
@@ -73,15 +73,15 @@
     .sc-task-view details[data-sc-role].is-active { border-color:var(--role-accent); background:var(--panel-active); animation:sc-running-pulse var(--motion-period) ease-in-out infinite; }
     .sc-task-view details[data-sc-role].is-active > * { position:relative; z-index:1; }
     .sc-task-view details[data-sc-role] > summary { position:relative; }
-    /* The right column leaves .3 card widths before the preview; summary excludes two 3px borders. */
-    .sc-task-view__preview-link { position:absolute; left:calc(100% + 3px); top:50%; width:calc(12px + 30% + 1.8px); height:1px; background:var(--focus); box-shadow:0 0 4px color-mix(in srgb,var(--focus) 45%,transparent); pointer-events:none; }
-    .sc-task-view__preview-link:not([hidden])::before { content:""; position:absolute; top:-1px; left:0; width:25%; height:3px; border-radius:2px; background:linear-gradient(to right,transparent,var(--focus) 35%,#fff 55%,transparent); box-shadow:0 0 6px 1px color-mix(in srgb,var(--focus) 55%,transparent); opacity:0; animation:sc-preview-flow var(--motion-period) linear infinite; }
-    .sc-task-view details[data-sc-role].is-handoff-receiving::after { content:""; position:absolute; inset:-3px; border:3px solid var(--focus); border-radius:inherit; pointer-events:none; animation:sc-handoff-receive 420ms ease-out 650ms 1 both; }
+    /* The right column leaves .3 card widths before the preview; summary excludes two 2px borders. */
+    .sc-task-view__preview-link { position:absolute; left:calc(100% + 2px); top:50%; width:calc(12px + 30% + 1.2px); height:2px; background:var(--focus); box-shadow:0 0 4px color-mix(in srgb,var(--focus) 45%,transparent); pointer-events:none; }
+    .sc-task-view__preview-link:not([hidden])::before { content:""; position:absolute; top:-.5px; left:0; width:25%; height:3px; border-radius:2px; background:linear-gradient(to right,transparent,var(--focus) 35%,#fff 55%,transparent); box-shadow:0 0 6px 1px color-mix(in srgb,var(--focus) 55%,transparent); opacity:0; animation:sc-preview-flow var(--motion-period) linear infinite; }
+    .sc-task-view details[data-sc-role].is-handoff-receiving::after { content:""; position:absolute; inset:-2px; border:2px solid var(--focus); border-radius:inherit; pointer-events:none; animation:sc-handoff-receive 420ms ease-out 650ms 1 both; }
     .sc-task-view summary { display:flex; justify-content:space-between; gap:12px; padding:11px 12px; border-radius:5px; cursor:pointer; font-weight:700; list-style-position:inside; overflow-wrap:anywhere; transition:background-color 160ms ease; }
     .sc-task-view summary:hover { background:color-mix(in srgb,var(--focus) 7%,transparent); }
-    .sc-task-view summary:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+    .sc-task-view summary:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
     .sc-task-view details[data-sc-role] > summary { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr); align-items:stretch; gap:0; min-height:calc(3.2em + 18px); padding:5px 3px; text-align:center; }
-    .sc-task-view details[data-sc-role] .sc-task-view__role-name { justify-content:center; align-items:center; padding-right:6px; border-right:1px solid var(--line); }
+    .sc-task-view details[data-sc-role] .sc-task-view__role-name { justify-content:center; align-items:center; padding-right:6px; border-right:2px solid var(--line); }
     .sc-task-view__role-progress { display:grid; align-content:center; gap:3px; min-width:0; padding-left:6px; }
     .sc-task-view details[data-sc-role] > summary .sc-task-view__role-state { min-width:0; max-width:100%; text-align:center; white-space:normal; }
     .sc-task-view__role-subskill { min-width:0; color:var(--muted); font-size:11px; font-weight:400; overflow-wrap:anywhere; }
@@ -95,21 +95,21 @@
     .sc-task-view .sc-task-view__state--revision { color:var(--revision); }
     .sc-task-view .sc-task-view__state--unknown { color:var(--unknown); }
     .sc-task-view .sc-task-view__placeholder { color:#fff; }
-    .sc-task-view__detail { padding:0 12px 12px; border-top:1px solid #273241; }
+    .sc-task-view__detail { padding:0 12px 12px; border-top:2px solid #273241; }
     .sc-task-view__detail-content:empty { min-height:1.6em; min-height:1lh; }
     .sc-task-view [data-sc-detail-body].is-detail-revealing { animation:sc-detail-reveal 180ms ease-out 1; }
     .sc-task-view [data-sc-preview-body].is-detail-revealing { animation:sc-preview-reveal 180ms ease-out 1; }
     .sc-task-view__detail ul { margin:5px 0 0; padding-left:18px; }
     .sc-task-view__detail li, .sc-task-view__detail p { overflow-wrap:anywhere; }
     .sc-task-view__empty { color:#fff; font-style:italic; }
-    .sc-task-view details.sc-task-view__subskill, .sc-task-view .sc-task-view__size-subskill { margin-top:6px; border:0; border-top:1px solid #273241; background:transparent; }
+    .sc-task-view details.sc-task-view__subskill, .sc-task-view .sc-task-view__size-subskill { margin-top:6px; border:0; border-top:2px solid #273241; background:transparent; }
     .sc-task-view__subskill summary, .sc-task-view__size-subskill summary { padding:7px 0; font-weight:400; }
     .sc-task-view__subskill summary > span:first-child, .sc-task-view__size-subskill summary > span:first-child { min-width:0; }
     .sc-task-view__subskill > div, .sc-task-view__size-subskill > div { padding:0 0 6px; }
     .sc-task-view__subskill [data-sc-subskill-reply-hint] { margin-top:6px; }
-    .sc-task-view__play { padding:5px 9px; border:1px solid var(--line); border-radius:5px; background:var(--panel); color:var(--text); font:inherit; cursor:pointer; transition:background-color 160ms ease; }
+    .sc-task-view__play { padding:5px 9px; border:2px solid var(--line); border-radius:5px; background:var(--panel); color:var(--text); font:inherit; cursor:pointer; transition:background-color 160ms ease; }
     .sc-task-view__play:hover { border-color:var(--focus); color:var(--focus); }
-    .sc-task-view__play:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+    .sc-task-view__play:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
     .sc-task-view details.sc-task-view__node.is-manual-replay { animation:sc-manual-role 1.1s ease-in-out 2; }
     @keyframes sc-manual-role { 0%,100% { box-shadow:0 0 0 0 transparent; } 50% { box-shadow:0 0 0 6px color-mix(in srgb,var(--focus) 32%,transparent); } }
     @keyframes sc-running-pulse { 0%,100% { box-shadow:0 0 0 1px color-mix(in srgb,var(--role-accent) 26%,transparent),0 0 8px color-mix(in srgb,var(--role-accent) 18%,transparent); } 50% { box-shadow:0 0 0 5px color-mix(in srgb,var(--role-accent) 52%,transparent),0 0 26px color-mix(in srgb,var(--role-accent) 38%,transparent); } }

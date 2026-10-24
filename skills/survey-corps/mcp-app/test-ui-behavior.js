@@ -240,7 +240,7 @@ try {
   assert.equal(result.defaults.connectorGeometry.length, 3, "only transitions between role cards must have connectors");
   assert.ok(result.defaults.connectorGeometry.every(({before,after,headTop})=>before!=="none"&&after!=="none"&&parseFloat(headTop)>0), "connectors must expose a visible stem and solid downward arrowhead in the browser");
   const {connectorGeometry,...defaultValues}=result.defaults;
-  assert.deepEqual(defaultValues, { summary: "", summaryDom:0, bottomSummary:0, selected: "REQ → DEV → CR → QA", contextRemoved: true, namesRemoved: true, projectMcpsHidden: true, debugHidden: true, autoMotion: false, frameBorders:{context:"3px",preview:"3px",role:"3px",roleDivider:"1px",previewDivider:"1px"} }, "task context and both task information frames must use 3px borders while internal dividers remain 1px");
+  assert.deepEqual(defaultValues, { summary: "", summaryDom:0, bottomSummary:0, selected: "REQ → DEV → CR → QA", contextRemoved: true, namesRemoved: true, projectMcpsHidden: true, debugHidden: true, autoMotion: false, frameBorders:{context:"2px",preview:"2px",role:"2px",roleDivider:"2px",previewDivider:"2px"} }, "task context and both task information frames and their internal dividers must use 2px borders");
   assert.deepEqual(result.debugTrue, { hidden: false, replay: true }, "strict debug true must expose and enable replay");
   for (const mode of [result.debugString, result.debugDefault, result.debugFalse, result.debugInSnapshot]) assert.deepEqual(mode, { hidden: true, replay: false }, "only options.debug true may enable replay; nondebug programmatic clicks must not replay");
   assert.equal(result.provided.headerText.includes("SURVEY CORPS"), false, "header must omit the removed metadata row");
@@ -335,7 +335,7 @@ try {
     assert.deepEqual(observed.connectors.map(item=>item.next),["dev","cr","qa"],"downward connectors must connect adjacent roles and omit the task-context arrow");
     for(const item of observed.connectors) {
       assert.ok(item.width>=8&&item.height>=22,"arrowheads must fit inside visible connectors");
-      assert.equal(item.stemWidth,"1.5px");assert.ok(parseFloat(item.stemHeight)>0);
+      assert.equal(item.stemWidth,"2px");assert.ok(parseFloat(item.stemHeight)>0);
       assert.equal(item.left,"4px");assert.equal(item.right,"4px");assert.equal(item.top,"7px");assert.equal(item.bottom,"0px");
       assert.equal(item.topColor,item.color);assert.equal(item.leftColor,"rgba(0, 0, 0, 0)");assert.equal(item.rightColor,"rgba(0, 0, 0, 0)");
       assert.equal(item.headTransform,"matrix(1, 0, 0, 1, -4, 0)","the larger solid arrowhead must remain centered on its vertical stem without rotation");

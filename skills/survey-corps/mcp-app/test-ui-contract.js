@@ -115,7 +115,7 @@ assert.match(appTemplate, /function cloneRoleDetail\(source,preview=false\)/, "r
 assert.match(appTemplate, /renderPreviewSize\(root\)[\s\S]*?cloneRoleDetail\(source\)/, "size reserve copies must use the shared clone helper without preview markers");
 assert.match(appTemplate, /cloneRoleDetail\(source,true\)/, "preview copies must use the shared clone helper with preview markers");
 assert.match(appTemplate, /if \(\(attribute\.name\.startsWith\("data-sc-"\)&&!retained\.includes\(attribute\.name\)\)\|\|\(!preview&&attribute\.name==="id"\)\) node\.removeAttribute\(attribute\.name\)/, "detail copies must remove source markers and ids while retaining only preview identity markers");
-assert.match(appTemplate, /sc-task-view__preview-link \{[^}]*height:1px; background:var\(--focus\); box-shadow:0 0 4px/, "the preview owner must connect to the detail with a thin softly highlighted line");
+assert.match(appTemplate, /sc-task-view__preview-link \{[^}]*height:2px; background:var\(--focus\); box-shadow:0 0 4px/, "the preview owner must connect to the detail with a thin softly highlighted line");
 assert.doesNotMatch(appTemplate, /sc-task-view__preview-link::after/, "the horizontal ownership line must have no arrowhead");
 assert.match(appTemplate, /link\.hidden=link\.closest\("\[data-sc-role\]"\)\.dataset\.scRole!==role/, "the horizontal link must follow the preview owner");
 assert.doesNotMatch(appTemplate, /details\[data-sc-role\]:hover \{[^}]*transform:/, "role hover must not move its hit target");
