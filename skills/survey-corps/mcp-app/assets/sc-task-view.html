@@ -106,7 +106,7 @@
     .sc-task-view__play:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
     .sc-task-view details.sc-task-view__node.is-manual-replay { animation:sc-manual-role 1.1s ease-in-out 2; }
     @keyframes sc-manual-role { 0%,100% { box-shadow:0 0 0 0 transparent; } 50% { box-shadow:0 0 0 6px color-mix(in srgb,var(--focus) 32%,transparent); } }
-    @keyframes sc-running-pulse { 0%,100% { box-shadow:0 0 0 1px color-mix(in srgb,var(--role-accent) 26%,transparent),0 0 8px color-mix(in srgb,var(--role-accent) 18%,transparent); } 50% { box-shadow:0 0 0 5px color-mix(in srgb,var(--role-accent) 52%,transparent),0 0 26px color-mix(in srgb,var(--role-accent) 38%,transparent); } }
+    @keyframes sc-running-pulse { 0%,100% { background-color:color-mix(in srgb,var(--role-accent) 3%,var(--panel-active)); box-shadow:0 0 0 1px color-mix(in srgb,var(--role-accent) 26%,transparent),0 0 8px color-mix(in srgb,var(--role-accent) 18%,transparent); } 50% { background-color:color-mix(in srgb,var(--role-accent) 8%,var(--panel-active)); box-shadow:0 0 0 5px color-mix(in srgb,var(--role-accent) 52%,transparent),0 0 26px color-mix(in srgb,var(--role-accent) 38%,transparent); } }
     @keyframes sc-handoff-flow { 0% { background-position:50% 100%; opacity:.5; } 35%,65% { opacity:1; } 100% { background-position:50% 0%; opacity:.5; } }
     @keyframes sc-handoff-receive { 0% { opacity:0; box-shadow:0 0 0 transparent; } 25% { opacity:1; box-shadow:0 0 18px color-mix(in srgb,var(--focus) 55%,transparent); } 100% { opacity:0; box-shadow:0 0 0 transparent; } }
     @keyframes sc-detail-reveal { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
@@ -259,17 +259,20 @@
       }
       const subskillNames={req:["align-with-visuals","grill-with-docs"],dev:["tech-select","refactor-with-goal","bug-fix","bug-cause","optimize"],cr:["review-with-goal"],qa:["test-with-goal"]};
       const stringList=value=>Array.isArray(value)?value.map(optionalText).filter(Boolean):[];
-      function selectRoleSubskill(role,value,active) {
-        if (!Array.isArray(value)) return null;
-        let last=null,running=null;
+      function selectRoleSubskills(role,value,active) {
+        if (!Array.isArray(value)) return [];
+        const skills=new Map();
+        let running=null;
         for (const input of value) {
           const item=asObject(input),name=optionalText(item.name);
           if (!subskillNames[role].includes(name)) continue;
           if (!["goal","summary","question","result"].some(field=>optionalText(item[field]))&&!stringList(item.evidence).length) continue;
-          last={name,running:active&&item.status==="running"};
-          if (last.running) running=last;
+          const skill=skills.get(name)||{name,running:false};
+          skills.set(name,skill);
+          if (active&&item.status==="running") running=skill;
         }
-        return running||last;
+        if (running) running.running=true;
+        return [...skills.values()];
       }
       function previewRoleFor(root) {
         const selected=root.__scSelectedRoles||[];
@@ -387,9 +390,14 @@
           elapsed.append(value);
           progress.append(elapsed);
         }
-        const skill=document.createElement("span");
-        skill.className="sc-task-view__role-subskill";
-        progress.append(skill);
+        const skills=detail.status==="pending"?[]:selectRoleSubskills(role,detail.subskills,active);
+        for (const selectedSkill of skills.length?skills:[null]) {
+          const skill=document.createElement("span");
+          skill.className="sc-task-view__role-subskill";
+          skill.title=skill.textContent=selectedSkill?.name||"";
+          skill.classList.toggle("is-status-running",selectedSkill?.running===true);
+          progress.append(skill);
+        }
         summary.append(name,progress,link);
         node.append(summary);
         body.className="sc-task-view__detail";
@@ -398,9 +406,6 @@
         detailField(body,"摘要",detail.summary);
         detailField(body,"必要证据",detail.evidence);
         detailField(body,"风险",detail.risks);
-        const selectedSkill=selectRoleSubskill(role,detail.subskills,active);
-        skill.title=skill.textContent=selectedSkill?.name||"";
-        skill.classList.toggle("is-status-running",selectedSkill?.running===true);
         node.append(body);
         return node;
       }

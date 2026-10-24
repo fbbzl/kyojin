@@ -17,7 +17,9 @@ assert.match(appTemplate, /role-subskill\.is-status-running \{ background-image:
 assert.match(appTemplate, /role-state\.is-status-running,[^}]*background-image:linear-gradient\(100deg,var\(--active\) 38%,var\(--focus\) 47%,#fff 50%,var\(--focus\) 53%,var\(--active\) 62%\)/, "running status retains its original blue gradient");
 assert.doesNotMatch(appTemplate, /sc-task-view__preview-link::after/, "the horizontal ownership line must have no arrowhead");
 assert.match(appTemplate, /@keyframes sc-running-pulse \{[^}]*box-shadow:0 0 0 1px[^}]*/s, "the active role pulse must retain a visible resting glow");
-assert.match(appTemplate, /50% \{ box-shadow:0 0 0 5px[^}]*0 0 26px/s, "the active role pulse must reach a pronounced card glow");
+assert.match(appTemplate, /50% \{[^}]*box-shadow:0 0 0 5px[^}]*0 0 26px/s, "the active role pulse must reach a pronounced card glow");
+assert.match(appTemplate, /@keyframes sc-running-pulse \{ 0%,100% \{ background-color:color-mix\(in srgb,var\(--role-accent\) 3%,var\(--panel-active\)\)/, "the low card-fill frame uses a restrained three-percent character accent");
+assert.match(appTemplate, /50% \{ background-color:color-mix\(in srgb,var\(--role-accent\) 8%,var\(--panel-active\)\)/, "the high card-fill frame remains substantially weaker than the role border");
 assert.doesNotMatch(appTemplate, /sc-thinking-border|details\[data-sc-role\]\.is-active::before/, "role cards must not render a rotating geometric border effect");
 assert.doesNotMatch(appTemplate, /details\[data-sc-role\]::before[^}]*animation:/, "idle roles must not animate");
 assert.match(appTemplate, /details\.sc-task-view__node\.is-manual-replay \{[^}]*animation:sc-manual-role/, "debug replay must be scoped to a role card");

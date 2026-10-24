@@ -93,9 +93,12 @@ assert.match(appTemplate, /detailField\(body,"摘要".*detailField\(body,"必要
 assert.doesNotMatch(appTemplate, /detailField\(body,"下一步"/, "role details must omit the next-action field on desktop and narrow screens");
 assert.doesNotMatch(appTemplate, /\["下一步",data\.next\]|next:stringList\(work\.next_action\)/, "task summaries must omit the complete next-action section and its presentation data");
 assert.match(appTemplate, /\[\["结果",data\.result\],\["已验证",data\.verified\],\["注意事项",data\.notes\]\]/, "task summaries retain result, verified scope and notes");
-assert.match(appTemplate, /\.sc-task-view__role-subskill \{[^}]*min-height:1\.6em;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/, "role cards reserve a single clipped subskill-name line");
-assert.match(appTemplate, /function selectRoleSubskill\(role,value,active\)/, "left-card subskill selection stays independent of detail DOM");
-assert.match(appTemplate, /skill\.title=skill\.textContent=selectedSkill\?\.name\|\|""/, "the selected subskill name exposes its full value in a tooltip");
+assert.match(appTemplate, /\.sc-task-view__role-subskill \{[^}]*min-height:1\.6em;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/, "each subskill name retains a clipped single-line row");
+assert.match(appTemplate, /function selectRoleSubskills\(role,value,active\)/, "left-card subskill lists stay independent of detail DOM");
+assert.match(appTemplate, /skill\.title=skill\.textContent=selectedSkill\?\.name\|\|""/, "each subskill name exposes its full value in a tooltip");
+assert.match(appTemplate, /for \(const selectedSkill of skills\.length\?skills:\[null\]\)/, "unique valid names render in order with one blank row only when no records exist");
+assert.match(appTemplate, /const skills=new Map\(\)/, "name deduplication preserves first valid occurrence order");
+assert.match(appTemplate, /if \(running\) running\.running=true;\s*return \[\.\.\.skills\.values\(\)\];/, "the last eligible running record marks its one displayed name");
 assert.doesNotMatch(appTemplate, /data-sc-field="resume_state"|data-sc-state-reference|复验入口/, "minimal UI must not render the state machine or resume_state");
 assertSkillMatch(/不展示状态机、状态参考集、复验入口或 `resume_state`/, "skill must keep resume_state authoritative but out of the UI");
 assertSkillDoesNotMatch(/needs_revalidation` 时必须展示 `resume_state`/, "skill must not require resume_state rendering");
