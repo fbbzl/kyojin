@@ -98,67 +98,39 @@ const omitted = observe(first, snapshot(undefined, { handoffs: undefined }));
 assert.equal(observe(omitted, snapshot([handoff(), handoff("h2")])).event, null, "returning from an omitted history establishes a new static baseline");
 assert.equal(observe(empty, snapshot([handoff()], { view_id: "" })).event, null);
 
-function node(dataset = {}, classes = [], bounds = { left: 0, top: 0, width: 180, height: 60 }) {
-  const target = new EventTarget(), values = new Set(), attributes = new Map();
-  target.dataset = dataset; target.offsetWidth = 12; target.children = []; target.isConnected = true;
+function node(dataset = {}, classes = []) {
+  const target = new EventTarget(), values = new Set(classes);
+  target.dataset = dataset;
+  target.offsetWidth = 12;
   target.classList = { add: name => values.add(name), remove: name => values.delete(name), contains: name => values.has(name), toggle: (name, enabled) => enabled ? values.add(name) : values.delete(name) };
-  classes.forEach(name => target.classList.add(name));
-  target.setAttribute = (name, value) => attributes.set(name, String(value));
-  target.getAttribute = name => attributes.get(name) ?? null;
-  target.getBoundingClientRect = () => bounds;
-  target.append = child => { target.children.push(child); child.parentNode = target; };
-  target.remove = () => { if (target.parentNode) target.parentNode.children.splice(target.parentNode.children.indexOf(target), 1); target.parentNode = null; };
   return target;
 }
-const observers = [];
-context.document = { createElementNS: (_namespace, tag) => Object.assign(node(), { tagName: tag }) };
-context.ResizeObserver = class {
-  constructor(callback) { this.callback = callback; this.targets = new Set(); this.disconnected = false; observers.push(this); }
-  observe(target) { this.targets.add(target); }
-  disconnect() { this.disconnected = true; this.targets.clear(); }
-};
 const connector = node({ scConnectorFrom: "dev", scConnectorTo: "cr" });
-const receiver = node({}, ["is-active"], { left: 0, top: 100, width: 180, height: 80 });
-const source = node({}, [], { left: 0, top: 230, width: 180, height: 60 });
-const lane = node({}, [], { left: 0, top: 100, width: 180, height: 500 });
-const root = { querySelectorAll: () => [connector], querySelector: selector => selector === ".sc-task-view__role-lane" ? lane : selector.includes('"dev"') ? receiver : source };
-const currentReturn = () => lane.children[0], currentLight = () => currentReturn()?.children[1];
-function assertReturn() {
-  assert.equal(connector.classList.contains("is-handoff-flow"), false, "return must not animate the down arrow");
-  assert.equal(lane.children.length, 1); assert.equal(currentReturn().getAttribute("aria-hidden"), "true");
-  assert.equal(currentReturn().getAttribute("focusable"), "false");
-  assert.equal(currentLight().getAttribute("pathLength"), "100");
-  assert.equal(currentLight().getAttribute("d"), currentReturn().children[0].getAttribute("d"));
-  assert.equal(currentLight().classList.contains("is-handoff-return-flow"), true);
-  assert.equal(receiver.classList.contains("is-handoff-receiving"), true);
-  assert.equal(observers.at(-1).targets.size, 3, "only the lane and two participant cards are observed");
-}
-animateHandoff(root, reverse.event); assertReturn();
-const firstObserver = observers.at(-1); currentLight().dispatchEvent(new Event("animationend"));
-assert.equal(lane.children.length, 0); assert.equal(firstObserver.disconnected, true);
+const receiver = node({}, ["is-active"]);
+const root = { querySelectorAll: () => [connector], querySelector: () => receiver };
+animateHandoff(root, reverse.event);
+assert.ok(connector.classList.contains("is-handoff-flow"));
+assert.ok(connector.classList.contains("is-handoff-reverse"));
+assert.ok(receiver.classList.contains("is-handoff-receiving"));
+connector.dispatchEvent(new Event("animationend"));
+assert.ok(!connector.classList.contains("is-handoff-flow"));
+assert.ok(!connector.classList.contains("is-handoff-reverse"), "reverse arrow must reset when flow ends");
 receiver.dispatchEvent(new Event("animationend"));
-assert.equal(receiver.classList.contains("is-handoff-receiving"), false);
-assert.equal(receiver.classList.contains("is-active"), true, "receiver retains its running pulse after finite feedback");
-animateHandoff(root, reverse.event); assertReturn();
-const cancelledObserver = observers.at(-1); currentLight().dispatchEvent(new Event("animationcancel"));
-assert.equal(lane.children.length, 0); assert.equal(cancelledObserver.disconnected, true);
-animateHandoff(root, reverse.event); const updatedObserver = observers.at(-1); animateHandoff(root, null);
-assert.equal(lane.children.length, 0); assert.equal(updatedObserver.disconnected, true);
-assert.equal(receiver.classList.contains("is-handoff-receiving"), false, "next snapshot clears receiver feedback");
-const observerCount = observers.length;
-animateHandoff(root, { from: "dev", to: "cr" });
-assert.equal(connector.classList.contains("is-handoff-flow"), true, "forward handoff retains its down-arrow animation");
-assert.equal(lane.children.length, 0); assert.equal(observers.length, observerCount);
+assert.ok(!receiver.classList.contains("is-handoff-receiving"));
+assert.ok(receiver.classList.contains("is-active"), "handoff feedback must preserve the running pulse");
+animateHandoff(root, reverse.event);
 connector.dispatchEvent(new Event("animationcancel"));
-assert.equal(connector.classList.contains("is-handoff-flow"), false);
+assert.ok(!connector.classList.contains("is-handoff-reverse"), "reverse arrow must also reset on cancellation");
+animateHandoff(root, reverse.event);
 animateHandoff(root, null);
+assert.ok(!connector.classList.contains("is-handoff-flow"));
+assert.ok(!receiver.classList.contains("is-handoff-receiving"), "the next snapshot must clean up transient effects");
 reduced = true;
 const reducedObservation = observe(empty, snapshot([handoff()]));
-animateHandoff(root, reducedObservation.event); animateHandoff(root, reverse.event);
-assert.equal(lane.children.length, 0); assert.equal(observers.length, observerCount);
-assert.equal(connector.classList.contains("is-handoff-flow"), false);
-assert.equal(receiver.classList.contains("is-handoff-receiving"), false);
+animateHandoff(root, reducedObservation.event);
+assert.ok(!connector.classList.contains("is-handoff-flow"));
+assert.ok(!receiver.classList.contains("is-handoff-receiving"));
 reduced = false;
-assert.equal(observe(reducedObservation, snapshot([handoff()])).event, null, "leaving reduced motion never backfills an accepted ID");
+assert.equal(observe(reducedObservation, snapshot([handoff()])).event, null, "leaving reduced motion must not replay the accepted ID");
 
-console.log("SC handoff observation and finite forward/return lifecycle checks passed.");
+console.log("SC handoff motion implementation units passed.");

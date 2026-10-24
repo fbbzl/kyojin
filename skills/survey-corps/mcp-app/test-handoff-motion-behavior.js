@@ -18,16 +18,7 @@ const page = path.join(temp, "test.html");
 const ownedChrome = new Set();
 
 // Requirement source: the accepted SC handoff contract; inspect DOM/CSS output rather than private observation state.
-// Observe the real native lifecycle; keep geometry and browser delivery unmocked.
-const instrumentedTemplate = template.replace("<script>", `<script>
-window.qaReturnObservers=[];
-const QaNativeResizeObserver=window.ResizeObserver;
-window.ResizeObserver=class extends QaNativeResizeObserver {
-  constructor(callback){const record={targets:[],callbacks:0,disconnected:false};super((entries,observer)=>{record.callbacks++;callback(entries,observer);});this.qaRecord=record;window.qaReturnObservers.push(record);}
-  observe(target,options){this.qaRecord.targets.push(target);super.observe(target,options);}
-  disconnect(){this.qaRecord.disconnected=true;super.disconnect();}
-};`);
-const harness = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main id="seed">${instrumentedTemplate}</main><script>
+const harness = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main id="seed">${template}</main><script>
 window.onerror=(message,source,line,column)=>document.body.dataset.scTestError=String(message)+' at '+line+':'+column;
 const seed=document.getElementById('seed'),pristine=seed.cloneNode(true),results={};
 let sequence=0;
@@ -36,17 +27,14 @@ const makeRoot=()=>{const root=pristine.cloneNode(true);root.id='case-'+(++seque
 const snapshot=(id='task')=>({view_id:'sc-task-view:'+id,state:'ready_for_cr',work_unit:{work_unit_id:id,roles:['req','dev','cr','qa']},role_details:{req:{status:'passed'},dev:{status:'passed'},cr:{status:'running'},qa:{status:'pending'}},handoffs:[]});
 const handoff=(id,from='dev',to='cr',unit='task')=>({handoff_id:id,from,to,work_unit_id:unit,handoff_result:'accepted'});
 const render=(root,value)=>window.renderSurveyCorpsTaskView(root,value);
-const marked=root=>({flows:root.querySelectorAll('.is-handoff-flow,.is-handoff-return-flow').length,receivers:[...root.querySelectorAll('.is-handoff-receiving')].map(node=>node.dataset.scRole),reverse:root.querySelectorAll('.sc-task-view__handoff-return').length});
-const observerState=root=>{const lane=root.querySelector('.sc-task-view__role-lane'),records=window.qaReturnObservers.filter(record=>record.targets.includes(lane));return {created:records.length,live:records.filter(record=>!record.disconnected).length,callbacks:records.reduce((sum,record)=>sum+record.callbacks,0),targetCounts:records.map(record=>record.targets.length)};};
-const returnGeometry=root=>{const svg=root.querySelector('.sc-task-view__handoff-return');if(!svg)return null;const path=svg.querySelector('.sc-task-view__handoff-return-line'),tip=svg.querySelector('.sc-task-view__handoff-return-tip'),source=root.querySelector('[data-sc-role=cr]').getBoundingClientRect(),target=root.querySelector('[data-sc-role=dev]').getBoundingClientRect(),bounds=path.getBBox(),point=(line,distance)=>{const p=line.getPointAtLength(distance).matrixTransform(line.getScreenCTM());return [p.x,p.y];};return {source:[source.left+source.width/2+12,source.top],target:[target.left+target.width/2+12,target.bottom],start:point(path,0),end:point(path,path.getTotalLength()),tip:point(tip,tip.getTotalLength()/2),outside:new DOMPoint(bounds.x+bounds.width,0).matrixTransform(path.getScreenCTM()).x,expectedOutside:Math.max(source.left+source.width/2,target.left+target.width/2)+26,path:path.getAttribute('d'),lane:svg.getAttribute('viewBox')};};
-const inspect=root=>{const connector=root.querySelector('.is-handoff-flow'),svg=root.querySelector('.sc-task-view__handoff-return'),light=svg?.querySelector('.sc-task-view__handoff-return-light'),line=svg?.querySelector('.sc-task-view__handoff-return-line'),receiver=root.querySelector('.is-handoff-receiving');const flow=light?getComputedStyle(light):connector&&getComputedStyle(connector,'::before'),head=connector&&getComputedStyle(connector,'::after'),receive=receiver&&getComputedStyle(receiver,'::after'),pathStyle=line&&getComputedStyle(line);return {...marked(root),from:svg?'cr':connector?.dataset.scConnectorFrom,to:svg?'dev':connector?.dataset.scConnectorTo,hidden:(svg||connector)?.getAttribute('aria-hidden'),flowAnimation:flow?.animationName,flowDuration:flow?.animationDuration,flowIterations:flow?.animationIterationCount,flowDirection:flow?.animationDirection,headTransform:head?.transform,headTop:head?.borderTopWidth,headBottom:head?.borderBottomWidth,headLeft:head?.borderLeftWidth,headRight:head?.borderRightWidth,headTopColor:head?.borderTopColor,headBottomColor:head?.borderBottomColor,headLeftColor:head?.borderLeftColor,headRightColor:head?.borderRightColor,color:(svg||connector)&&getComputedStyle(svg||connector).color,receiveAnimation:receive?.animationName,receiveDuration:receive?.animationDuration,receiveDelay:receive?.animationDelay,receiveIterations:receive?.animationIterationCount,receivePointerEvents:receive?.pointerEvents,activeAnimation:receiver&&getComputedStyle(receiver).animationName,geometry:returnGeometry(root),pathWidth:pathStyle?.strokeWidth,pathCap:pathStyle?.strokeLinecap,pathJoin:pathStyle?.strokeLinejoin,lineDash:pathStyle?.strokeDasharray,lightDash:light&&getComputedStyle(light).strokeDasharray,pathLength:light?.getAttribute('pathLength'),pointerEvents:svg&&getComputedStyle(svg).pointerEvents,focusable:svg?.getAttribute('focusable')};};
+const marked=root=>({flows:root.querySelectorAll('.is-handoff-flow').length,receivers:[...root.querySelectorAll('.is-handoff-receiving')].map(node=>node.dataset.scRole),reverse:root.querySelectorAll('.is-handoff-reverse').length});
+const inspect=root=>{const connector=root.querySelector('.is-handoff-flow'),receiver=root.querySelector('.is-handoff-receiving');const flow=connector&&getComputedStyle(connector,'::before'),head=connector&&getComputedStyle(connector,'::after'),receive=receiver&&getComputedStyle(receiver,'::after');return {...marked(root),from:connector?.dataset.scConnectorFrom,to:connector?.dataset.scConnectorTo,hidden:connector?.getAttribute('aria-hidden'),flowAnimation:flow?.animationName,flowDuration:flow?.animationDuration,flowIterations:flow?.animationIterationCount,flowDirection:flow?.animationDirection,headTransform:head?.transform,headTop:head?.borderTopWidth,headBottom:head?.borderBottomWidth,headLeft:head?.borderLeftWidth,headRight:head?.borderRightWidth,headTopColor:head?.borderTopColor,headBottomColor:head?.borderBottomColor,headLeftColor:head?.borderLeftColor,headRightColor:head?.borderRightColor,color:connector&&getComputedStyle(connector).color,receiveAnimation:receive?.animationName,receiveDuration:receive?.animationDuration,receiveDelay:receive?.animationDelay,receiveIterations:receive?.animationIterationCount,receivePointerEvents:receive?.pointerEvents,activeAnimation:receiver&&getComputedStyle(receiver).animationName};};
 const fresh=()=>{const root=makeRoot(),value=snapshot();render(root,value);return {root,value};};
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const settle=async()=>{await wait(0);await new Promise(requestAnimationFrame);await wait(0);};
 const revealAnimations=root=>root.getAnimations({subtree:true}).filter(animation=>['sc-detail-reveal','sc-preview-reveal'].includes(animation.animationName)&&animation.effect.target.checkVisibility()&&getComputedStyle(animation.effect.target).animationName===animation.animationName);
 const revealState=root=>({marked:root.querySelectorAll('.is-detail-revealing').length,animations:revealAnimations(root).map(animation=>({name:animation.animationName,transform:getComputedStyle(animation.effect.target).transform,duration:animation.effect.getTiming().duration,iterations:animation.effect.getTiming().iterations,role:animation.effect.target.closest('[data-sc-role]')?.dataset.scRole||null}))});
-let keySequence=0,motionSequence=0;
-const nativeMotion=reduce=>new Promise(resolve=>{const id=++motionSequence,done=event=>{if(event.source!==parent||event.data.scMotionDone!==id)return;window.removeEventListener('message',done);resolve();};window.addEventListener('message',done);parent.postMessage({scMotionPreference:{id,reduce}},'*');});
+let keySequence=0;
 const nativeKey=key=>new Promise(resolve=>{const id=++keySequence;const done=event=>{if(event.source!==parent||event.data.scInputDone!==id)return;window.removeEventListener('message',done);resolve();};window.addEventListener('message',done);parent.postMessage({scInputKey:{id,key}},'*');});
 (async()=>{
   const {root,value}=fresh();results.initial=marked(root);
@@ -90,46 +78,19 @@ const nativeKey=key=>new Promise(resolve=>{const id=++keySequence;const done=eve
   {const sample=fresh();sample.value.handoffs.push(handoff('interrupt'));render(sample.root,sample.value);sample.value.state='paused';render(sample.root,sample.value);results.interrupted=marked(sample.root);sample.value.state='ready_for_cr';render(sample.root,sample.value);results.interruptResume=marked(sample.root);}
   {const sample=fresh();const nativeMatchMedia=window.matchMedia;window.matchMedia=query=>query==='(prefers-reduced-motion:reduce)'?{matches:true}:nativeMatchMedia(query);sample.value.handoffs.push(handoff('reduced-consumed'));render(sample.root,sample.value);results.preferenceSuppressed=marked(sample.root);window.matchMedia=nativeMatchMedia;render(sample.root,sample.value);results.preferenceResumed=marked(sample.root);}
   {const sample=fresh();sample.root.querySelector('[data-sc-role=cr]').open=false;const req=sample.root.querySelector('[data-sc-role=req]');req.open=true;req.querySelector('summary').focus();sample.value.handoffs.push(handoff('focus'));render(sample.root,sample.value);results.focus={open:[...sample.root.querySelectorAll('[data-sc-role][open]')].map(node=>node.dataset.scRole),role:document.activeElement.closest('[data-sc-role]')?.dataset.scRole};}
-  const finiteAnimations=root=>root.getAnimations({subtree:true}).filter(animation=>['sc-handoff-flow','sc-handoff-return','sc-handoff-receive'].includes(animation.animationName));
+  const finiteAnimations=root=>root.getAnimations({subtree:true}).filter(animation=>['sc-handoff-flow','sc-handoff-receive'].includes(animation.animationName));
   const cleanup=fresh();results.endEvents=[];const onHandoffEnd=event=>results.endEvents.push(event.animationName+'/'+event.pseudoElement);cleanup.root.addEventListener('animationend',onHandoffEnd);
   cleanup.value.handoffs.push(handoff('cleanup'));render(cleanup.root,cleanup.value);results.beforeCleanup=inspect(cleanup.root);
   cleanup.root.scrollIntoView({block:'start'});
   const ending=finiteAnimations(cleanup.root);await Promise.all(ending.map(animation=>animation.finished));await new Promise(requestAnimationFrame);await wait(0);
   results.afterCleanup=marked(cleanup.root);cleanup.root.removeEventListener('animationend',onHandoffEnd);render(cleanup.root,cleanup.value);results.afterCleanupUpdate=marked(cleanup.root);
   const again=structuredClone(cleanup.value);again.handoffs.push(handoff('next'));render(cleanup.root,again);results.nextEvent=marked(cleanup.root);
-  const cancel=fresh();results.cancelEvents=[];const onHandoffCancel=event=>results.cancelEvents.push(event.animationName+'/'+event.pseudoElement);cancel.root.addEventListener('animationcancel',onHandoffCancel);
+  const cancel=fresh();results.cancelEvents=[];cancel.root.addEventListener('animationcancel',event=>results.cancelEvents.push(event.animationName+'/'+event.pseudoElement));
   cancel.value.role_details.cr.status='passed';cancel.value.role_details.dev.status='running';cancel.value.handoffs.push(handoff('cancel','cr','dev'));render(cancel.root,cancel.value);results.beforeCancel=inspect(cancel.root);
   cancel.root.scrollIntoView({block:'start'});const cancelling=finiteAnimations(cancel.root);await Promise.all(cancelling.map(animation=>animation.ready));await wait(100);
   results.cancelClock=cancelling.map(animation=>({start:animation.startTime,time:animation.currentTime}));
-  const stopStyle=document.createElement('style');stopStyle.textContent='#'+cancel.root.id+' .is-handoff-flow::before,#'+cancel.root.id+' .is-handoff-return-flow,#'+cancel.root.id+' .is-handoff-receiving::after{animation-name:none}';cancel.root.append(stopStyle);void cancel.root.offsetWidth;
-  await new Promise(requestAnimationFrame);await wait(0);results.afterCancel=marked(cancel.root);results.cancelObservers=observerState(cancel.root);cancel.root.removeEventListener('animationcancel',onHandoffCancel);
-  // QA sc-view-return-motion: measure physical endpoints, native ResizeObserver and actual compositor lifecycle.
-  const frames=async()=>{await settle();await settle();};
-  const finishFinite=async root=>{await Promise.all(finiteAnimations(root).map(animation=>animation.finished));await frames();};
-  const activate=(sample,role)=>{sample.value.state=role==='dev'?'dev_in_progress':role==='qa'?'ready_for_qa':'ready_for_cr';sample.value.role_details.dev.status='passed';sample.value.role_details.cr.status='passed';sample.value.role_details.qa.status='pending';sample.value.role_details[role].status='running';};
-  const returnSample=name=>{const sample=fresh();sample.value.role_details.dev.summary='Inline details with enough content to change the receiving card height. '.repeat(5);activate(sample,'dev');sample.value.handoffs.push(handoff(name,'cr','dev'));render(sample.root,sample.value);return sample;};
-  const stableLayout=root=>{const rect=node=>{const box=node.getBoundingClientRect();return [box.x,box.y,box.width,box.height];};return {view:rect(root),cards:[...root.querySelectorAll('details[data-sc-role]')].map(rect),preview:rect(root.querySelector('[data-sc-role-preview]'))};};
-  const sized=returnSample('dynamic-return'),sizedCard=sized.root.querySelector('[data-sc-role=dev]'),sizedSvg=sized.root.querySelector('.sc-task-view__handoff-return'),sizedBefore=JSON.stringify(sized.value);sized.root.scrollIntoView({block:'start'});results.returnEndEvents=[];sized.root.addEventListener('animationend',event=>{if(['sc-handoff-return','sc-handoff-receive'].includes(event.animationName))results.returnEndEvents.push(event.animationName+'/'+event.pseudoElement);});
-  const initialGeometry=returnGeometry(sized.root);sizedCard.open=false;await frames();const closedGeometry=returnGeometry(sized.root);sizedCard.open=true;await frames();const reopenedGeometry=returnGeometry(sized.root),beforeResize=observerState(sized.root);sizedCard.querySelector('summary').style.minHeight=(sizedCard.querySelector('summary').getBoundingClientRect().height+44)+'px';await frames();
-  results.dynamicReturn={initial:initialGeometry,closed:closedGeometry,reopened:reopenedGeometry,resized:returnGeometry(sized.root),beforeResize,afterResize:observerState(sized.root),sameSvg:sized.root.querySelector('.sc-task-view__handoff-return')===sizedSvg,unchanged:sizedBefore===JSON.stringify(sized.value)};
-  const light=sized.root.querySelector('.is-handoff-return-flow'),sweep=light?.getAnimations().find(animation=>animation.animationName==='sc-handoff-return');results.returnSweep=null;
-  if(sweep){await sweep.ready;const current=sweep.currentTime,timing=sweep.effect.getTiming();sweep.pause();const offsets=[];for(const time of [0,325,640]){sweep.currentTime=time;offsets.push(parseFloat(getComputedStyle(light).strokeDashoffset));}results.returnSweep={duration:timing.duration,iterations:timing.iterations,offsets};sweep.currentTime=current;sweep.play();}
-  const layoutBefore=stableLayout(sized.root);sizedCard.querySelector('summary').focus();await settle();sized.root.querySelector('[data-sc-role=cr] > summary').dispatchEvent(new PointerEvent('pointerover',{bubbles:true}));await settle();results.returnInteraction={sameLayout:JSON.stringify(layoutBefore)===JSON.stringify(stableLayout(sized.root)),focus:sized.root.querySelector('[data-sc-role=dev] > summary')===document.activeElement,scrollWidth:document.documentElement.scrollWidth,viewport:innerWidth};
-  await finishFinite(sized.root);results.afterReturnEnd={...marked(sized.root),observers:observerState(sized.root)};
-  results.returnLifecycle=[];
-  for(const action of ['same-id','pause','task-switch','reduce']){
-    const sample=returnSample('lifecycle-'+action);sample.root.scrollIntoView({block:'start'});await settle();const before=inspect(sample.root),observerBefore=observerState(sample.root);let mediaChanged=false;
-    if(action==='pause'){sample.value.state='paused';render(sample.root,sample.value);sample.value.state='dev_in_progress';render(sample.root,sample.value);}
-    else if(action==='task-switch'){render(sample.root,snapshot('switched'));render(sample.root,sample.value);}
-    else if(action==='reduce'&&!reduced){await nativeMotion(true);await frames();mediaChanged=matchMedia('(prefers-reduced-motion:reduce)').matches;await nativeMotion(false);}
-    else render(sample.root,sample.value);
-    await frames();const after=marked(sample.root),observers=observerState(sample.root),callbacks=observers.callbacks;sample.root.querySelector('[data-sc-role=dev] > summary').style.minHeight='220px';await frames();render(sample.root,sample.value);await frames();
-    results.returnLifecycle.push({action,before,observerBefore,after,observers,callbacksStable:observerState(sample.root).callbacks===callbacks,noReplay:marked(sample.root),mediaChanged,preferenceRestored:matchMedia('(prefers-reduced-motion:reduce)').matches===reduced});
-  }
-  const rounds=fresh();rounds.root.scrollIntoView({block:'start'});results.rounds=[];
-  for(const [id,from,to] of [['round-return-1','cr','dev'],['round-submit-1','dev','cr'],['round-return-2','cr','dev'],['round-submit-2','dev','cr'],['round-qa','cr','qa']]){
-    activate(rounds,to);rounds.value.handoffs.push(handoff(id,from,to));const before=JSON.stringify(rounds.value);render(rounds.root,rounds.value);const during=inspect(rounds.root),observers=observerState(rounds.root);await finishFinite(rounds.root);const ended=marked(rounds.root);render(rounds.root,rounds.value);results.rounds.push({id,from,to,during,observers,ended,afterSameId:marked(rounds.root),afterObservers:observerState(rounds.root),unchanged:before===JSON.stringify(rounds.value),order:[...rounds.root.querySelectorAll('details[data-sc-role]')].map(node=>node.dataset.scRole)});
-  }
+  const stopStyle=document.createElement('style');stopStyle.textContent='#'+cancel.root.id+' .is-handoff-flow::before,#'+cancel.root.id+' .is-handoff-receiving::after{animation-name:none}';cancel.root.append(stopStyle);void cancel.root.offsetWidth;
+  await new Promise(requestAnimationFrame);await wait(0);results.afterCancel=marked(cancel.root);
   // Requirement source: approved detail opening transition; use native details toggles and real CSS events.
   const detail=fresh(),detailResult=results.detail={starts:[],ends:[]};
   const preview=()=>detail.root.querySelector('[data-sc-role-preview]'),body=()=>detail.root.querySelector('[data-sc-preview-body]'),role=()=>detail.root.querySelector('[data-sc-role=dev]'),summary=()=>role().querySelector(':scope > summary');
@@ -165,7 +126,7 @@ for (const [index, script] of [...harness.matchAll(/<script>([\s\S]*?)<\/script>
 
 async function readResult(width, reduced) {
   const srcdoc = harness.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-  const wrapper = `<!doctype html><html><body><script>window.addEventListener('message',event=>{if(event.source===document.querySelector('iframe').contentWindow){if(event.data.scHandoffResult)document.body.dataset.scTestResult=JSON.stringify(event.data.scHandoffResult);if(event.data.scHandoffError)document.body.dataset.scTestError=event.data.scHandoffError;if(event.data.scInputKey)document.body.dataset.scTestInput=JSON.stringify(event.data.scInputKey);if(event.data.scMotionPreference)document.body.dataset.scTestMotion=JSON.stringify(event.data.scMotionPreference);}});</script><iframe style="border:0;width:${width}px;height:900px" srcdoc="${srcdoc}"></iframe></body></html>`;
+  const wrapper = `<!doctype html><html><body><script>window.addEventListener('message',event=>{if(event.source===document.querySelector('iframe').contentWindow){if(event.data.scHandoffResult)document.body.dataset.scTestResult=JSON.stringify(event.data.scHandoffResult);if(event.data.scHandoffError)document.body.dataset.scTestError=event.data.scHandoffError;if(event.data.scInputKey)document.body.dataset.scTestInput=JSON.stringify(event.data.scInputKey);}});</script><iframe style="border:0;width:${width}px;height:900px" srcdoc="${srcdoc}"></iframe></body></html>`;
   fs.writeFileSync(page, wrapper, "utf8");
   // Real CSS animation events need compositor time; only control this test's isolated Chrome over inherited pipes.
   const args = ["--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run", "--remote-debugging-pipe", `--user-data-dir=${path.join(temp, `profile-${width}-${reduced}`)}`, "--window-size=1000,1000"];
@@ -209,11 +170,11 @@ async function readResult(width, reduced) {
     await send("Target.activateTarget", { targetId });
     await send("Page.enable", {}, sessionId);
     await send("Page.navigate", { url: new URL(`file:///${page.replaceAll("\\", "/")}`).href }, sessionId);
-    const deadline = Date.now() + 25000;let lastInput=0,lastMotion=0;
+    const deadline = Date.now() + 15000;let lastInput=0;
     while (Date.now() < deadline) {
       let value;
       try {
-        const observation = await send("Runtime.evaluate", { expression: "document.body&&({result:document.body.dataset.scTestResult,error:document.body.dataset.scTestError,input:document.body.dataset.scTestInput,motion:document.body.dataset.scTestMotion})", returnByValue: true }, sessionId);
+        const observation = await send("Runtime.evaluate", { expression: "document.body&&({result:document.body.dataset.scTestResult,error:document.body.dataset.scTestError,input:document.body.dataset.scTestInput})", returnByValue: true }, sessionId);
         if (observation.exceptionDetails) throw new Error(observation.exceptionDetails.text);
         value = observation.result.value;
       } catch (error) {
@@ -229,16 +190,10 @@ async function readResult(width, reduced) {
         await send('Input.dispatchKeyEvent',{type:'keyDown',...key,text,unmodifiedText:text},sessionId);await send('Input.dispatchKeyEvent',{type:'keyUp',...key},sessionId);
         await send('Runtime.evaluate',{expression:"document.querySelector('iframe').contentWindow.postMessage({scInputDone:"+input.id+"},'*')"},sessionId);
       }
-      const motion=value?.motion&&JSON.parse(value.motion);
-      if(motion&&motion.id!==lastMotion){
-        assert.ok(Number.isSafeInteger(motion.id)&&motion.id>lastMotion&&typeof motion.reduce==="boolean","motion preference bridge accepts ordered boolean fixture requests");lastMotion=motion.id;
-        await send("Emulation.setEmulatedMedia",{features:[{name:"prefers-reduced-motion",value:motion.reduce?"reduce":"no-preference"}]},sessionId);
-        await send("Runtime.evaluate",{expression:"document.querySelector('iframe').contentWindow.postMessage({scMotionDone:"+motion.id+"},'*')"},sessionId);
-      }
       await delay(20);
     }
     const diagnostic=await send('Runtime.evaluate',{expression:"JSON.stringify({input:document.body.dataset.scTestInput,focus:document.querySelector('iframe').contentDocument.activeElement?.outerHTML,animations:document.querySelector('iframe').contentDocument.getAnimations().filter(a=>a.animationName==='sc-detail-reveal').map(a=>({state:a.playState,time:a.currentTime,role:a.effect.target.closest('[data-sc-role]')?.dataset.scRole}))})",returnByValue:true},sessionId);
-    throw new Error("Chrome did not emit the handoff behavior result within 25 seconds: "+diagnostic.result.value);
+    throw new Error("Chrome did not emit the handoff behavior result within 15 seconds: "+diagnostic.result.value);
   } finally {
     if (!processClosed && !terminalError) await send("Browser.close").catch(() => {});
     await Promise.race([closed, delay(1500)]);
@@ -256,24 +211,6 @@ function assertFlow(value, receiver, reverse, name) {
   assert.equal(value.flows, 1, `${name} must animate exactly one existing adjacent connector`);
   assert.deepEqual(value.receivers, [receiver], `${name} must highlight only the receiver`);
   assert.equal(value.reverse, reverse ? 1 : 0, `${name} must use the accepted handoff direction`);
-}
-
-const motionOnly=value=>({flows:value.flows,receivers:value.receivers,reverse:value.reverse});
-function assertReturnGeometry(value,name) {
-  assert.ok(value,name+" provides browser-measured return geometry");
-  for(const [actual,expected] of [[value.start,value.source],[value.end,value.target],[value.tip,value.target]])for(let index=0;index<2;index++)assert.ok(Math.abs(actual[index]-expected[index])<=1.1,name+" connects source top and receiver bottom at card center +12px");
-  assert.ok(value.start[1]>value.end[1],name+" travels upward from source to receiver");
-  assert.ok(Math.abs(value.outside-value.expectedOutside)<=1.1,name+" bends at card center +26px");
-  assert.ok((value.path.match(/Q/g)||[]).length>=4,name+" has rounded turns");
-  assert.ok(!/NaN|Infinity/.test(value.path));
-}
-function assertReturnStyle(value,name) {
-  assertReturnGeometry(value.geometry,name);
-  assert.equal(value.pathWidth,"2px");assert.equal(value.pathCap,"round");assert.equal(value.pathJoin,"round");
-  const numbers=input=>input.split(/[, ]+/).filter(Boolean).map(parseFloat);
-  assert.deepEqual(numbers(value.lineDash),[3,5]);assert.deepEqual(numbers(value.lightDash),[12,100]);
-  assert.equal(value.pathLength,"100");assert.equal(value.pointerEvents,"none");assert.equal(value.focusable,"false");
-  assert.equal(value.flowAnimation,"sc-handoff-return");assert.equal(value.flowDuration,"0.65s");assert.equal(value.flowIterations,"1");
 }
 
 (async () => { try {
@@ -301,31 +238,6 @@ function assertReturnStyle(value,name) {
     const animated=['manual','switch','coexist'];if(mode.width>560){for(const field of ['bodyFocused','shiftReturned','escapeReturned'])assert.equal(detail[field],true,field+' retains role keyboard navigation');}else{for(const field of ['enterClosed','spaceOpened','closeImmediate','closedHidden'])assert.equal(detail[field],true,field+' retains native role disclosures');assert.deepEqual(detail.closed,staticReveal);animated.push('keyboard');}
     for(const field of animated){assert.equal(detail[field].marked,mode.reduced?0:1,field+' marks one role detail');assert.equal(detail[field].animations.length,mode.reduced?0:1);for(const animation of detail[field].animations){assert.ok(animation.duration>=140&&animation.duration<=200);assert.equal(animation.iterations,1);assert.equal(animation.name,mode.width>560?'sc-preview-reveal':'sc-detail-reveal');if(mode.width>560)assert.equal(animation.transform,'none');}}
     if(!mode.reduced){assert.deepEqual(detail.firstStarts,['dev']);assert.deepEqual(detail.firstEnds,['dev']);assertFlow(detail.coexist.handoff,'cr',false,'role/handoff coexistence');assert.equal(detail.coexist.handoff.activeAnimation,'sc-running-pulse');}else{assert.deepEqual(detail.starts,[]);assert.deepEqual(detail.ends,[]);}
-    const dynamic=result.dynamicReturn;
-    assert.equal(dynamic.unchanged,true);assert.equal(dynamic.sameSvg,true,"resize updates the same lifecycle SVG");
-    assert.equal(result.returnInteraction.sameLayout,true,"focus and hover preserve card, preview and view geometry during a return");assert.equal(result.returnInteraction.focus,true);assert.ok(result.returnInteraction.scrollWidth<=mode.width);
-    assertQuiet(motionOnly(result.afterReturnEnd),"natural return completion");assert.equal(result.afterReturnEnd.observers.live,0);
-    for(const lifecycle of result.returnLifecycle){
-      assertQuiet(lifecycle.after,lifecycle.action+" clears return feedback");assertQuiet(lifecycle.noReplay,lifecycle.action+" does not resume a consumed ID");assert.equal(lifecycle.callbacksStable,true,lifecycle.action+" disconnects geometry updates");assert.equal(lifecycle.observers.live,0);assert.equal(lifecycle.preferenceRestored,true);
-      assert.equal(lifecycle.observerBefore.created,mode.reduced?0:1);assert.equal(lifecycle.observerBefore.live,mode.reduced?0:1);assert.equal(lifecycle.observers.created,mode.reduced?0:1);
-      if(mode.reduced)assertQuiet(motionOnly(lifecycle.before),lifecycle.action);else assertFlow(lifecycle.before,"dev",true,lifecycle.action);
-      if(lifecycle.action==="reduce")assert.equal(lifecycle.mediaChanged,!mode.reduced,"the running cancellation uses a real media-preference change");
-    }
-    assert.deepEqual(result.returnLifecycle.map(item=>item.action),["same-id","pause","task-switch","reduce"]);
-    assert.deepEqual(result.rounds.map(item=>item.id),["round-return-1","round-submit-1","round-return-2","round-submit-2","round-qa"]);
-    for(const [index,round] of result.rounds.entries()){
-      assert.equal(round.unchanged,true);assert.deepEqual(round.order,["req","dev","cr","qa"]);assertQuiet(round.ended,round.id+" ends naturally");assertQuiet(round.afterSameId,round.id+" does not replay");assert.equal(round.afterObservers.live,0);
-      if(mode.reduced){assertQuiet(motionOnly(round.during),round.id);assert.equal(round.observers.created,0);}else{assertFlow(round.during,round.to,round.to==="dev",round.id);assert.equal(round.observers.live,round.to==="dev"?1:0);assert.equal(round.afterObservers.created,index<2?1:2);if(round.to==="dev")assertReturnStyle(round.during,round.id);else assert.equal(round.during.geometry,null,"resubmission and CR-passed QA handoff have no return SVG or historical replay");}
-    }
-    assert.equal(result.cancelObservers.live,0,"CSS cancellation disconnects the return observer");
-    if(mode.reduced){assert.equal(dynamic.initial,null);assert.equal(dynamic.resized,null);assert.equal(dynamic.afterResize.created,0);assert.equal(result.returnSweep,null);assert.deepEqual(result.returnEndEvents,[]);}
-    else{
-      for(const field of ["initial","closed","reopened","resized"])assertReturnGeometry(dynamic[field],field);
-      assert.notEqual(dynamic.resized.path,dynamic.reopened.path,"native resize recomputes the path after card height grows");assert.ok(dynamic.afterResize.callbacks>dynamic.beforeResize.callbacks);assert.equal(dynamic.afterResize.live,1);assert.deepEqual(dynamic.afterResize.targetCounts,[3]);
-      if(mode.width<=560)assert.notEqual(dynamic.closed.path,dynamic.reopened.path,"native inline disclosure changes return endpoints");
-      assert.equal(result.returnSweep.duration,650);assert.equal(result.returnSweep.iterations,1);const offsets=result.returnSweep.offsets;assert.ok(Math.abs(offsets[0]-12)<=.1&&offsets[0]>offsets[1]&&offsets[1]>offsets[2]&&offsets[2]<-95,"the short light advances from source to receiver exactly once");
-      assert.deepEqual(result.returnEndEvents.sort(),["sc-handoff-receive/::after","sc-handoff-return/"],"SVG light and receiving card dispatch native completion events");
-    }
     if (mode.reduced) {
       for (const field of ["forward", "reverse", "qaForward", "beforeCleanup"]) assertQuiet({ flows: result[field].flows, receivers: result[field].receivers, reverse: result[field].reverse }, field);
       assertQuiet(result.acceptedTransition, "acceptedTransition");
@@ -344,11 +256,11 @@ function assertReturnStyle(value,name) {
     assertFlow(result.beforeCancel, "dev", true, "the cancellable reverse handoff");
     const expectedEvents = ["sc-handoff-flow/::before", "sc-handoff-receive/::after"];
     assert.deepEqual(result.endEvents.sort(), expectedEvents, "Chrome must dispatch actual CSS animationend events for both finite effects");
-    assert.deepEqual(result.cancelEvents.sort(), ["sc-handoff-receive/::after","sc-handoff-return/"], "Chrome must dispatch actual cancellation for SVG light and receiver");
+    assert.deepEqual(result.cancelEvents.sort(), expectedEvents, "Chrome must dispatch actual CSS animationcancel events for both finite effects");
     assert.equal(result.cancelClock.length, 2, "both cancellable CSS effects must have started");
     assert.ok(result.cancelClock.every(clock => Number.isFinite(clock.start) && clock.time > 0), "CSS effects must be ready and time must advance before cancellation");
     for (const item of [result.forward, result.reverse]) {
-      assert.equal(item.flowAnimation, item.reverse?"sc-handoff-return":"sc-handoff-flow");
+      assert.equal(item.flowAnimation, "sc-handoff-flow");
       assert.equal(item.flowIterations, "1", "handoff flow must finish after one pass");
       assert.equal(item.receiveAnimation, "sc-handoff-receive");
       assert.equal(item.receiveIterations, "1", "receiver feedback must finish after one pass");
@@ -360,11 +272,10 @@ function assertReturnStyle(value,name) {
       assert.ok(parseFloat(item.receiveDuration) > 0 && parseFloat(item.receiveDuration) <= 1, "receiver feedback must have a short finite duration");
     }
     assert.equal(result.forward.flowDirection, "normal");
-    assert.equal(result.reverse.flowDirection, "normal", "SVG path itself follows the return direction");
-    assertReturnStyle(result.reverse,"reverse");
-    for(const item of [result.forward]){assert.equal(item.headTransform,'matrix(1, 0, 0, 1, -4, 0)');assert.equal(item.headLeft,'4px');assert.equal(item.headRight,'4px');assert.equal(item.headLeftColor,'rgba(0, 0, 0, 0)');assert.equal(item.headRightColor,'rgba(0, 0, 0, 0)');}
+    assert.equal(result.reverse.flowDirection, "reverse");
+    for(const item of [result.forward,result.reverse]){assert.equal(item.headTransform,'matrix(1, 0, 0, 1, -4, 0)');assert.equal(item.headLeft,'4px');assert.equal(item.headRight,'4px');assert.equal(item.headLeftColor,'rgba(0, 0, 0, 0)');assert.equal(item.headRightColor,'rgba(0, 0, 0, 0)');}
     assert.equal(result.forward.headTop,'7px');assert.equal(result.forward.headBottom,'0px');assert.equal(result.forward.headTopColor,result.forward.color,'forward solid triangle must point down');
-    assert.equal(result.reverse.headTransform,undefined,"return arrow is an SVG open tip rather than a reversed triangle");
+    assert.equal(result.reverse.headTop,'0px');assert.equal(result.reverse.headBottom,'7px');assert.equal(result.reverse.headBottomColor,result.reverse.color,'reverse solid triangle must point up');
   }
   console.log("SC handoff motion independent Chrome regression passed (360px, 960px, reduced motion).");
 } finally {

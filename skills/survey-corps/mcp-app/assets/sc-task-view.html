@@ -34,19 +34,15 @@
     .sc-task-view__summary-content p, .sc-task-view__summary-content ul { margin:4px 0 0; }
     .sc-task-view__summary-content ul { padding-left:18px; }
     .sc-task-view [hidden] { display:none !important; }
-    .sc-task-view__connector { position:relative; flex:1 0 36px; width:12px; min-height:36px; margin:0 auto; color:var(--muted); transform:translateX(-12px); transform-origin:top; }
+    .sc-task-view__connector { position:relative; flex:1 0 36px; width:12px; min-height:36px; margin:0 auto; color:var(--muted); transform-origin:top; }
     .sc-task-view__connector::before { content:""; position:absolute; top:0; left:50%; width:2px; height:calc(100% - 9px); transform:translateX(-50%); background:currentColor; box-shadow:0 0 4px color-mix(in srgb,currentColor 35%,transparent); }
     .sc-task-view__connector::after { content:""; position:absolute; left:50%; bottom:3px; width:0; height:0; transform:translateX(-50%); border-left:4px solid transparent; border-right:4px solid transparent; border-top:7px solid currentColor; }
     .sc-task-view__connector.is-handoff-flow { color:var(--active); }
     .sc-task-view__connector.is-handoff-flow::before { background-color:currentColor; background-image:linear-gradient(transparent 30%,var(--focus) 48%,transparent 66%); background-size:100% 300%; animation:sc-handoff-flow 650ms ease-in-out 1 both; }
-    .sc-task-view__handoff-return { position:absolute; inset:0; width:100%; height:100%; overflow:visible; color:var(--focus); pointer-events:none; z-index:2; }
-    .sc-task-view__handoff-return path { fill:none; stroke:currentColor; stroke-width:2px; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
-    .sc-task-view__handoff-return-line { stroke-dasharray:3 5; opacity:.25; }
-    .sc-task-view__handoff-return-light { stroke-dasharray:12 100; stroke-dashoffset:12; opacity:0; filter:drop-shadow(0 0 2px currentColor); }
-    .sc-task-view__handoff-return-light.is-handoff-return-flow { animation:sc-handoff-return 650ms ease-in-out 1 both; }
-    .sc-task-view__handoff-return-tip { opacity:.65; }
+    .sc-task-view__connector.is-handoff-reverse::before { animation-direction:reverse; }
+    .sc-task-view__connector.is-handoff-reverse::after { top:0; bottom:auto; border-top:0; border-bottom:7px solid currentColor; }
     .sc-task-view__workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,3fr); gap:12px; align-items:start; padding-top:20px; }
-    .sc-task-view__role-lane { position:relative; display:flex; align-self:stretch; min-width:0; }
+    .sc-task-view__role-lane { display:flex; align-self:stretch; min-width:0; }
     .sc-task-view__roles { display:flex; flex:1; flex-direction:column; align-items:stretch; }
     .sc-task-view__role-preview { display:grid; align-self:stretch; justify-self:end; width:90%; min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
     .sc-task-view__preview-content { display:grid; min-width:0; overflow-wrap:anywhere; }
@@ -112,7 +108,6 @@
     @keyframes sc-manual-role { 0%,100% { box-shadow:0 0 0 0 transparent; } 50% { box-shadow:0 0 0 6px color-mix(in srgb,var(--focus) 32%,transparent); } }
     @keyframes sc-running-pulse { 0%,100% { background-color:color-mix(in srgb,var(--role-accent) 3%,var(--panel-active)); box-shadow:0 0 0 1px color-mix(in srgb,var(--role-accent) 26%,transparent),0 0 8px color-mix(in srgb,var(--role-accent) 18%,transparent); } 50% { background-color:color-mix(in srgb,var(--role-accent) 8%,var(--panel-active)); box-shadow:0 0 0 5px color-mix(in srgb,var(--role-accent) 52%,transparent),0 0 26px color-mix(in srgb,var(--role-accent) 38%,transparent); } }
     @keyframes sc-handoff-flow { 0% { background-position:50% 100%; opacity:.5; } 35%,65% { opacity:1; } 100% { background-position:50% 0%; opacity:.5; } }
-    @keyframes sc-handoff-return { 0% { stroke-dashoffset:12; opacity:0; } 15%,85% { opacity:1; } 100% { stroke-dashoffset:-100; opacity:0; } }
     @keyframes sc-handoff-receive { 0% { opacity:0; box-shadow:0 0 0 transparent; } 25% { opacity:1; box-shadow:0 0 18px color-mix(in srgb,var(--focus) 55%,transparent); } 100% { opacity:0; box-shadow:0 0 0 transparent; } }
     @keyframes sc-detail-reveal { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
     @keyframes sc-preview-reveal { from { opacity:0; } to { opacity:1; } }
@@ -472,44 +467,6 @@
         // A restored or rewritten history becomes a baseline, never a replay queue.
         return {viewId,records,seen,event};
       }
-      function returnHandoffGeometry(from,to,lane) {
-        const sx=from.left+from.width/2-lane.left+12,sy=from.top-lane.top,tx=to.left+to.width/2-lane.left+12,ty=to.top+to.height-lane.top;
-        if (lane.width<=0||lane.height<=0||sy<=ty) return null;
-        const outside=Math.max(sx,tx)+14,radius=Math.min(3,(sy-ty)/6);
-        return {path:`M ${sx} ${sy} V ${sy-radius} Q ${sx} ${sy-2*radius} ${sx+radius} ${sy-2*radius} H ${outside-radius} Q ${outside} ${sy-2*radius} ${outside} ${sy-3*radius} V ${ty+3*radius} Q ${outside} ${ty+2*radius} ${outside-radius} ${ty+2*radius} H ${tx+radius} Q ${tx} ${ty+2*radius} ${tx} ${ty+radius} V ${ty}`,tip:`M ${tx-3} ${ty+4} L ${tx} ${ty} L ${tx+3} ${ty+4}`};
-      }
-      function animateReturnHandoff(root,event,cleanups) {
-        const lane=root.querySelector(".sc-task-view__role-lane"),from=root.querySelector(`[data-sc-role="${event.from}"]`),to=root.querySelector(`[data-sc-role="${event.to}"]`);
-        if (!lane||!from||!to) return false;
-        const svg=document.createElementNS("http://www.w3.org/2000/svg","svg"),paths=["line","light","tip"].map(kind=>{
-          const path=document.createElementNS("http://www.w3.org/2000/svg","path");
-          path.classList.add(`sc-task-view__handoff-return-${kind}`);
-          svg.append(path);
-          return path;
-        });
-        svg.classList.add("sc-task-view__handoff-return");
-        svg.setAttribute("aria-hidden","true");
-        svg.setAttribute("focusable","false");
-        paths[1].setAttribute("pathLength","100");
-        let observer;
-        const finish=()=>{ observer?.disconnect(); svg.remove(); };
-        const update=()=>{
-          const bounds=lane.getBoundingClientRect(),geometry=returnHandoffGeometry(from.getBoundingClientRect(),to.getBoundingClientRect(),bounds);
-          if (!lane.isConnected||!geometry) { finish(); return false; }
-          svg.setAttribute("viewBox",`0 0 ${bounds.width} ${bounds.height}`);
-          paths[0].setAttribute("d",geometry.path);
-          paths[1].setAttribute("d",geometry.path);
-          paths[2].setAttribute("d",geometry.tip);
-          return true;
-        };
-        lane.append(svg);
-        if (!update()) return false;
-        observer=new ResizeObserver(update);
-        [lane,from,to].forEach(node=>observer.observe(node));
-        animateOnce(paths[1],"is-handoff-return-flow",cleanups,finish);
-        cleanups.push(finish);
-        return true;
-      }
       function animateHandoff(root,event) {
         root.__scHandoffMotionCleanup?.();
         root.__scHandoffMotionCleanup=undefined;
@@ -517,8 +474,8 @@
         const connectors=[...root.querySelectorAll("[data-sc-connector-from]")],connector=connectors.find(node=>node.dataset.scConnectorFrom===event.from&&node.dataset.scConnectorTo===event.to)||connectors.find(node=>node.dataset.scConnectorFrom===event.to&&node.dataset.scConnectorTo===event.from);
         if (!connector) return;
         const cleanups=[],reverse=connector.dataset.scConnectorFrom!==event.from;
-        if (reverse) { if (!animateReturnHandoff(root,event,cleanups)) return; }
-        else animateOnce(connector,"is-handoff-flow",cleanups);
+        connector.classList.toggle("is-handoff-reverse",reverse);
+        animateOnce(connector,"is-handoff-flow",cleanups,()=>connector.classList.remove("is-handoff-reverse"));
         animateOnce(root.querySelector(`[data-sc-role="${event.to}"]`),"is-handoff-receiving",cleanups);
         root.__scHandoffMotionCleanup=()=>cleanups.forEach(cleanup=>cleanup());
       }

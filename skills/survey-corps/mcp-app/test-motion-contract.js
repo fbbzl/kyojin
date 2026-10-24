@@ -26,14 +26,8 @@ assert.match(appTemplate, /details\.sc-task-view__node\.is-manual-replay \{[^}]*
 assert.match(appTemplate, /@media \(prefers-reduced-motion:reduce\).*animation:none !important; transition:none !important;/, "reduced motion must disable animation and transitions");
 assert.doesNotMatch(appTemplate, /\.sc-task-view__connector(?:::before|::after)? \{[^}]*animation:/, "idle connectors must remain static");
 assert.match(appTemplate, /\.sc-task-view__connector\.is-handoff-flow::before \{[^}]*animation:sc-handoff-flow [^;]* 1 both/, "an explicitly triggered handoff must use one finite connector animation");
-assert.doesNotMatch(appTemplate, /is-handoff-reverse/, "return feedback uses its own rounded path, not a reversed down arrow");
-assert.match(appTemplate, /\.sc-task-view__connector \{[^}]*transform:translateX\(-12px\)/, "down arrows leave the approved return-lane clearance");
-assert.match(appTemplate, /\.sc-task-view__handoff-return path \{[^}]*stroke-width:2px; stroke-linecap:round; stroke-linejoin:round/, "the return path is two-pixel rounded SVG");
-assert.match(appTemplate, /handoff-return-line \{ stroke-dasharray:3 5/, "the return lane is dashed");
-assert.match(appTemplate, /handoff-return-light \{ stroke-dasharray:12 100/, "only a short light segment travels along the return path");
-assert.match(appTemplate, /handoff-return-light\.is-handoff-return-flow \{ animation:sc-handoff-return 650ms ease-in-out 1 both/, "each return has one finite 650ms sweep");
-assert.match(appTemplate, /@keyframes sc-handoff-return \{ 0% \{ stroke-dashoffset:12;[^}]*}[^}]*} 100% \{ stroke-dashoffset:-100/, "the short light advances from the path start toward its receiver");
-assert.match(appTemplate, /const finish=\(\)=>\{ observer\?\.disconnect\(\); svg\.remove\(\); }/, "return cleanup removes its SVG and disconnects its lifecycle observer");
+assert.match(appTemplate, /\.sc-task-view__connector\.is-handoff-reverse::before \{[^}]*animation-direction:reverse/, "return handoffs must reverse their travel direction");
+assert.match(appTemplate, /\.sc-task-view__connector\.is-handoff-reverse::after \{[^}]*border-top:0; border-bottom:7px solid currentColor/, "return handoffs must use a filled upward triangle");
 assert.match(appTemplate, /\.is-handoff-receiving::after \{[^}]*pointer-events:none;[^}]*animation:sc-handoff-receive [^;]* 1 both/, "receiver feedback must be finite and must not intercept interaction");
 assert.match(appTemplate, /\.sc-task-view__connector::before[^}]*background:currentColor/, "connector stem must follow the flow color");
 assert.match(appTemplate, /\.sc-task-view__connector::after[^}]*border-top:7px solid currentColor/, "connector arrowhead must point down");
