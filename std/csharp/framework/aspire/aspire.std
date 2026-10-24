@@ -1,0 +1,26 @@
+# Aspire 标准
+
+仅在项目实际采用时联读 [csharp.std](../../csharp.std)。本文件约束工程行为；具体 API、默认值与协议能力以项目锁定版本为准。
+
+## 编排边界
+
+0. AppHost 显式描述项目、容器与资源依赖；WithReference 负责资源引用，WaitFor 表达启动等待，不能代替业务调用中的超时与故障处理。
+1. AppHost SDK、hosting integrations 与目标框架按项目兼容版本管理；开发编排可运行不等于生产发布配置可用。
+
+## 资源与部署
+
+0. 连接信息通过资源引用或受控配置传递，密钥进入环境对应的秘密存储，不复制样例凭据。
+1. 副本服务保持无进程绑定会话；数据库迁移、初始化与后台作业明确单实例或分布式协调方式。
+2. 为资源定义健康、就绪、日志和 trace；外部端点显式授权暴露，仪表盘与管理服务限制访问。
+
+## 验证
+
+0. 覆盖依赖延迟启动、资源中断、重启和多副本；分别验证本地拓扑与实际部署目标的网络、身份及持久卷，不以 AppHost 成功启动替代生产验证。
+
+## 参考依据
+
+0. [dotnet/aspire-samples · samples/orleans-voting/OrleansVoting.AppHost/OrleansVoting.AppHost.csproj](https://github.com/dotnet/aspire-samples/blob/53725d5f255d876f4450e228f9df8a343587eb2f/samples/orleans-voting/OrleansVoting.AppHost/OrleansVoting.AppHost.csproj)：用于核对构建、插件或编排声明。
+1. [dotnet/aspire-samples · samples/orleans-voting/OrleansVoting.Service/OrleansVoting.Service.csproj](https://github.com/dotnet/aspire-samples/blob/53725d5f255d876f4450e228f9df8a343587eb2f/samples/orleans-voting/OrleansVoting.Service/OrleansVoting.Service.csproj)：用于核对构建、插件或编排声明。
+2. [dotnet/aspire-samples · samples/orleans-voting/OrleansVoting.AppHost/AppHost.cs](https://github.com/dotnet/aspire-samples/blob/53725d5f255d876f4450e228f9df8a343587eb2f/samples/orleans-voting/OrleansVoting.AppHost/AppHost.cs)：用于核对构建、插件或编排声明。
+
+来源未经过本仓库构建或运行验证；样例版本不构成版本推荐，以上规则不代表来源已实现所有故障处理。

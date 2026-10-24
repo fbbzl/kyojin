@@ -1,0 +1,30 @@
+# Bloc / Flutter Bloc 标准
+
+本文件补充 Bloc / Flutter Bloc 特有规则；联读 [Flutter 标准](../flutter/flutter.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[frontend.std](../../../frontend.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 状态与所有权
+
+0. Bloc、Cubit、flutter_bloc 及测试包版本以 pubspec 和锁文件为准，历史教程 API 不能直接套到新版本。
+1. 状态明确加载、空、成功和失败，事件与状态不可被外部任意修改；相等性反映可观察变化。
+2. Bloc/Cubit 由清晰的 scope 创建并关闭，复用实例与 Provider 自动释放的责任不得重叠。
+
+## 事件与副作用
+
+0. 事件并发、顺序、取消或丢弃策略按业务定义，不假定异步事件总按提交顺序完成。
+1. 导航、通知和网络副作用不放入可重复 build；订阅、计时器和请求在失效时清理。
+2. 登出或账号切换清空用户范围状态，避免旧请求回写到新会话。
+
+## 验证
+
+0. 用可控时钟和依赖测试事件竞争、失败、关闭、账号切换及状态序列，并保留必要 Widget 验证。
+
+## 参考依据
+
+0. [VeryGoodOpenSource/very_good_core 的构建文件](https://github.com/VeryGoodOpenSource/very_good_core/blob/978121a2194a17ee257c1c63ffc46c5ca20b2e3a/brick/__brick__/{{project_name.snakeCase()}}/pubspec.yaml)：固定提交 `978121a2194a17ee257c1c63ffc46c5ca20b2e3a`，路径 `brick/__brick__/{{project_name.snakeCase()}}/pubspec.yaml`。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

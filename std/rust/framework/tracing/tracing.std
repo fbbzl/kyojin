@@ -1,0 +1,22 @@
+# tracing / OpenTelemetry 标准
+
+仅在项目实际采用相应组件时联读 [rust.std](../../rust.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. span 覆盖异步 future 的执行过程，避免错误持有 enter guard 跨 await。
+1. 字段使用 allowlist，禁止自动记录凭据和大型 payload。
+2. subscriber 只初始化一次，过滤和导出队列受控。
+
+## 验证
+
+0. 验证父子 span、任务取消和 exporter 故障。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [launchbadge/realworld-axum-sqlx · Cargo.toml · L43](https://github.com/launchbadge/realworld-axum-sqlx/blob/f1b25654773228297e35c292f357d33b7121a101/Cargo.toml#L43)：依赖声明。
+- [loco-rs/loco · examples/demo/Cargo.toml · L24](https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/examples/demo/Cargo.toml#L24)：依赖声明。
+- [erikwang2013/e-cat · Cargo.toml · L32](https://github.com/erikwang2013/e-cat/blob/671a4a0e5571b90ce597ceade55722130d4df38d/Cargo.toml#L32)：声明上下文待解析。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

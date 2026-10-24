@@ -1,0 +1,22 @@
+# JUnit / Mockito / Testcontainers / ArchUnit / Gatling 标准
+
+仅在项目实际采用相应组件时联读 [java.std](../../java.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. JUnit 测试按行为和边界组织，时间与随机源可控。
+1. Mockito 只替换外部边界；Testcontainers 使用与生产相称的数据库版本和隔离资源。
+2. ArchUnit 规则表达真实架构边界；Gatling 负载模型说明数据规模与观测指标。
+
+## 验证
+
+0. 验证测试并行隔离、容器释放及压测失败阈值，不以 Mock 证明真实事务。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [jhipster/jhipster-sample-app · pom.xml · L199](https://github.com/jhipster/jhipster-sample-app/blob/6b000b5d23a36c45e01472471b84a44fa2464044/pom.xml#L199)：开发或测试；scope=test。
+- [YunaiV/ruoyi-vue-pro · yudao-dependencies/pom.xml · L433](https://github.com/YunaiV/ruoyi-vue-pro/blob/48809cbd4d4cb5253d4f153640af803981ff3a80/yudao-dependencies/pom.xml#L433)：依赖管理；scope=compile(default)。
+- [dromara/RuoYi-Vue-Plus · pom.xml · L118](https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/pom.xml#L118)：dependency-scope-see-block。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

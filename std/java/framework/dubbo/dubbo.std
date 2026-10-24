@@ -1,0 +1,31 @@
+# Apache Dubbo 标准
+
+本文件补充 Apache Dubbo RPC 服务契约、调用和治理规则；与 [java.std](../../java.std) 及采用 Spring 集成时的 [spring.std](../spring/spring.std) 联读。版本、注册中心和序列化协议以项目构建与部署配置为准。
+
+## 服务契约
+
+0. RPC 接口是跨进程契约；接口、DTO、枚举和错误语义按兼容策略演进，避免将数据库实体或不稳定内部类型直接作为公共协议。
+1. 服务版本、分组和接口标识须可追踪；变更提供者前先确认消费者范围、灰度与回滚路径。
+2. 提供者实现保持幂等边界清晰；调用者不得依赖隐式线程局部状态传递身份或事务上下文。
+
+## 调用与治理
+
+0. 每次调用设置超时并传递调用链路上下文；超时预算覆盖重试和下游调用，超时结果不能被解释为提供者必然未执行。
+1. 重试只针对明确可恢复的错误，写请求须幂等或可去重；限制重试次数并避免调用链各层叠加重试。
+2. 注册中心只负责发现与元数据，不替代健康检查、调用授权或数据一致性；凭据与命名空间按环境隔离。
+3. 过滤器、路由、负载均衡和熔断规则保持职责单一；影响业务正确性的治理规则需有配置校验、变更审计和回退。
+4. 优雅关闭先停止对外发布或接收新请求，再限时排空进行中的调用，最后关闭注册中心和传输资源。
+
+## 验证
+
+0. 验证契约兼容、提供者不可达、注册信息变化、超时取消、重复写、序列化兼容、限流/熔断和关闭排空。
+1. 本地测试覆盖业务语义；集成验证使用真实协议与注册中心组合，不以 Mock 调用证明服务发现或治理行为正确。
+
+## 参考依据
+
+- [spacecloud 实际应用模块 POM](https://github.com/javahongxi/spacecloud/blob/2d01dd8aa570eeddd2ba98bdd2bc1393c20b28c1/cloud-provider-dubbo-sample/pom.xml)：直接依赖 Dubbo starter、Nacos registry 与 Sentinel 适配器。根 POM 的 dependencyManagement 仅负责管理，不能单独证明启用。
+
+0. [javahongxi/spacecloud Maven 构建](https://github.com/javahongxi/spacecloud/blob/2d01dd8aa570eeddd2ba98bdd2bc1393c20b28c1/pom.xml)：列出 `cloud-provider-dubbo-sample` 模块，在 dependencyManagement 中管理 `dubbo-spring-boot-starter` 与 Nacos 注册中心适配器。
+1. [mateaix/matecloud Maven 构建](https://github.com/mateaix/matecloud/blob/580562917197e9ecabfc1c0a20f2f0eea8265a83/pom.xml)：包含 Dubbo BOM 版本管理声明；此项本身不证明 Dubbo starter 已由应用模块引入。
+
+脚手架来源是依赖与模块证据，不替代 Dubbo 官方版本文档、协议约定或运行测试；不得把本文件中的工程约束当作某一版本的 API 保证。

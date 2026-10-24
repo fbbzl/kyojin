@@ -1,0 +1,30 @@
+# Django REST Framework 标准
+
+本文件补充 Django REST Framework 特有规则；联读 [python.std](../../python.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 序列化与权限
+
+0. Serializer 分开定义可写与只读字段，身份、租户、价格和审计字段不能由客户端任意写入。
+1. 列表 QuerySet 先限制资源范围；对象级权限不应被误认为自动过滤全部列表结果。
+2. 嵌套写入的创建、更新、删除及事务行为显式定义，不能依赖模糊默认行为。
+
+## 端点与可靠性
+
+0. ViewSet action、认证、权限和限流在实际路由注册路径验证，额外 action 不绕过同一边界。
+1. 分页、错误、PATCH 未提供/null 和内容协商遵循现有 API 契约。
+2. 根据真实序列化访问预加载关联并检查 SQL 次数，避免按每条结果查询。
+
+## 验证
+
+0. 仅在模板选择 DRF 或项目实际采用时生效；验证列表越权、字段写入、嵌套失败回滚、分页和匿名请求。
+
+## 参考依据
+
+0. [cookiecutter/cookiecutter-django 的构建文件](https://github.com/cookiecutter/cookiecutter-django/blob/33aca01e5a46c5cf8eb9e405ce133452ba387595/{{cookiecutter.project_slug}}/requirements/base.txt)：固定提交 `33aca01e5a46c5cf8eb9e405ce133452ba387595`，路径 `{{cookiecutter.project_slug}}/requirements/base.txt`。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

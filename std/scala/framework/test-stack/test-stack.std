@@ -1,0 +1,22 @@
+# ScalaTest / MUnit 标准
+
+仅在项目实际采用相应组件时联读 [scala.std](../../scala.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. 异步测试返回受框架管理的 effect 或 Future，不靠 sleep 等待。
+1. fixture 生命周期隔离数据库、actor 和调度器。
+2. 属性和参数化测试围绕业务不变量，随机失败记录种子。
+
+## 验证
+
+0. 验证测试超时、并行隔离和资源释放。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [playframework/play-scala-seed.g8 · src/main/g8/build.sbt · L11](https://github.com/playframework/play-scala-seed.g8/blob/cd3ab7577fe8751567bcfbc360df383deb289c58/src/main/g8/build.sbt#L11)：开发或测试。
+- [http4s/http4s.g8 · src/main/g8/build.sbt · L3](https://github.com/http4s/http4s.g8/blob/3a4b4cfffac2f95897babc1a48523efef28c33db/src/main/g8/build.sbt#L3)：声明上下文待解析。
+- [ScalaConsultants/zio-scala3-quickstart.g8 · src/main/g8/build.sbt · L44](https://github.com/ScalaConsultants/zio-scala3-quickstart.g8/blob/f89c3395a28019d502a31b23d5c51659d9c2b264/src/main/g8/build.sbt#L44)：开发或测试。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

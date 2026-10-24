@@ -1,0 +1,24 @@
+# PyMS 标准
+
+仅在项目实际采用时联读 [python 基础规范](../../python.std)。具体 API 与默认行为以项目采用版本为准。
+
+## 模板与配置
+
+0. py-ms extras、Flask 和扩展版本以生成项目为准；all extras 不证明服务发现、追踪与监控已配置或可用。
+1. 保留模板选项和生成后的配置，区分 Swagger/Connexion、traces 与 metrics 条件分支；不把 Jinja 模板直接当作可加载 YAML。
+
+## 服务边界
+
+0. 在 HTTP 边界校验请求、身份与错误契约；下游调用采用有界超时，写重试须幂等，不能以框架名称推断已有完整微服务治理。
+1. 追踪上下文不能承载可信授权；密钥由部署配置注入，日志与指标避免敏感数据及无界标签。
+
+## 验证
+
+0. 覆盖条件生成、配置缺失、下游不可达、扩展兼容与资源关闭；当前来源确认 PyMS 运行依赖，尚未证明多服务拓扑或服务发现启用。
+
+## 参考依据
+
+0. [python-microservices/cookiecutter-pyms · {{cookiecutter.project_folder}}/requirements.txt](https://github.com/python-microservices/cookiecutter-pyms/blob/88b640b15fb867265057578566c4e206d711aa87/%7B%7Bcookiecutter.project_folder%7D%7D/requirements.txt)：用于核对构建或资源配置。
+1. [python-microservices/cookiecutter-pyms · {{cookiecutter.project_folder}}/config.yml](https://github.com/python-microservices/cookiecutter-pyms/blob/88b640b15fb867265057578566c4e206d711aa87/%7B%7Bcookiecutter.project_folder%7D%7D/config.yml)：用于核对构建或资源配置。
+
+来源未经本仓库构建或运行验证；以上约束不表示来源已实现所有恢复机制。

@@ -1,0 +1,30 @@
+# userver 标准
+
+本文件补充 userver 特有规则；联读 [cpp.std](../../cpp.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 构建与组件
+
+0. userver、CMake 组件、编译器和下载策略按项目锁定；模板自动下载路径不等于批准外部供应链。
+1. 静态与动态配置校验类型和必填项，秘密不得留在示例配置或生成产物中。
+2. 组件依赖、启动失败清理与关闭顺序清楚，任务不能在依赖销毁后继续访问。
+
+## 协程与请求
+
+0. 阻塞数据库、文件与 CPU 工作使用适合的任务处理器，不能堵塞协作式执行路径。
+1. deadline、取消和请求身份传递到外部调用，重试遵循幂等和总时间预算。
+2. HTTP/RPC handler 负责协议转换，业务校验与资源授权在可信服务边界执行。
+
+## 验证
+
+0. 使用项目 testsuite 或同等工具验证真实组件、外部失败、取消、任务残留、配置错误及优雅关闭。
+
+## 参考依据
+
+0. [userver-framework/service_template 的构建文件](https://github.com/userver-framework/service_template/blob/c076389c520c8ec4eb2477e858b9e416ddafd94c/CMakeLists.txt)：固定提交 `c076389c520c8ec4eb2477e858b9e416ddafd94c`，路径 `CMakeLists.txt`。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

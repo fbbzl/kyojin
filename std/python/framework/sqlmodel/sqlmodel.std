@@ -1,0 +1,30 @@
+# SQLModel 标准
+
+本文件补充 SQLModel 特有规则；联读 [python.std](../../python.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[database.std](../../../database.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 模型边界
+
+0. SQLModel、SQLAlchemy 与 Pydantic 的兼容版本按项目锁定，不能混用不同版本序列化 API。
+1. 表模型、输入模型与输出模型分开表达，密码、权限和服务端字段不因模型复用泄漏。
+2. PATCH 区分未提供和显式 null；只更新允许字段，不能用缺省值覆盖未提交数据。
+
+## 会话与查询
+
+0. Session 有明确请求或任务归属，不在并发任务间共享；退出、异常和取消释放资源。
+1. commit、刷新、回滚与响应序列化顺序清楚；关系访问避免脱离会话后隐式加载。
+2. SQLModel 的模型声明不替代数据库唯一约束、迁移审核和资源授权。
+
+## 验证
+
+0. 覆盖未提供字段、敏感输出、并发写入、关系加载、事务失败和目标数据库迁移。
+
+## 参考依据
+
+0. [fastapi/full-stack-fastapi-template 的构建文件](https://github.com/fastapi/full-stack-fastapi-template/blob/b1125d8839482cb7bbae603ddc6d0081bf87532e/backend/pyproject.toml)：固定提交 `b1125d8839482cb7bbae603ddc6d0081bf87532e`，路径 `backend/pyproject.toml`。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

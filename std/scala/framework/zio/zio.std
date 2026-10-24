@@ -1,0 +1,30 @@
+# ZIO 与 ZIO HTTP 标准
+
+本文件补充 ZIO 与 ZIO HTTP 特有规则；联读 [scala.std](../../scala.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 环境与错误
+
+0. ZIO、ZLayer、ZIO HTTP、序列化和日志版本按项目构建匹配；不使用模板中的预发布值作为统一基线。
+1. 环境依赖由层或项目等效机制构造，避免重复获取同一昂贵资源；获取失败时释放已创建依赖。
+2. 领域失败、缺陷与取消区分处理；不通过统一成功占位吞掉 cause。
+
+## 并发与服务
+
+0. Fiber 有明确所有者及 scope，后台任务结束、取消和应用关闭时可回收，不随意使用无监管 fork。
+1. 数据库与阻塞调用使用匹配的执行方式；重试限定次数、时间和可重试错误，副作用必须幂等。
+2. ZIO HTTP 路由、编解码、鉴权与 Body 限制在实际服务注册边界验证。
+
+## 验证
+
+0. 覆盖资源获取失败、并行任务一侧失败、重试耗尽、客户端取消、路由越权及关闭时 Fiber 清理。
+
+## 参考依据
+
+0. [ScalaConsultants/zio-scala3-quickstart.g8 的构建文件](https://github.com/ScalaConsultants/zio-scala3-quickstart.g8/blob/f89c3395a28019d502a31b23d5c51659d9c2b264/src/main/g8/build.sbt)：固定提交 `f89c3395a28019d502a31b23d5c51659d9c2b264`，路径 `src/main/g8/build.sbt`。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

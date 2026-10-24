@@ -1,0 +1,24 @@
+# AutoRoute 标准
+
+本文件补充 AutoRoute 特有规则；联读 [Flutter 标准](../flutter/flutter.std)、[general.std](../../../general.std)、[security.std](../../../security.std)及实际触及的专项规范。
+
+## 适用基线
+
+0. 只对实际采用该组件的项目应用；版本与部署能力以项目依赖和锁文件为准，不复制历史模板默认配置。
+1. 来源构建文件于 2026-10-24 读取，依赖存在不等于所有功能已启用。
+
+## 路由与生成
+
+0. auto_route 与生成器版本匹配，路由声明、生成代码和应用导航结构同步审查。
+1. 参数、路径和深链输入按类型及资源权限校验，客户端 guard 不能替代服务端授权。
+2. 嵌套路由、标签页与导航栈的所有者明确，返回行为及状态恢复按产品流程定义。
+
+## 身份与异步
+
+0. 登录、登出、Token 失效与 guard 的重评估语义按实际版本验证，避免旧页面在身份变化后继续可见。
+1. 异步 guard 的继续、取消和重定向路径有界且不重复完成；防止循环跳转与失效页面使用旧 Context。
+2. 验证外部深链、未登录跳转、返回栈、快速连续导航、账号切换、参数失败及生成器升级。
+
+## 参考依据
+
+0. [wednesday-solutions/flutter_template 构建文件](https://github.com/wednesday-solutions/flutter_template/blob/41ccdc52b8004bef01469a31f0086cf5ce19c417/pubspec.yaml)，固定提交 `41ccdc52b8004bef01469a31f0086cf5ce19c417`。

@@ -1,0 +1,30 @@
+# Django Ninja 标准
+
+本文件补充 Django Ninja 特有规则；联读 [python.std](../../python.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## Schema 与路由
+
+0. Django Ninja、Django 与 Pydantic 版本按依赖声明核对，Schema 默认值及别名语义不跨版本推断。
+1. 请求、响应和持久化模型按读写权限分离，输出仅含获准字段。
+2. 路由注册、认证覆盖范围及状态码与生成 OpenAPI 保持一致；文档可见性不代表有调用权限。
+
+## 同步与异步
+
+0. 同步 ORM、异步处理及事务边界依据 Django 实际支持方式选择，不能直接在事件循环执行阻塞工作。
+1. 服务端按对象、字段和租户授权；认证回调不替代资源过滤。
+2. 异常、上传、Body 规模和超时在真实请求边界限制。
+
+## 验证
+
+0. 该组件在模板中为条件选项，不与 DRF 自动同时启用；验证认证继承、Schema 裁剪、错误响应及事务失败。
+
+## 参考依据
+
+0. [cookiecutter/cookiecutter-django 的构建文件](https://github.com/cookiecutter/cookiecutter-django/blob/33aca01e5a46c5cf8eb9e405ce133452ba387595/{{cookiecutter.project_slug}}/requirements/base.txt)：固定提交 `33aca01e5a46c5cf8eb9e405ce133452ba387595`，路径 `{{cookiecutter.project_slug}}/requirements/base.txt`。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

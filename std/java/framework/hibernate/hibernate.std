@@ -1,0 +1,30 @@
+# Hibernate ORM 标准
+
+本文件补充 Hibernate ORM 特有规则；联读 [java.std](../../java.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[database.std](../../../database.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 实体与关联
+
+0. 实体身份、equals/hashCode、代理和可变集合语义一致，避免未初始化关联被日志或序列化访问。
+1. 关系维护明确拥有方、级联与 orphanRemoval，删除或替换集合前确认业务范围。
+2. 查询按访问模式选择 fetch、投影和批量策略，不用全局 eager 替代查询分析。
+
+## 事务与状态
+
+0. Session/EntityManager 的生命周期和线程归属明确，不跨并发工作共享有状态上下文。
+1. flush、commit 与 SQL 执行分别判定；失败后的事务与上下文按实际状态回滚或丢弃。
+2. 原生 SQL、批量 DML、二级缓存和版本控制之间的同步影响逐项验证。
+
+## 验证
+
+0. 验证真实数据库中的关联删除、延迟加载、SQL 数量、并发版本冲突及失败后的实体状态；生产不以自动建表替代迁移。
+
+## 参考依据
+
+0. [jhipster/jhipster-sample-app 的构建文件](https://github.com/jhipster/jhipster-sample-app/blob/6b000b5d23a36c45e01472471b84a44fa2464044/pom.xml)：固定提交 `6b000b5d23a36c45e01472471b84a44fa2464044`，路径 `pom.xml`。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

@@ -1,0 +1,61 @@
+# Vue 标准
+
+本文件只补充 Vue 特有规则，并继承 [frontend.std](../../../frontend.std)、[typescript.std](../../typescript.std) 与 [security.std](../../../security.std)。
+
+
+## 适用基线
+
+0. Vue、编译器、路由、SSR 框架和浏览器范围以项目依赖与配置为准。
+1. Composition API、Options API 与 `<script setup>` 沿用项目方向，不为形式统一机械迁移。
+2. Pinia、Vue Router、请求和表单库只在项目已采用或需求明确时使用。
+
+
+## 组件与响应式
+
+0. Props 只读，更新通过 emit、model 契约或共享状态完成；不得直接修改传入对象掩盖单向数据流。
+1. `ref`、`reactive`、`computed` 和 `watch` 按数据语义选择，派生值优先 `computed`。
+2. 解构响应式对象时保持响应性；普通 `reactive` 对象与 Vue 3.5+ 同一 `<script setup>` 内的响应式 Props 解构不是同一机制。跨函数传递需持续跟踪的 Props 时使用 getter、`toRef` 或项目等效写法，不传一次性快照。
+3. 列表 key 表达稳定身份，模板表达式保持轻量且无副作用。
+4. `computed` getter 只计算结果，不发请求、修改源状态或写其他响应式值；需要用户动作触发的写操作放在事件处理流程。
+5. 不用两组 `watch` 相互同步可推导状态；先确定唯一所有者，再以 `computed`、事件或明确的 model 契约连接。
+
+
+## 组件接口与组合
+
+0. 组件围绕一项可描述的界面职责组织；共享布局用组件和 Slot，共享有状态逻辑用 Composable，纯计算用普通函数。
+1. Props、Emits 和 Slot 参数只暴露调用方需要的契约；事件表达已发生的业务动作，不泄漏组件内部 DOM 或要求父级修改子级私有状态。
+2. `v-model` 明确值的所有者、更新事件和默认值；避免子级默认值与父级未初始化值形成两份互相矛盾的状态。
+3. 复用组件不靠不断增加互斥布尔 Props 扩展；差异可用内容槽或明确模式表达时，不引入通用配置解释器。
+
+
+## Composable 与状态
+
+0. Composable 管理一组相关响应式能力，并明确创建的订阅、监听和资源如何释放。
+1. Composable 不隐藏意外全局单例；共享状态的作用域必须与应用、请求或组件生命周期一致。
+2. Store 只保存共享源状态，避免复制可计算数据和形成 Store 间循环依赖。
+3. SSR 中不得把用户级可变状态放进跨请求共享单例。
+4. Composable 声明输入接受普通值、ref 还是 getter；返回可解构状态时优先返回包含 refs 的普通对象，避免调用方意外失去响应性。
+5. `provide` / `inject` 的键、默认行为和写权限明确；共享状态由提供方集中修改，不让任意后代隐式改写业务状态。
+
+
+## 生命周期与路由
+
+0. 定时器、DOM 事件、Observer、订阅和请求在卸载或作用域结束时清理。
+1. `watch` 明确数据源、flush 时机和竞态处理，不用深度监听替代数据建模。
+2. 路由 Guard 只控制前端导航，服务端仍需授权；异步 Guard 必须完成或明确取消。
+3. KeepAlive、Teleport 和 Suspense 改变生命周期时，验证激活、停用和错误路径。
+4. `watchEffect` 的异步依赖只在首次 `await` 前同步追踪；需精确追踪时使用显式 `watch` 源，并在当前版本允许的时机注册清理，防止迟到结果覆盖新数据。
+
+
+## 测试与陷阱
+
+0. 测试工具沿用项目配置，重点验证 Props/Emits、响应式更新、路由取消、KeepAlive/Suspense 生命周期、SSR hydration 和资源清理。
+1. 避免不稳定 key、直接修改 Props、丢失响应性和未清理监听。
+2. `watchEffect` 隐式依赖过多会使触发原因不可判断。
+3. SSR hydration 依赖时间、随机数或客户端专有 API 时可能产生不一致。
+4. 优先通过用户可见结果和公开 Props/Emits 验证行为；实体切换、重复提交和路由返回要检查状态是否正确保留或重置，不只断言内部 ref。
+
+
+## 参考依据
+
+0. Vue 官方指南的 [Composables](https://vuejs.org/guide/reusability/composables)、[Props](https://vuejs.org/guide/components/props) 与 [Watchers](https://vuejs.org/guide/essentials/watchers)：据其逻辑复用、响应式解构、依赖追踪与清理章节补齐规则；API 以项目版本为准。

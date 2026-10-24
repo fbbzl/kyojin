@@ -1,0 +1,25 @@
+# Serverpod 标准
+
+仅在项目实际采用时联读 [Flutter / Dart 基础规范](../flutter/flutter.std)。具体 API 与默认行为以项目采用版本为准。
+
+## 服务端与生成
+
+0. Serverpod 服务端、客户端、generator 与 Dart SDK 保持兼容；协议模型变更重新生成并核对兼容，不直接修改生成文件。
+1. 端点执行认证、授权和输入校验；不能因客户端由 generator 产生就信任客户端输入。
+
+## 数据库与扩展
+
+0. 数据库迁移与应用发布顺序明确，并准备失败恢复；事务范围限于实际数据库连接，不跨网络请求长期持锁。
+1. 多实例需要核对 Redis、会话、缓存与后台任务协调配置；当前样例 production.yaml 中 redis.enabled 为 false，不据此宣称已启用分布式缓存或多实例协调。
+2. 密码、服务公开地址与环境资源配置分离；示例域名和版本只用于说明结构，不能复制成生产值。
+
+## 验证
+
+0. 覆盖协议生成、迁移、授权、并发更新和关闭；采用 Redis 或多实例时另测失效与重启，本次构建文件只确认服务端框架依赖。
+
+## 参考依据
+
+0. [zeabur/serverpod-template · pubspec.yaml](https://github.com/zeabur/serverpod-template/blob/068d937480da24d7c4f72d86b61d54e80e969e16/pubspec.yaml)：用于核对构建或资源配置。
+1. [zeabur/serverpod-template · config/production.yaml](https://github.com/zeabur/serverpod-template/blob/068d937480da24d7c4f72d86b61d54e80e969e16/config/production.yaml)：用于核对构建或资源配置。
+
+来源未经本仓库构建或运行验证；以上约束不表示来源已实现所有恢复机制。

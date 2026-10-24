@@ -1,0 +1,75 @@
+# C# (.NET) 开发标准
+
+本文件是 C# / .NET 开发变更的主入口：涉及源代码、测试、项目配置、异步/后台工作、依赖注入或公共 API 时读取。始终联读 [general.std](../general.std)；仅在实际触及输入/权限/秘密、持久化、日志与可观测性时分别联读 [security.std](../security.std)、[database.std](../database.std) 和 [logging.std](../logging.std)。
+
+## 适用基线
+
+0. Target Framework、语言版本和运行平台以项目文件、`global.json` 与部署目标为准。
+1. 使用项目已启用的 Nullable、分析器、格式化和依赖注入约定，不主动切换基础设施。
+
+## 类型与 API
+
+0. 公共类型和成员遵循 .NET 命名惯例；异步方法通常使用 `Async` 后缀，接口命名服从项目一致性。
+1. 启用 Nullable Reference Types 时准确标注 `T?`，不使用 `null!` 长期绕过分析。
+2. `var` 在右侧类型清晰时可用；复杂泛型、数值转换或公共契约优先显式类型。
+3. `record` 只在值语义成立时使用；不可变集合和 `readonly` 根据生命周期、共享与修改需求选择，不把可变实体误建模为值对象。
+4. 默认通过 `using` 使用类型简单名；同名类型冲突优先 alias，只有必须强调命名空间或处理局部冲突时才使用全限定类型名。
+
+## 方法、属性与对象设计
+
+0. 方法与类型使用领域名称，单位和修改影响可辨认；布尔开关切换不同动作时优先拆出语义化方法，相关参数形成概念时再引入参数对象。
+1. 属性表示状态或低成本查询；网络调用、阻塞、昂贵计算和可见副作用用方法表达，不能藏在 getter、运算符或隐式转换中。
+2. 构造器建立有效状态，不调用虚方法；继承用于可替换关系，普通复用优先组合，公开的覆盖点需要稳定契约。
+3. 字段与成员保持最小可见性；`readonly` 和 record 的值语义不保证嵌套对象不可变，公开集合需明确视图、快照与修改权。
+4. 小型稳定值可用 struct，含身份、复杂生命周期或大状态的对象不为减少分配强改为值类型；值相等、`GetHashCode` 和排序契约保持一致。
+5. 公共 XML 文档记录单位、可空、异常、线程安全和所有权；泛型约束只包含算法实际需要的能力，不人为要求无参构造或特定基类。
+
+## 集合、委托与 LINQ
+
+0. 参数接受满足需求的接口；结果区分 `IEnumerable<T>` 的惰性序列与已物化快照，不能假定可多次枚举、随机访问或计数无代价。
+1. LINQ 表达清晰的变换与筛选，lambda 不隐藏状态写入或 I/O；需要复杂分支和受控退出时用循环，不按偏好一律改写查询。
+2. `IQueryable<T>` 与本地枚举的执行边界必须可见，物化前确认过滤和分页位置；不把任意 .NET 方法都当成可翻译的远端查询。
+3. `yield` 延迟方法体与异常执行，资源应覆盖实际枚举生命周期；需要调用时校验的参数在非迭代入口检查。
+4. `First`、`Single` 及其默认值变体按业务基数选择，不用默认值掩盖本应唯一或必须存在的数据，不为避免异常改变语义。
+5. 简单回调用 delegate 或已有函数类型；事件订阅方与发布方明确退订责任，长生命周期发布方不能意外保留短生命周期对象。
+6. 协议字符串与业务排序按语义显式选择比较器；机器标识默认考虑 ordinal，不依赖运行环境文化设置处理键、路径片段或协议字段。
+
+## 异步与资源
+
+0. 除事件处理器外避免 `async void`；异步调用必须被等待、返回或显式纳入后台任务生命周期，所有者关闭时先停止接收，再取消并等待全部子任务，最后释放作用域依赖。
+1. 库和长任务按调用链传递 `CancellationToken`，取消不是普通错误，不应被吞掉。
+2. 当前作用域创建并拥有的 `IDisposable` / `IAsyncDisposable` 使用 `using` / `await using` 覆盖成功和异常路径；容器托管实例由容器释放，调用方不得提前释放。
+3. 避免 `.Result`、`.Wait()` 和阻塞式同步异步代码；确需同步桥接时说明线程与死锁边界。
+4. Dispose 只释放拥有的资源，重复调用应安全；仅在直接持有非托管资源且现有封装不足时考虑终结器，不为普通托管对象添加终结器。
+
+## 错误与并发
+
+0. 可预期业务结果可用显式结果类型或领域异常表达；未处理异常在应用边界统一转换。
+1. 重新抛出使用 `throw;` 保留堆栈；包装异常时保留内部异常和必要上下文。
+2. 共享状态使用明确同步原语或并发集合，避免把 scoped 服务和 `DbContext` 跨线程共享。
+3. DI 生命周期必须匹配依赖生命周期，singleton 不直接持有 scoped 依赖。
+
+## 工具与测试
+
+0. 格式化和分析器沿用项目配置，可使用 `dotnet format`、内置分析器或现有规则集。
+1. 测试框架沿用 xUnit、NUnit、MSTest 或项目既有选择；异步测试返回 `Task`，并覆盖多 Task 失败、同级取消、关闭超时、部分副作用恢复及目标 TFM/API 兼容。
+2. 参数化测试、Fake/Mock 和真实集成测试根据边界选择，不固定具体 Mock 库。
+3. 断言行为与不变量，覆盖延迟枚举、相等性、事件退订和取消路径；重构中的提取、移动和查询改写需证明求值次数、异常时机与外部副作用未变。
+
+## 常见陷阱
+
+0. LINQ 延迟执行引发重复枚举、重复查询或已释放资源访问。
+1. `async void`、未观察 Task、错误取消传播和 fire-and-forget 生命周期丢失。
+2. 捕获异常后使用 `throw ex` 丢失原始堆栈。
+3. 值类型装箱、闭包捕获和大对象分配造成隐藏开销。
+4. `DbContext`、流或响应对象在异步操作完成前被释放。
+
+## 框架规范导航
+
+仅在实际采用时联读以下框架及生态组件规范：[ABP Framework 标准](framework/abp/abp.std)、[Ardalis Result / GuardClauses](framework/ardalis/ardalis.std)、[Aspire 标准](framework/aspire/aspire.std)、[ASP.NET Core 标准](framework/aspnetcore/aspnetcore.std)、[AutoMapper](framework/automapper/automapper.std)、[Entity Framework Core 标准](framework/efcore/efcore.std)、[FastEndpoints 标准](framework/fastendpoints/fastendpoints.std)、[FluentValidation](framework/fluentvalidation/fluentvalidation.std)、[Mediator Source Generator](framework/mediator/mediator.std)、[MediatR](framework/mediatr/mediatr.std)、[OpenTelemetry .NET / Azure Identity](framework/opentelemetry/opentelemetry.std)、[Orleans 标准](framework/orleans/orleans.std)、[Scalar / ASP.NET OpenAPI](framework/scalar/scalar.std)、[Serilog](framework/serilog/serilog.std)、[NUnit / Moq / Playwright / Reqnroll](framework/test-stack/test-stack.std)。来源与声明范围见 [规范导航](../README.md)。
+
+
+## 参考依据
+
+0. Bill Wagner《Effective C#》第 3 版公开目录：资源、初始化、泛型、LINQ、延迟求值与异常保证。来源：<https://www.informit.com/store/effective-c-sharp-50-specific-ways-to-improve-your-c-sharp-9780672337871>。不把书中的 var、查询语法等偏好变成统一硬规定。
+1. Jon Skeet《C# in Depth》第 4 版公开介绍与章节摘要：类型、委托、迭代和 async 语义。来源：<https://www.manning.com/books/c-sharp-in-depth-fourth-edition>。新版语法与 Nullable 行为以项目语言版本为准。

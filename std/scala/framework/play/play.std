@@ -1,0 +1,31 @@
+# Play Framework 标准
+
+本文件补充 Play Framework 特有规则；联读 [scala.std](../../scala.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 构建与路由
+
+0. Play、Scala、sbt 插件与服务器版本按构建配置锁定；模板占位值不是可部署配置。
+1. routes、Action、BodyParser 和 JSON/Form 校验保持契约一致；输入体积限制及错误响应明确。
+
+## 异步与安全
+
+0. Future 中的阻塞调用放到明确的专用执行上下文；不能占用默认请求线程后假定异步即非阻塞。
+1. 认证 Action、CSRF、会话和 Cookie 保护分别配置；客户端路由与模板隐藏不替代资源授权。
+2. 依赖与后台任务接入应用生命周期停止钩子；Future 不能自动提供取消与回滚，副作用需要幂等或补偿。
+
+## 验证
+
+0. 覆盖路由绑定、BodyParser 拒绝、CSRF、权限、异常映射及停止时仍在执行的工作。
+
+## 参考依据
+
+0. [playframework/play-scala-seed.g8](https://github.com/playframework/play-scala-seed.g8/tree/cd3ab7577fe8751567bcfbc360df383deb289c58)：固定观察提交 `cd3ab7577fe8751567bcfbc360df383deb289c58`。
+1. [src/main/g8/build.sbt](https://github.com/playframework/play-scala-seed.g8/blob/cd3ab7577fe8751567bcfbc360df383deb289c58/src/main/g8/build.sbt)：用于核对实际依赖或生成入口。
+2. [src/main/g8/project/plugins.sbt](https://github.com/playframework/play-scala-seed.g8/blob/cd3ab7577fe8751567bcfbc360df383deb289c58/src/main/g8/project/plugins.sbt)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

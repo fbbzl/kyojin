@@ -1,0 +1,21 @@
+# OpenTelemetry .NET / Azure Identity 标准
+
+仅在项目实际采用相应组件时联读 [csharp.std](../../csharp.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. 日志指标 trace 的资源标识与服务版本一致，标签有基数限制。
+1. Azure Identity 凭据链在生产明确来源，避免意外使用开发者身份。
+2. exporter 队列和 flush 时间有界，敏感头和 baggage 过滤。
+
+## 验证
+
+0. 验证跨服务传播、凭据拒绝与 exporter 不可达。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [jasontaylordev/CleanArchitecture · src/Web/Web.csproj · L21](https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Web/Web.csproj#L21)：PackageReference。
+- [jasontaylordev/CleanArchitecture · Directory.Packages.props · L11](https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/Directory.Packages.props#L11)：依赖管理。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

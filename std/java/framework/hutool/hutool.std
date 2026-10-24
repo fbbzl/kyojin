@@ -1,0 +1,22 @@
+# Hutool / Lombok / 通用工具 标准
+
+仅在项目实际采用相应组件时联读 [java.std](../../java.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. 工具替换先核对空白、编码、时区和异常语义，不机械改写清晰表达式。
+1. Lombok 实体避免默认生成递归 toString 或将可变关系纳入 equals。
+2. 网络、文件和压缩工具仍执行路径、大小及目标地址校验。
+
+## 验证
+
+0. 验证字符边界、路径穿越、空值与生成方法的实际契约。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [dromara/RuoYi-Vue-Plus · pom.xml · L151](https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/pom.xml#L151)：依赖管理；scope=import。
+- [jhipster/jhipster-sample-app · pom.xml · L241](https://github.com/jhipster/jhipster-sample-app/blob/6b000b5d23a36c45e01472471b84a44fa2464044/pom.xml#L241)：依赖声明；scope=compile(default)。
+- [YunaiV/ruoyi-vue-pro · yudao-dependencies/pom.xml · L499](https://github.com/YunaiV/ruoyi-vue-pro/blob/48809cbd4d4cb5253d4f153640af803981ff3a80/yudao-dependencies/pom.xml#L499)：依赖管理；scope=compile(default)。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

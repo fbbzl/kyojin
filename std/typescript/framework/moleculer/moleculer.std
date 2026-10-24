@@ -1,0 +1,26 @@
+# Moleculer 标准
+
+仅在项目实际采用时联读 [typescript.std](../../typescript.std)。本文件约束工程行为；具体 API、默认值与协议能力以项目锁定版本为准。
+
+## 模板与服务边界
+
+0. 生成前记录 monolith、transporter、apiGW、channels 和 workflows 选项；条件依赖只能说明模板支持，不能视为项目已全部启用。
+1. 服务 action 的参数、结果和错误建立运行时契约；服务名、版本和节点标识按环境隔离。
+
+## RPC 与事件
+
+0. 调用设置超时预算；重试仅用于可恢复故障，写 action 用业务幂等键去重，不将超时解释为服务未执行。
+1. 明确 emit 与 broadcast 的订阅组和扇出范围；普通事件不能自动获得持久化、确认或重放保证。需要持久消息时核对 channels 与所选 broker 的实际确认语义。
+2. transporter 凭据、TLS、命名空间和网络访问权限按部署配置管理；API gateway 的鉴权结果不得替代内部 action 的授权边界。
+
+## 生命周期与验证
+
+0. 服务停止时停止接收任务，限时排空 action 和消费者，再关闭 broker；外部连接由生命周期钩子管理。
+1. 覆盖节点离线、超时后晚到结果、重复消息、重投、部分失败和关闭排空；模板中演示的匿名消息服务和开放管理端口不能直接用于生产。
+
+## 参考依据
+
+0. [moleculerjs/moleculer-template-project-typescript · template/package.json](https://github.com/moleculerjs/moleculer-template-project-typescript/blob/0f4af078633f3eaefc4eaa4a5201231e4f3be0fc/template/package.json)：用于核对构建、插件或编排声明。
+1. [moleculerjs/moleculer-template-project-typescript · template/docker-compose.yml](https://github.com/moleculerjs/moleculer-template-project-typescript/blob/0f4af078633f3eaefc4eaa4a5201231e4f3be0fc/template/docker-compose.yml)：用于核对构建、插件或编排声明。
+
+来源未经过本仓库构建或运行验证；样例版本不构成版本推荐，以上规则不代表来源已实现所有故障处理。

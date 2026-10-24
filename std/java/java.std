@@ -1,0 +1,96 @@
+# Java 开发标准
+
+本文件是 Java 开发变更的主入口：涉及源代码、测试、构建配置、并发/后台工作、JVM 公共 API 或库发布时读取。始终联读 [general.std](../general.std)；仅在实际触及输入/权限/秘密、持久化、日志与可观测性时分别联读 [security.std](../security.std)、[database.std](../database.std) 和 [logging.std](../logging.std)。Spring 项目再读取 [spring.std](framework/spring/spring.std)；使用分布式组件时仅在实际引入后读取 [Spring Cloud 标准](framework/spring-cloud/spring-cloud.std)、[Spring Cloud Alibaba 标准](framework/spring-cloud-alibaba/spring-cloud-alibaba.std) 或 [Apache Dubbo 标准](framework/dubbo/dubbo.std)。
+
+## 适用基线
+
+0. JDK 版本、语言级别和运行时以 Maven/Gradle toolchain、构建配置与部署目标为准。
+1. 只使用兼容目标支持的语法和 API；`record`、sealed class、模式匹配和虚拟线程不是统一要求。
+2. 格式化、静态分析、注解处理和依赖选择沿用项目现有配置。
+
+## 排版与导入
+
+项目规则、已生效的格式化配置和稳定现有风格优先；仅在均无约定时采用以下默认值，不据此批量重排既有代码。
+
+0. 使用 UTF-8、4 空格缩进、8 空格续行缩进，行宽以 120 字符为参考；换行符沿用目标文件或仓库约定，不机械换行。
+1. 类和方法的左花括号另起一行，控制块与 lambda 的左花括号同行；空行划分逻辑阶段，同组字段、赋值和多行参数适当对齐，避免装饰性空白。
+2. 普通导入与静态导入分组，组内按名称排序，默认显式导入；静态导入用于来源明确且无同名歧义的成员，移除无用导入。
+
+## 命名、方法与控制流
+
+0. 类型使用 PascalCase，方法和变量使用 camelCase，常量使用 UPPER_SNAKE_CASE，项目明确约定的领域名称除外；名称使用领域词汇，同一概念保持同一名称。`Manager`、`Helper` 等泛称不能替代职责说明，金额、时长和容量名称要能辨认单位。
+1. 方法围绕一个业务动作组织，协调流程与底层解析、持久化细节分层表达；提取方法应形成有意义的概念，不为缩短行数制造跳转。
+2. 查询默认不修改业务状态；写入、发送、缓存刷新等副作用在名称或契约中明确，不能隐藏在 getter、比较器或日志参数求值中。
+3. 同类型参数难以区分、布尔参数切换不同职责时，先考虑语义化方法、enum 或参数对象；参数对象只聚合共同概念，不成为任意字段容器。
+4. 用卫语句处理明确的拒绝与退出条件；复杂判断先命名业务条件，再决定是否拆分，避免叠加三元表达式或为消除分支引入无收益的类层级。简单单语句分支和方法可依项目惯例紧凑书写；含嵌套、较长逻辑或易误读时使用完整代码块。
+
+## 类型与 API
+
+0. 命名遵循 Java 与项目惯例；公共 API 明确可空性、集合可变性和异常契约。
+1. 局部变量是否使用 `var` 以可读性为准，不做全局禁止或强制。
+2. `Optional` 适合表达返回值缺失，不裸用 `get()`，也不默认用于字段、参数或序列化模型。
+3. `record` 只用于值语义和不变量稳定的数据，不替代需要身份或生命周期的实体。
+4. `equals`、`hashCode` 和排序规则保持一致；普通对象的值语义使用 `equals` / `Objects.equals`，enum 常量和显式身份比较可使用 `==`。
+5. 默认通过 `import` 使用类型简单名；仅在同名类型冲突、迁移兼容或需要强调来源的局部位置使用全限定类名，不能用全限定名替代正常的依赖声明。
+
+## 对象设计与依赖
+
+0. 字段和成员从最小可见性开始；对象通过业务方法维护不变量，不因框架方便就暴露所有 setter 或允许半初始化状态。
+1. 构造时验证必需条件并建立有效状态；同类型参数难辨时考虑具名工厂，只有可选组合确实复杂时才引入 builder，简单构造不强制套模式。
+2. 优先组合与委托；继承必须满足可替换契约，并说明可覆盖点，构造器不得调用可覆盖方法。
+3. 外部资源通过明确依赖传入，不在领域对象中查找全局容器或自行创建客户端；接口对应真实替换边界，不要求每个类都配接口。
+4. 不可变类型不得泄漏可变内部状态；数组、集合和日期对象按所有权做防御性拷贝，`final` 引用与 `record` 都不保证对象图深度不可变。
+5. 包按业务能力与依赖方向组织，隐藏内部实现；公共 Javadoc 说明前置条件、单位、可空性、修改影响和失败语义，不复述方法名。
+6. 配置和构建过程可使用链式或 fluent API，同一类型中的访问器约定保持一致；不为链式调用暴露无约束修改或隐藏必要的调用顺序。
+
+## 泛型、集合与数据处理
+
+0. 不使用 raw type 逃避类型检查；泛型表达真实类型关系，输入输出角色明确时使用有界通配符，unchecked 豁免保持局部并解释安全依据。
+1. API 接受满足需求的接口类型，具体实现留在内部；结果明确是快照、只读视图还是可变集合，不能把只读包装当成独立快照。
+2. 无元素的成功结果通常返回空集合或数组；未找到、失败与未加载若语义不同，用明确类型区分，不擅自改变既有协议。
+3. Stream 用于清晰的数据变换，lambda 避免修改外部状态；涉及复杂分支、提前退出或受检异常时优先可读循环，不默认改成 parallel stream。
+4. 封闭取值使用 enum；金额等精确计算按领域选择整数最小单位或 `BigDecimal`，显式定义舍入、精度与溢出策略。
+5. 序列化模型与内部对象的耦合必须可控；不可信数据不直接进入 Java 原生反序列化，历史协议变更需要兼容与迁移证据。
+
+## 错误与资源
+
+0. 受检异常、运行时异常或显式结果类型按项目边界统一选择；不要逐层记录后原样抛出。
+1. 包装异常时保留 cause 和必要上下文，对外边界转换为稳定错误契约。
+2. 文件、流、连接和锁使用 try-with-resources 或明确的 finally 清理。
+3. 空值注解使用项目统一体系，不把 Spring、Jakarta 或其他注解强加给非对应项目。
+4. 异常不用于正常分支；捕获失败后不得返回表示成功的占位值。失败时尽量保持对象原有有效状态，已发生副作用则明确补偿，不捕获宽泛异常后继续执行未知状态。
+
+## 并发与生命周期
+
+0. 使用受管理的 Executor、`CompletableFuture`、结构化并发或虚拟线程时，以实际 JDK 和运行模型为准，并定义队列边界、饱和与拒绝策略。
+1. 保留线程中断状态，超时和取消沿调用链传播；关闭时停止提交、限时等待或排空、处置未完成任务后再释放依赖，多任务失败必须定义汇聚和同级任务策略。
+2. 默认不在数据库事务中等待不可控的外部服务；无法避免时限制超时并明确幂等、锁影响、补偿和失败恢复，跨系统一致性优先使用项目既有模式。
+3. 静态可变状态、非线程安全格式化器和共享集合必须有清晰同步策略。
+
+## 工具与测试
+
+0. 构建沿用 Maven 或 Gradle；格式化、Checkstyle、SpotBugs、Error Prone 等只使用项目已配置工具。
+1. 测试沿用 JUnit、TestNG 或项目既有框架；并发、事务和序列化边界需要相称的集成验证，覆盖拒绝执行、中断/取消、多 Future 失败及支持 JDK/消费者组合。
+2. Lombok、MapStruct、Hutool 等依赖按项目收益与成本选择，不作为 Java 默认组成。已使用 Lombok 时可生成访问器、构造器等样板，校验、转换及特殊行为显式实现。
+3. 测试围绕可观察行为和不变量组织，名称说明条件与结果，用空行区分准备、执行与断言；测试独立控制时间、随机数和外部资源，不依赖执行顺序或真实等待。
+4. Mock 限于真实依赖边界，不为私有方法或内部调用顺序写脆弱断言；重命名、提取与移动先有行为保护，小步验证后再继续。
+5. 已引入 Hutool 时，可用 `StrUtil`、`ArrayUtil`、`ObjectUtil` 等表达字符串、数组及默认值处理；按 `general.std` 核对替换边界，不能把 `String.isBlank()`、`trim()` 与工具方法视为天然等价，也不将清晰的 `value == null` 机械改写。
+
+## 常见陷阱
+
+0. 自动拆箱可空包装类型，或进行未经检查的数值窄化转换，引发异常或溢出。
+1. `@PostConstruct`、静态初始化块或类加载期间执行重 I/O。
+2. `CompletableFuture` 使用公共线程池、异常未观察或上下文丢失。
+3. 可变对象作为 Map key，或 `equals` / `hashCode` 实现不一致。
+4. 使用 `SimpleDateFormat` 等非线程安全实例共享状态。
+
+## 框架规范导航
+
+仅在实际采用时联读以下框架及生态组件规范：[Bean Searcher](framework/bean-searcher/bean-searcher.std)、[Caffeine / Ehcache](framework/caching/caching.std)、[TransmittableThreadLocal](framework/context-propagation/context-propagation.std)、[crane4j](framework/crane4j/crane4j.std)、[Tika / Jsoup / 文档处理](framework/document-processing/document-processing.std)、[Apache Dubbo 标准](framework/dubbo/dubbo.std)、[dynamic-datasource](framework/dynamic-datasource/dynamic-datasource.std)、[Easy-ES / Elasticsearch Java](framework/easy-es/easy-es.std)、[EasyExcel（既有项目兼容）](framework/easyexcel/easyexcel.std)、[Aviator / JSQLParser / 报表](framework/expression-report/expression-report.std)、[Fesod Sheet](framework/fesod/fesod.std)、[Firebase Admin JVM](framework/firebase-admin/firebase-admin.std)、[Flowable](framework/flowable/flowable.std)、[Flyway](framework/flyway/flyway.std)、[FreeMarker](framework/freemarker/freemarker.std)、[Hibernate ORM 标准](framework/hibernate/hibernate.std)、[HikariCP / Druid](framework/hikaricp/hikaricp.std)、[Hutool / Lombok / 通用工具](framework/hutool/hutool.std)、[Jackson / Fastjson2 / Fory](framework/jackson/jackson.std)、[JustAuth / WxJava / 支付 SDK](framework/justauth/justauth.std)、[Liquibase](framework/liquibase/liquibase.std)、[LiteFlow](framework/liteflow/liteflow.std)、[MapStruct / MapStruct Plus](framework/mapstruct/mapstruct.std)、[Mica MQTT / Paho / 协议适配](framework/mqtt/mqtt.std)、[MyBatis / MyBatis-Plus Join](framework/mybatis/mybatis.std)、[MyBatis-Plus 标准](framework/mybatis-plus/mybatis-plus.std)、[OkHttp / Apache HttpClient / S3 SDK](framework/network-sdk/network-sdk.std)、[Micrometer / OpenTelemetry / 日志](framework/observability/observability.std)、[Redisson / Lock4j](framework/redisson/redisson.std)、[RocketMQ Spring](framework/rocketmq/rocketmq.std)、[Sa-Token 标准](framework/sa-token/sa-token.std)、[Bouncy Castle / Nimbus JOSE](framework/security-crypto/security-crypto.std)、[Spring Boot 标准](framework/spring/spring.std)、[Spring AI](framework/spring-ai/spring-ai.std)、[Spring Boot Admin](framework/spring-boot-admin/spring-boot-admin.std)、[Spring Cloud 标准](framework/spring-cloud/spring-cloud.std)、[Spring Cloud Alibaba 标准](framework/spring-cloud-alibaba/spring-cloud-alibaba.std)、[Spring Data JPA 标准](framework/spring-data-jpa/spring-data-jpa.std)、[Spring Data Redis](framework/spring-data-redis/spring-data-redis.std)、[Spring AOP / JHipster / JVM 集成](framework/spring-ecosystem/spring-ecosystem.std)、[Spring Retry](framework/spring-retry/spring-retry.std)、[Spring Security 标准](framework/spring-security/spring-security.std)、[Spring WebFlux / Reactor / R2DBC](framework/spring-webflux/spring-webflux.std)、[springdoc / Knife4j](framework/springdoc/springdoc.std)、[Velocity / 服务端模板](framework/template-engines/template-engines.std)、[JUnit / Mockito / Testcontainers / ArchUnit / Gatling](framework/test-stack/test-stack.std)、[Thymeleaf 标准](framework/thymeleaf/thymeleaf.std)、[Jakarta Validation / Hibernate Validator](framework/validation/validation.std)、[Vert.x](framework/vertx/vertx.std)、[Warm-Flow / SnailJob / 调度扩展](framework/workflow-extensions/workflow-extensions.std)。来源与声明范围见 [规范导航](../README.md)。
+
+
+## 参考依据
+
+0. Robert C. Martin《Clean Code》（2008）公开目录：命名、函数、对象边界、错误处理、单元测试和类职责。来源：<https://www.informit.com/store/clean-code-a-handbook-of-agile-software-craftsmanship-9780132350884>。
+1. Joshua Bloch《Effective Java》第 3 版公开目录：对象创建、可见性、组合、泛型、防御性拷贝、Stream 和方法契约。来源：<https://www.informit.com/store/effective-java-9780134686059>。
+2. Martin Fowler《Refactoring》第 2 版公开目录：提取与内联、参数建模、条件简化和委托。来源：<https://www.refactoring.com/catalog/>。以上用于选题与规则提炼，不是逐条翻译；以本地规范、兼容目标和实际行为为准，不把书中启发式当作行数或模式硬指标。

@@ -1,0 +1,20 @@
+# Express 标准
+
+仅在项目实际采用相应组件时联读 [typescript.std](../../typescript.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. 路由、中间件与错误处理顺序明确，异步错误按采用版本处理。
+1. proxy 信任、body 大小、cookie 安全与 CORS 按部署配置。
+2. 对象级鉴权在 handler 或用例边界执行，输入不直接拼接 SQL 或路径。
+
+## 验证
+
+0. 验证 malformed body、异步异常、越权和优雅关闭。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [tsukhu/nxplorerjs-microservice-starter · package.json · L56](https://github.com/tsukhu/nxplorerjs-microservice-starter/blob/3ce0d5291358bbdb6a4281bc87dd42522e8d2bf5/package.json#L56)：依赖声明。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

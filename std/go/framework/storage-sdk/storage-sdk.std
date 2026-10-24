@@ -1,0 +1,22 @@
+# Go 数据与对象存储 SDK 标准
+
+仅在项目实际采用相应组件时联读 [go.std](../../go.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. MongoDB 和 pgx 的事务、连接池及超时按原生语义配置，查询参数绑定。
+1. S3、MinIO 与国内云对象存储 key 由服务端构造，上传大小和签名 URL 有效期受控。
+2. Excelize 流式读写并关闭资源，限制行列和解压后大小。
+
+## 验证
+
+0. 验证权限拒绝、分页断点、部分上传和压缩炸弹。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [go-dev-frame/sponge · go.mod · L54](https://github.com/go-dev-frame/sponge/blob/beef9eecdc5e2dc6b1358f130d8e9133771c277b/go.mod#L54)：依赖声明。
+- [flipped-aurora/gin-vue-admin · server/go.mod · L6](https://github.com/flipped-aurora/gin-vue-admin/blob/f7f1009c98e6c180d6d89f897cf36907a85ecc43/server/go.mod#L6)：依赖声明。
+- [zeromicro/go-zero · go.mod · L15](https://github.com/zeromicro/go-zero/blob/54e7a937a73ef3493d2dc704af0e87b3951d3adc/go.mod#L15)：依赖声明。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

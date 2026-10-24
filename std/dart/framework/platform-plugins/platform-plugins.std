@@ -1,0 +1,21 @@
+# Flutter 平台插件与本地存储 标准
+
+仅在项目实际采用相应组件时联读 [Flutter / Dart 基础规范](../flutter/flutter.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. SharedPreferences 仅保存非敏感偏好，不当作可靠业务数据库或安全密钥库。
+1. url_launcher 仅允许可信 scheme 和目标，平台权限按最小集合声明。
+2. 图片缓存和本地文件限制大小并按会话清理敏感内容。
+
+## 验证
+
+0. 验证平台差异、权限拒绝、插件失效和退出清理。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [bizz84/starter_architecture_flutter_firebase · pubspec.yaml · L26](https://github.com/bizz84/starter_architecture_flutter_firebase/blob/c5b1940cbd6b2647a39394a9f4e516ad2c332131/pubspec.yaml#L26)：依赖声明。
+- [wednesday-solutions/flutter_template · pubspec.yaml · L85](https://github.com/wednesday-solutions/flutter_template/blob/41ccdc52b8004bef01469a31f0086cf5ce19c417/pubspec.yaml#L85)：依赖声明。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

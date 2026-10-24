@@ -1,0 +1,30 @@
+# Ktor 标准
+
+本文件补充 Ktor 特有规则；联读 [kotlin.std](../../kotlin.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 模块与插件
+
+0. Ktor、Kotlin、引擎和序列化插件版本匹配；插件安装在明确 Application/路由范围，避免重复或漏装。
+1. ContentNegotiation 的序列化设置与请求/响应契约一致；StatusPages 统一转换异常，不暴露内部信息。
+
+## 认证与协程
+
+0. 认证插件校验身份后仍需资源授权；JWT 校验签名、签发方、受众与有效期，测试使用与生产等价的校验链。
+1. 处理协程传播取消，阻塞数据库或文件工作使用适合的执行边界；不使用 GlobalScope 绕过生命周期。
+2. HttpClient、连接池和后台任务在所属生命周期关闭；WebSocket 限制帧规模并处理断连。
+
+## 验证
+
+0. 使用 testApplication 或项目等效工具验证真实插件链、错误内容协商、授权和取消；不只调用业务函数。
+
+## 参考依据
+
+0. [ktorio/ktor-samples](https://github.com/ktorio/ktor-samples/tree/1c9df7cf102d638eadaf545fcce4c0ec5ccad334)：固定观察提交 `1c9df7cf102d638eadaf545fcce4c0ec5ccad334`。
+1. [jwt-auth-tests/build.gradle.kts](https://github.com/ktorio/ktor-samples/blob/1c9df7cf102d638eadaf545fcce4c0ec5ccad334/jwt-auth-tests/build.gradle.kts)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

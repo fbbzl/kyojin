@@ -1,0 +1,31 @@
+# Drogon 标准
+
+本文件补充 Drogon 特有规则；联读 [cpp.std](../../cpp.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[api-design.std](../../../api-design.std)、[database.std](../../../database.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 生成与构建
+
+0. Drogon、Trantor、编译器、C++ 标准及数据库/TLS 特性按 CMake 与部署目标锁定。
+1. drogon_ctl 生成控制器、模型或项目后审查路由、构建输入与配置，不覆盖已有手工实现。
+
+## 事件循环与生命周期
+
+0. 事件循环不执行阻塞数据库、文件或长计算；使用有界执行方式并明确回调运行线程。
+1. 异步回调中的对象捕获保持有效所有权，避免悬空引用；响应回调在每条成功或失败路径恰当完成且不重复。
+2. 过滤器负责实际路由权限，JSON/上传校验及 SQL 参数绑定在服务端生效；共享对象并发策略明确。
+
+## 验证
+
+0. 验证异常、断连、回调生命周期、响应重复、数据库失败、过载及关闭期间未完成操作。
+
+## 参考依据
+
+0. [drogonframework/drogon](https://github.com/drogonframework/drogon/tree/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb)：固定观察提交 `c9be40f4d61df6ffbaf94b661ca86a3b46c749fb`。
+1. [README.md](https://github.com/drogonframework/drogon/blob/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb/README.md)：用于核对实际依赖或生成入口。
+2. [drogon_ctl/CMakeLists.txt](https://github.com/drogonframework/drogon/blob/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb/drogon_ctl/CMakeLists.txt)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

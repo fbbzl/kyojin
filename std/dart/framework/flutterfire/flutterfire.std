@@ -1,0 +1,30 @@
+# FlutterFire 标准
+
+本文件补充 FlutterFire 特有规则；联读 [Flutter 标准](../flutter/flutter.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[frontend.std](../../../frontend.std)。
+
+## 适用基线
+
+0. 仅对项目实际采用的组件应用；项目显式约定与实际依赖版本优先，不自动安装、升级或复制脚手架配置。
+1. 构建文件于 2026-10-24 核对；模板选项、预发布及历史版本只作为发现证据，不是推荐或安全认证。
+
+## 项目与身份
+
+0. Firebase 项目、应用标识、构建 flavor 和平台配置对应真实环境，不能使用脚手架作者项目作为部署目标。
+1. 客户端配置不是服务端秘密的存放位置，Admin SDK 凭据不进入移动应用。
+2. Auth 登录只确认身份，Firestore/Storage 等服务以规则或服务端授权限制资源、字段及租户。
+
+## 数据与生命周期
+
+0. 订阅、离线缓存和监听按用户范围维护，登出时清理敏感状态及旧监听。
+1. 事务回调、重试和离线恢复不能包含不可重复的外部副作用，关键金额由可信服务端校验。
+2. 规则、索引和应用查询同步审查，客户端隐藏按钮与查询过滤不能替代安全规则。
+
+## 验证
+
+0. 使用实际规则测试或模拟器覆盖跨用户、未登录、字段越权、离线重放及账号切换；本地通过不代替生产配置核对。
+
+## 参考依据
+
+0. [bizz84/starter_architecture_flutter_firebase 的构建文件](https://github.com/bizz84/starter_architecture_flutter_firebase/blob/c5b1940cbd6b2647a39394a9f4e516ad2c332131/pubspec.yaml)：固定提交 `c5b1940cbd6b2647a39394a9f4e516ad2c332131`，路径 `pubspec.yaml`。
+
+规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

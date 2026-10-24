@@ -1,0 +1,31 @@
+# Next.js 标准
+
+本文件补充 Next.js 特有规则；联读 [typescript.std](../../typescript.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[frontend.std](../../../frontend.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 运行与渲染
+
+0. 路由体系、React/Next.js 版本、Node/Edge 运行时按依赖与部署锁定；不把模板版本当强制升级依据。
+1. Server 与 Client Component 边界明确，秘密和数据库客户端不进入客户端 bundle；传输数据按可序列化契约裁剪。
+
+## 授权与缓存
+
+0. Route Handler、Server Action 和服务端数据访问逐次验证身份及资源授权，不能依赖页面或布局隐藏。
+1. 缓存、重验证和动态渲染按所用版本及实际配置核对；用户或租户数据不得进入共享缓存键。
+2. 外部输入、重定向、上传和 Action 参数同样视为不可信；客户端提交价格和身份不直接采信。
+
+## 验证
+
+0. 在生产构建验证水合、服务端错误、未授权 Action、跨用户缓存、重验证及部署运行时兼容。
+
+## 参考依据
+
+0. [t3-oss/create-t3-app](https://github.com/t3-oss/create-t3-app/tree/4709861f7e67a15564c0460c13e7b4b6cfcae40d)：固定观察提交 `4709861f7e67a15564c0460c13e7b4b6cfcae40d`。
+1. [cli/template/base/package.json](https://github.com/t3-oss/create-t3-app/blob/4709861f7e67a15564c0460c13e7b4b6cfcae40d/cli/template/base/package.json)：用于核对实际依赖或生成入口。
+2. [README.md](https://github.com/t3-oss/create-t3-app/blob/4709861f7e67a15564c0460c13e7b4b6cfcae40d/README.md)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

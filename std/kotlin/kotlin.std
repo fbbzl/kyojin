@@ -1,0 +1,74 @@
+# Kotlin/JVM 开发标准
+
+本文件是 Kotlin/JVM 开发变更的主入口：涉及源代码、测试、构建配置、协程/Flow、Java 互操作或 JVM 公共 API 时读取。始终联读 [general.std](../general.std)；仅在实际触及输入/权限/秘密、持久化、日志与可观测性时分别联读 [security.std](../security.std)、[database.std](../database.std) 和 [logging.std](../logging.std)。Spring 项目再读取 [spring.std](../java/framework/spring/spring.std)。
+
+## 适用基线
+
+0. Kotlin、JVM 与 API 版本以构建配置、Gradle toolchain 和部署目标为准。
+1. 协程、序列化、格式化和 lint 工具沿用项目现有选择，不默认要求某个生态库。
+
+## 类型与建模
+
+0. 使用可空类型表达缺失，限制 `!!` 和 `lateinit`；无法避免时说明初始化或非空不变量。
+1. 优先 `val`；需要可变状态时控制作用域并说明并发访问方式。
+2. `data class`、`value class` 和 sealed hierarchy 只在对应值语义、包装或封闭状态集合成立时使用。
+3. 扩展函数用于与接收者紧密相关的行为，不隐藏依赖、I/O 或昂贵操作。
+4. Scope functions 以提高局部表达为目标，避免多层嵌套导致接收者含义不清。
+5. 默认通过 `import` 使用类型简单名；同名冲突优先用 import alias 消歧，只有别名会降低局部可读性或必须强调来源时才使用全限定类名。
+
+## 函数、属性与契约
+
+0. 函数按业务动作组织，协调逻辑与底层实现保持可辨认层次；简单操作接受函数类型，不为单个回调创建类层级。
+1. 同类型参数或布尔参数在调用处使用命名参数提高辨识度；默认参数表达稳定默认行为，不把复杂重载或 builder 作为所有构造的前提。
+2. 属性表达状态；昂贵计算、I/O 和可见状态变更用函数，运算符重载保持通常含义，不用语法糖隐藏业务副作用。
+3. `require`、`check` 分别表达参数与状态约束，`assert` 不承担生产输入校验；外部边界用可预期的校验结果，不把所有失败都转为非空断言。
+4. 公开函数和属性的类型保持稳定，必要时显式声明；KDoc 说明可空、修改影响、异常、挂起与取消契约，不复述签名。
+
+## 对象与集合设计
+
+0. 优先组合和委托；继承只开放真实扩展点，初始化过程中不调用可覆盖成员，也不让尚未构造完成的 `this` 逃逸。
+1. `val` 只限制引用重新赋值，`List` 只提供只读接口；跨边界是否需要快照由共享与修改契约决定，浅拷贝不能隔离嵌套可变值。
+2. `data class.copy()` 是浅拷贝，自动生成的相等性只考虑主构造器属性；有身份、派生状态或构造不变量时先验证自动生成行为是否合适。
+3. 扩展按扩展接收者的声明类型解析，不能借此覆盖接收者成员；避免扩展与成员同名造成调用误解，多接收者 DSL 只有在简化真实重复场景时采用。
+4. 集合操作按基数、短路与中间分配选择，`Sequence` 用于适合的惰性管线，不默认认为它更快；惰性计算不得逃出资源生命周期。
+5. 类型参数与 variance 表达真实读写关系；`inline`、`reified`、value class 按 API 与性能需求使用，不为“惯用”增加编译或互操作复杂度。
+
+## 错误与 Java 互操作
+
+0. 异常、显式结果类型和 sealed 错误模型按边界统一选择，不用 `runCatching` 隐藏取消或严重错误。
+1. 包装异常时保留 cause；在应用边界记录和转换一次。
+2. Java platform type 进入 Kotlin 边界时尽早确认可空性、集合可变性和注解语义。
+3. 面向 Java 的 API 检查默认参数、协变、checked exception 和生成签名的可用性。
+
+## 协程与资源
+
+0. 使用结构化并发，协程必须属于明确 Scope；每个 Scope 声明 fail-fast 或 supervisor 语义、子失败后的同级任务与多错误策略，禁止无所有者的长期 `GlobalScope` 任务。
+1. `CancellationException` 必须继续传播；清理逻辑放在 `finally` 或适合取消语义的上下文。
+2. 阻塞 I/O 使用合适 Dispatcher 或同步边界，不占用受限协程线程。
+3. `Closeable` 等支持的资源通过 `use` 释放；资源创建与消费处于同一有效生命周期，不在已关闭资源之上返回 Sequence 或 Flow。
+4. Flow/Channel 的冷/热语义、背压、共享启动与收集生命周期必须清楚；关闭时定义停止生产/接收顺序及缓冲项排空或放弃计数。
+
+## 工具与测试
+
+0. 格式化和 lint 沿用项目配置，可使用 ktlint、detekt 或 IDE formatter。
+1. 测试沿用 JUnit、Kotest 或项目既有框架；协程测试使用可控调度器和虚拟时间，并验证子失败、取消、关闭后无残留协程及目标 JVM/API 兼容。
+2. Java/Kotlin 混合模块要验证公开 API 在双方调用端的真实签名。
+3. 测试覆盖值相等、copy 后共享状态、默认参数和公开契约；重构 scope functions 或集合管线时检查接收者、求值时机与副作用没有变化。
+
+## 常见陷阱
+
+0. `!!`、未初始化 `lateinit` 和 platform type 引发运行时空指针。
+1. 捕获 `CancellationException`、错误 Scope 或阻塞调用造成协程无法取消。
+2. `data class` 中可变属性或数组破坏预期值语义。
+3. 默认参数若未生成重载，Java 调用方需传全参数；reified inline 和 suspend API 需要专门的 Java 入口或适配层。
+4. `equals`、集合元素可变性和委托属性产生隐藏副作用。
+
+## 框架规范导航
+
+仅在实际采用时联读以下框架及生态组件规范：[Coil](framework/coil/coil.std)、[Compose Multiplatform 标准](framework/compose-multiplatform/compose-multiplatform.std)、[Exposed 标准](framework/exposed/exposed.std)、[Koin 标准](framework/koin/koin.std)、[kotlinx Coroutines / Serialization](framework/kotlinx/kotlinx.std)、[Ktor 标准](framework/ktor/ktor.std)、[Navigation Compose / Lifecycle](framework/navigation-compose/navigation-compose.std)、[Spring Boot 标准（JVM 共用）](../java/framework/spring/spring.std)、[Spring Cloud 标准（JVM 共用）](../java/framework/spring-cloud/spring-cloud.std)、[Spring Cloud Alibaba 标准（JVM 共用）](../java/framework/spring-cloud-alibaba/spring-cloud-alibaba.std)、[Spring WebFlux / Reactor / R2DBC（JVM 共用）](../java/framework/spring-webflux/spring-webflux.std)、[Spring Data JPA 标准（JVM 共用）](../java/framework/spring-data-jpa/spring-data-jpa.std)、[Spring Security 标准（JVM 共用）](../java/framework/spring-security/spring-security.std)、[Firebase Admin JVM（JVM 共用）](../java/framework/firebase-admin/firebase-admin.std)、[Flyway（JVM 共用）](../java/framework/flyway/flyway.std)、[Micrometer / OpenTelemetry / 日志（JVM 共用）](../java/framework/observability/observability.std)、[Bouncy Castle / Nimbus JOSE（JVM 共用）](../java/framework/security-crypto/security-crypto.std)。来源与声明范围见 [规范导航](../README.md)。
+
+
+## 参考依据
+
+0. Marcin Moskała《Effective Kotlin》公开目录：可变性、命名参数、属性语义、抽象层次、构造、组合与集合处理。来源：<https://kt.academy/book/effectivekotlin>。条目按本地可读性与兼容目标改写，不机械推广 DSL、inline 或惰性集合。
+1. Kotlin 官方文档核对 data class 与扩展解析：<https://kotlinlang.org/docs/data-classes.html>、<https://kotlinlang.org/docs/extensions.html>。

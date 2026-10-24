@@ -1,0 +1,26 @@
+# gRPC C++ 标准
+
+仅在项目实际采用时联读 [cpp 基础规范](../../cpp.std)。具体 API 与默认行为以项目采用版本为准。
+
+## 构建与协议
+
+0. CMake、Conan、protobuf、gRPC 与代码生成插件保持兼容；记录依赖锁定和 host/target 工具路径，不混用不同版本的 protoc 与运行库。
+1. proto 字段编号保持兼容，删除字段保留编号；接口与错误语义须能跨版本演进。
+
+## 调用与并发
+
+0. 每次远程调用设置 deadline，服务端观察取消；连接复用并限制并发，异步调用中的 context、消息和回调对象保持到操作完成。
+1. 重试按幂等与状态码规则配置，覆盖整体预算；RPC 超时不能解释为写操作未执行。
+2. 使用 TLS 与端点认证，元数据输入执行校验；REST 转码层仍需鉴权、配额和错误映射，Envoy 不是业务授权替代品。
+
+## 验证
+
+0. 覆盖协议兼容、慢消费者、stream 中断、取消、超时和 server shutdown 排空；Conan 解析成功不证明不同平台的 ABI 与运行时兼容。
+
+## 参考依据
+
+0. [vlantonov/cpp-microservice-template · CMakeLists.txt](https://github.com/vlantonov/cpp-microservice-template/blob/f6640d90a8d4f73b9bd5ad9779b18485e2df5808/CMakeLists.txt)：用于核对构建或资源配置。
+1. [vlantonov/cpp-microservice-template · conanfile.py](https://github.com/vlantonov/cpp-microservice-template/blob/f6640d90a8d4f73b9bd5ad9779b18485e2df5808/conanfile.py)：用于核对构建或资源配置。
+2. [vlantonov/cpp-microservice-template · docker-compose.yml](https://github.com/vlantonov/cpp-microservice-template/blob/f6640d90a8d4f73b9bd5ad9779b18485e2df5808/docker-compose.yml)：用于核对构建或资源配置。
+
+来源未经本仓库构建或运行验证；以上约束不表示来源已实现所有恢复机制。

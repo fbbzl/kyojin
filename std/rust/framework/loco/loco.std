@@ -1,0 +1,31 @@
+# Loco 标准
+
+本文件补充 Loco 特有规则；联读 [rust.std](../../rust.std)、[general.std](../../../general.std)、[security.std](../../../security.std)、[database.std](../../../database.std)、[api-design.std](../../../api-design.std)。
+
+## 适用基线
+
+0. 仅在项目实际采用该框架时应用；依赖版本、部署目标和项目显式契约优先，不因参考脚手架自动引入组件或强制升级。
+1. 来源核对日期为 2026-10-24；脚手架依赖用于识别技术栈，不构成推荐版本、安全认证或运行验证。
+
+## 生成与功能
+
+0. 生成器、loco-rs、Axum、SeaORM 和 feature 组合按 Cargo.lock 及构建配置记录；示例中的预发布版本不自动推广。
+1. 控制器、模型、迁移和 worker 的生成结果纳入审查；模板测试及默认账号不能直接作为生产配置。
+
+## 任务与数据
+
+0. 后台 worker 按实际队列后端定义重试、确认、幂等及关闭；请求成功不代表异步任务已完成。
+1. 模型钩子不能成为唯一权限边界，批量与直接查询验证租户、字段授权和业务不变量。
+2. 迁移启动策略显式配置，生产迁移检查锁、兼容窗口、数据回填及失败恢复。
+
+## 验证
+
+0. 按启用 feature 验证路由、模型约束、任务重复投递、迁移失败以及正常/取消关闭。
+
+## 参考依据
+
+0. [loco-rs/loco](https://github.com/loco-rs/loco/tree/c8da43375bfb6542c59a69db4402757afed8eade)：固定观察提交 `c8da43375bfb6542c59a69db4402757afed8eade`。
+1. [Cargo.toml](https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/Cargo.toml)：用于核对实际依赖或生成入口。
+2. [examples/demo/Cargo.toml](https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/examples/demo/Cargo.toml)：用于核对实际依赖或生成入口。
+
+以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

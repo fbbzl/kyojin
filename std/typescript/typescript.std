@@ -1,0 +1,71 @@
+# TypeScript 开发标准
+
+本文件是 TypeScript 开发变更的主入口：涉及源代码、测试、`tsconfig`/构建配置、Node 或浏览器运行时、异步资源或公共模块 API 时读取。始终联读 [general.std](../general.std)；仅在实际触及输入/权限/秘密、持久化、日志与可观测性时分别联读 [security.std](../security.std)、[database.std](../database.std) 和 [logging.std](../logging.std)。前端或 NestJS 项目再读取对应规范。
+
+## 适用基线
+
+0. TypeScript、ECMAScript、Node.js 或浏览器目标以 `tsconfig`、`package.json`、锁文件和部署环境为准。
+1. 包管理器、模块格式、formatter 和 lint 工具沿用仓库现有配置，不统一强制 pnpm、ESM 或特定库。
+
+## 类型与边界
+
+0. 对项目代码启用与现状相称的 strict 选项；新增代码不得依赖隐式 `any` 掩盖未知结构。
+1. 不可信数据进入系统时以 `unknown` 接收并做运行时校验；类型断言不能替代验证。
+2. `any` 仅作为局部兼容逃生口，必须限制范围并说明原因；公共契约不能泄漏 `any`。
+3. 使用 discriminated union、`never` 和完整分支检查表达封闭状态，避免互相冲突的可选字段。
+4. `null` 与 `undefined` 的语义在项目内保持一致，并在序列化边界明确。
+
+## 函数与类型设计
+
+0. 类型名称使用领域词汇；同类型参数难辨时使用有名称的选项对象，有限状态使用字面量联合，不用任意字符串或多个 bool 拼接业务状态。
+1. 局部变量允许清晰推导；导出函数的输入与返回契约显式稳定，避免内部实现变化意外扩大联合类型或泄漏内部类型。
+2. 对象优先通过类型注解或兼容目标支持的 `satisfies` 检查；`as` 不证明值满足契约，非空断言必须有可核验的不变量。
+3. 从权威类型通过 `Pick`、索引访问等操作派生重复结构；泛型用于表达输入输出关系，不为一次性结构引入复杂条件类型或类型体操。
+4. `type` 与 `interface` 按联合表达、扩展和声明合并需要选择；使用 `string`、`number` 等原始类型，不使用其对象包装类型。
+5. TypeScript 使用结构类型，额外属性检查不等于封闭对象验证；领域 ID 确有误用风险时可用局部 branded type，但外部数据仍须校验。
+
+## 状态、集合与模块设计
+
+0. 不修改输入的函数接受 readonly 参数；`readonly` 不提供深度或运行时不可变性，需要独立快照时按对象图复制。
+1. 字典、固定属性对象和 Map 按实际键空间选择；未知键访问必须处理缺失，不用宽泛索引签名或断言掩盖不存在的值。
+2. 对象尽量在有效状态下构造，不以逐步赋值加断言维持半初始化对象；查询和数据映射不隐藏状态写入或 I/O。
+3. 简单转换用函数，类用于维护状态、不变量或资源生命周期；内部实现不为“统一风格”强制加 class、接口与依赖容器。
+4. 模块暴露最小稳定入口，不依赖深层私有路径；barrel 导出不得制造循环或让轻量调用者加载无关运行时依赖。
+5. 类型检查、代码生成与运行能力分别验证；类型声明和 polyfill 是不同问题，不能认为 `lib` 声明了 API 就代表目标环境支持。
+
+## 异步与资源
+
+0. Promise 必须被 `await`、返回或显式交给受管理后台流程；并发组合明确首个/多个 rejection、同级取消和部分成功副作用，禁止无人观察的 rejection。
+1. 超时和取消使用 `AbortSignal` 或项目等效机制沿调用链传播；超时返回或发出 abort 不代表底层操作已停止，所有者仍需观察并等待其终态。
+2. 事件监听、流、定时器和订阅在生命周期结束时清理。
+3. Node.js 与浏览器 API 的资源、权限和全局对象不同，不能依赖错误运行目标的隐式能力。
+
+## 错误与模块
+
+0. 抛出的值应规范化为 `Error` 或项目错误类型；捕获变量按未知值处理。
+1. 可预期业务结果可使用显式结果类型，未捕获异常在应用边界统一转换并记录一次。
+2. 避免循环依赖和仅为副作用的隐式导入；type-only import 用于减少不必要运行时耦合。
+3. Date、BigInt、Map、Set 和 class 实例跨 JSON 边界时明确转换规则。
+
+## 工具与测试
+
+0. 使用项目锁文件和指定包管理器保证依赖可重复；新增依赖检查浏览器/Node 目标与打包影响。
+1. 测试沿用 Vitest、Jest、Node test runner 或项目既有框架；运行时验证覆盖无效输入、停止接收与流/定时器排空或中止、无生命周期后更新/未处理 rejection 及目标运行时 API 兼容。
+2. 构建、类型检查与测试分别验证不同风险，不能用编译通过替代运行时验证。
+
+## 常见陷阱
+
+0. `typeof null === "object"`、数组与普通对象判断混淆。
+1. `JSON.parse`、环境变量和网络响应未经运行时校验就断言类型。
+2. async 函数漏写 `await`、浮动 Promise 或取消后继续更新状态。
+3. `Date` 的可变性、时区和字符串解析依赖运行环境。
+4. `any`、双重断言或宽泛索引签名绕过类型系统。
+
+## 框架规范导航
+
+仅在实际采用时联读以下框架及生态组件规范：[Angular 标准](framework/angular/angular.std)、[Ant Design Vue](framework/ant-design-vue/ant-design-vue.std)、[Antdv Next](framework/antdv-next/antdv-next.std)、[Apollo Server / GraphQL](framework/apollo/apollo.std)、[Axios / ioredis / 消息客户端](framework/axios/axios.std)、[ECharts / 图表](framework/echarts/echarts.std)、[Element Plus 标准](framework/element-plus/element-plus.std)、[Express](framework/express/express.std)、[InversifyJS](framework/inversify/inversify.std)、[Moleculer 标准](framework/moleculer/moleculer.std)、[Naive UI / Reka UI / VXE Table](framework/naive-ui/naive-ui.std)、[NestJS 标准](framework/nestjs/nestjs.std)、[Next.js 标准](framework/nextjs/nextjs.std)、[Nitro / H3](framework/nitro/nitro.std)、[Nuxt 标准](framework/nuxt/nuxt.std)、[Pinia](framework/pinia/pinia.std)、[Pino / Prometheus / OpenAPI](framework/pino/pino.std)、[React 标准](framework/react/react.std)、[React Hook Form](framework/react-hook-form/react-hook-form.std)、[RxJS / Socket.IO](framework/rxjs/rxjs.std)、[TDesign Vue Next](framework/tdesign/tdesign.std)、[Tiptap / ProseMirror](framework/tiptap/tiptap.std)、[Vite / VitePress / Tailwind CSS](framework/vite/vite.std)、[Vitest / Jest / Playwright](framework/vitest/vitest.std)、[Vue 标准](framework/vue/vue.std)、[Vue Router](framework/vue-router/vue-router.std)、[VueUse / Vue I18n](framework/vueuse/vueuse.std)、[Zod](framework/zod/zod.std)。来源与声明范围见 [规范导航](../README.md)。
+
+
+## 参考依据
+
+0. Dan Vanderkam《Effective TypeScript》第 2 版公开目录：结构类型、推导、有效状态、readonly、类型派生、泛型与运行时边界。来源：<https://effectivetypescript.com/>。提炼规则不替代运行时校验，也不把类型复杂度当设计质量。

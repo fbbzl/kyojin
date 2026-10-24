@@ -1,0 +1,22 @@
+# Jackson / Fastjson2 / Fory 标准
+
+仅在项目实际采用相应组件时联读 [java.std](../../java.std) 与 [general.std](../../../general.std)。本文包含框架、SDK 或工具的按需约束，不要求安装全部组件；版本与 API 以项目锁定配置为准。
+
+## 使用与边界
+
+0. 外部输入限制深度、大小和类型，不启用任意多态类型加载。
+1. 时间、金额、枚举及未知字段行为形成版本契约。
+2. 缓存与消息序列化升级验证新旧读写兼容，不直接依赖类名作为协议。
+
+## 验证
+
+0. 验证恶意嵌套、精度、时区和未知类型拒绝。
+1. 检查项目采用版本、启用配置与实际部署目标；依赖可解析不代表运行行为已验证。
+
+## 来源与适用范围
+
+- [dromara/RuoYi-Vue-Plus · pom.xml · L300](https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/pom.xml#L300)：依赖管理；scope=compile(default)。
+- [jhipster/jhipster-sample-app · pom.xml · L124](https://github.com/jhipster/jhipster-sample-app/blob/6b000b5d23a36c45e01472471b84a44fa2464044/pom.xml#L124)：依赖声明；scope=compile(default)。
+- [YunaiV/ruoyi-vue-pro · yudao-dependencies/pom.xml · L556](https://github.com/YunaiV/ruoyi-vue-pro/blob/48809cbd4d4cb5253d4f153640af803981ff3a80/yudao-dependencies/pom.xml#L556)：依赖管理；scope=compile(default)。
+
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

@@ -1,0 +1,35 @@
+# Spring Cloud Alibaba 标准
+
+本文件补充 Spring Cloud Alibaba 组件使用约束；与 [java.std](../../java.std)、[spring.std](../spring/spring.std) 和 [spring-cloud.std](../spring-cloud/spring-cloud.std) 联读。只有 BOM 或版本属性声明时，仅视为依赖管理证据；只有模块实际引入相关 starter 并启用配置时，才应用对应运行规则。
+
+## 组件与版本
+
+0. Spring Boot、Spring Cloud、Spring Cloud Alibaba 与 Nacos、Sentinel、Seata 等组件按官方兼容矩阵成组管理；禁止从不同代际示例拼接版本，升级时检查 BOM 管理范围和显式覆盖。
+1. 按服务实际职责选择发现、配置、流量治理或事务协调组件；同一能力避免重复接入多个控制面。
+2. 控制面地址、命名空间、分组、集群和凭据显式配置；环境隔离不能依赖容易混淆的默认命名空间或公共凭据。
+
+## Nacos
+
+0. 服务注册名、集群、健康检查和实例元数据有稳定约定；实例关闭先停止接收新流量，再完成有界排空与注销。
+1. 配置项有类型、默认值、校验和变更策略；敏感值使用密文或外部秘密源，日志不输出配置全量内容。
+2. 动态配置刷新须在验证后整体生效；刷新失败保持最近一次有效配置并产生可观测告警，不把部分绑定结果用于请求。
+
+## Sentinel 与 Seata
+
+0. Sentinel 规则标明资源名称、阈值单位、统计窗口、集群/本地范围和降级行为；限流或熔断响应必须符合 API 契约，并监测规则加载与生效状态。
+1. Seata 仅用于明确需要跨服务事务协调的业务；优先评估 Saga、Outbox 或幂等补偿。使用 AT/TCC 等模式时记录锁范围、隔离影响、超时、重试、悬挂/空回滚处理及人工恢复入口。
+2. 全局事务内远程调用必须有界；异常映射、回滚触发条件与业务补偿一致。不能将 `@GlobalTransactional` 当作任意外部副作用的原子保证。
+
+## 验证
+
+0. 覆盖注册中心不可用、实例变更、配置刷新失败、规则未加载、限流/熔断恢复，以及全局事务提交、回滚、超时、重复请求和协调器不可用等边界。
+1. 联调与测试使用项目锁定的服务端版本和协议；不能仅凭客户端依赖成功解析宣称集群兼容。
+
+## 参考依据
+
+- [spacecloud 实际应用模块 POM](https://github.com/javahongxi/spacecloud/blob/2d01dd8aa570eeddd2ba98bdd2bc1393c20b28c1/cloud-nacos-discovery-sample/pom.xml)：直接依赖 Nacos discovery starter。根 POM 的 dependencyManagement 仅负责管理，不能单独证明启用。
+
+0. [javahongxi/spacecloud Maven 构建](https://github.com/javahongxi/spacecloud/blob/2d01dd8aa570eeddd2ba98bdd2bc1393c20b28c1/pom.xml)：版本管理含 Spring Cloud Alibaba、Nacos 与 Sentinel，模块列表包含 Nacos 配置和服务发现示例。
+1. [mateaix/matecloud Maven 构建](https://github.com/mateaix/matecloud/blob/580562917197e9ecabfc1c0a20f2f0eea8265a83/pom.xml)：含 Spring Cloud Alibaba BOM，并在构建依赖声明中出现 Nacos、Seata、Sentinel 集成 starter。
+
+上述来源用于确认组件出现在脚手架构建中，不构成生产部署验证或版本推荐；运行细节以项目采用版本的官方文档和部署配置为准。
