@@ -16,13 +16,34 @@ metadata:
 显式启动 `sc` 后，编排者必须立即为**当前任务**调用 `show_sc_task_view(snapshot)`。该工具由 `survey-corps-task-view` MCP Apps server 提供，将 `structuredContent.snapshot` 传给 `ui://survey-corps/task-view` MCP App，并由宿主在内嵌 iframe 中渲染 HTML/CSS/JavaScript。`req`、`dev`、`cr`、`qa` 不是独立总视图入口，而是该总视图内可展开的成员子视图。
 
 - 任务视图只有一条渲染路径：`show_sc_task_view(snapshot) -> ui://survey-corps/task-view -> 宿主内嵌 iframe`。禁止创建、复制、打开或展示本地 HTML 可视化产物，禁止文本、Markdown、Mermaid 或其他替代任务视图。
-- 视图按 `work_unit.roles` 呈现实际参与角色；包含 QA 时，QA 是该链路的最后一个角色卡，不在其后渲染 SC 回流门禁。每个角色是可折叠任务卡，角色框展示状态、通过后的耗时和逐行排列的子技能调用名称，并随内容自然增高，详情仅展示摘要、必要证据和风险；状态机参考集、独立元数据面板、console 和 session log 不进入视图。
+- 角色卡严格按 `work_unit.roles` 中有效角色首次出现的原序自上而下展示，不按状态或固定角色表重排；不在角色链后渲染 SC 回流门禁。每个角色是可折叠任务卡，角色框展示状态、通过后的耗时和逐行排列的子技能调用名称，并随内容自然增高，详情仅展示摘要、必要证据和风险；状态机参考集、独立元数据面板、console 和 session log 不进入视图。
 - 渐进展示只自动展开一个当前活动角色，其余角色保持折叠；用户手动展开任一角色时也必须关闭其他角色，任何时刻最多显示一个详情区。角色严格串行执行，同时最多一个角色显式 `status=running`；QA 运行还要求当前选中的 CR 显式 `status=passed`。服务端在缓存和计时前拒绝多角色运行或 QA 前置条件不满足的快照；直接渲染此类旧快照时不高亮、自动展开或播放交接动效，不改写角色原始状态。没有显式 `running` 时，不高亮或自动展开任何角色；任务阶段不能推断角色执行。显式全局停止状态（与耗时停止规则一致）优先抑制活动提示和自动展开，即使角色仍残留活动状态。同一 `view_id` 且活动角色未变化时，保留有效的手动展开或全部折叠选择；切换任务或已展开角色被移除时，重新跟随当前活动角色。同任务刷新保留仍存在且可见的角色标题及预览正文焦点；不跨任务恢复焦点或抢占视图外焦点。
 - `show_sc_task_view` 工具缺失、MCP App 资源无法加载或工具调用失败时，立即将当前工作单元标记为 `blocked`，停止启动角色或继续交接。阻断报告必须说明实际错误，恢复条件为安装并启用 `survey-corps-task-view` 插件、启用 MCP Apps，必要时重启宿主客户端并在新会话中确认该 tool 可用后重试。不得以任何降级视图绕过阻断。
 - 每次角色启动、交接、状态变化、风险或证据变化时，必须再次调用同一 `show_sc_task_view` tool 更新快照。视图仅随这些明确的编排动作刷新，不声明自动事件订阅、后台轮询或平台原生实时同步。
-- 每个工作单元的 `work_unit.roles` 只列本轮实际执行的角色，不沿用历史工作单元的角色链，也不默认填写全部角色。已登记 Bug 的默认链路为 `dev -> cr -> qa`；只有仍存在会改变方案或验收的需求歧义、且本轮确实需要 REQ 收敛时才前置 `req`。清晰的功能请求直接从 `dev` 开始。
+- 每个工作单元的 `work_unit.roles` 只列本轮实际执行的角色，不沿用历史工作单元的角色链，也不默认填写全部角色。已登记 Bug 的默认链路为 `dev -> cr -> qa`；只有仍存在会改变方案或验收的需求歧义、且本轮确实需要 REQ 收敛时才前置 `req`。清晰的功能请求直接从 `dev` 开始。参与顺序由编排者按当前场景确定，例如常规 `dev -> cr -> qa`、优化 `cr -> dev -> qa`；不忽略已确认的参与列表重新推断。复审更新原角色卡，不复制角色。
 - 启动所选角色前，先提交包含该角色且其 `role_details.<role>.status=running` 的快照，并确认工具调用成功，再启动对应 subagent。首次快照若在角色完成后才发送，服务端无法回算该角色此前的耗时；不得用任务总耗时推算角色耗时。
 - MCP App 展示不是权威记录，也不能改变状态机、角色交接、完成门禁或 subagent-only 约束。权威记录仍是当前任务中的工作单元、交接和角色结论。
+
+### 快照更新与输出
+
+支持脚本状态保存时，以 `view_id` 隔离缓存工具成功接收的 `structuredContent.snapshot`。后续更新先复制缓存，再改本轮变化字段，仍向工具发送完整快照；只有成功且返回 ID 匹配时才替换缓存。失败须报告实际错误、保留旧缓存并停止交接；脚本状态丢失则按当前权威记录重建。`{}` 只恢复服务端最近快照，须核对 `view_id`，不能代替状态更新。
+
+完整快照继续供工具契约和 UI 使用；脚本对外仅输出真实 `result.content` 文本确认，不输出整份 `result`、`snapshot`，也不以顶层 `return` 返回它们。以下为当前 `functions.exec` 的后续更新示例；首次提交时按权威记录构建完整 `snapshot`，沿用相同成功校验与缓存步骤。工具名以当前可用声明为准。
+
+```javascript
+const viewId = "sc-task-view:<work_unit_id>";
+const key = `sc-snapshot:${viewId}`;
+const saved = load(key);
+if (!saved || saved.view_id !== viewId) throw new Error("缺少当前任务缓存；按权威记录重建完整快照。");
+const snapshot = JSON.parse(JSON.stringify(saved));
+snapshot.role_details.dev.summary = "填写本轮实际变化";
+const result = await tools.mcp__survey_corps_task_view__show_sc_task_view({ snapshot });
+for (const item of result.content ?? []) if (item.type === "text") text(item.text);
+if (result.isError) throw new Error("视图更新失败，停止交接；实际错误见工具返回。");
+const accepted = result.structuredContent?.snapshot;
+if (accepted?.view_id !== viewId) throw new Error(`快照 ID 不匹配：${accepted?.view_id ?? "缺失"}；停止交接。`);
+store(key, accepted);
+```
 
 ### 任务视图数据契约
 
