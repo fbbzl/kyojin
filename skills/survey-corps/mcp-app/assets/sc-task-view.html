@@ -32,6 +32,8 @@
     .sc-task-view__role-name { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; min-width:0; }
     .sc-task-view__task-summary { margin-top:18px; overflow-wrap:anywhere; }
     .sc-task-view__task-summary p { margin-top:4px; }
+    .sc-task-view__task-summary.is-preview-summary { display:none; }
+    @media (max-width:560px) { .sc-task-view__task-summary.is-preview-summary { display:block; } }
     .sc-task-view [hidden] { display:none !important; }
     .sc-task-view__connector { position:relative; flex:1 0 36px; width:12px; min-height:36px; margin:0 auto; color:var(--muted); transform-origin:top; }
     .sc-task-view__connector::before { content:""; position:absolute; top:0; left:50%; width:1.5px; height:calc(100% - 9px); transform:translateX(-50%); background:currentColor; box-shadow:0 0 4px color-mix(in srgb,currentColor 35%,transparent); }
@@ -46,7 +48,7 @@
     .sc-task-view__role-preview { display:grid; grid-template-rows:auto 1fr; align-self:stretch; justify-self:end; width:90%; min-width:0; padding:14px; border:1px solid var(--line); border-radius:6px; background:var(--panel); }
     .sc-task-view__preview-heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding-bottom:8px; border-bottom:1px solid #273241; }
     .sc-task-view__preview-state { color:var(--muted); text-align:right; }
-    .sc-task-view__preview-content { display:grid; min-width:0; }
+    .sc-task-view__preview-content { display:grid; min-width:0; overflow-wrap:anywhere; }
     .sc-task-view__preview-content .sc-task-view__detail { border-top:0; }
     .sc-task-view__preview-body { grid-area:1/1; align-self:start; min-width:0; padding-top:10px; }
     .sc-task-view__preview-size { display:grid; grid-area:1/1; align-self:start; min-width:0; padding-top:10px; visibility:hidden; pointer-events:none; user-select:none; }
@@ -212,6 +214,13 @@
         selectedNode.classList.toggle("sc-task-view__placeholder",!selected.length);
         summaryNode.textContent=summary||"暂无总结";
         summaryNode.classList.toggle("sc-task-view__placeholder",!summary);
+        root.__scTaskSummary=summary;
+      }
+      function taskSummaryNode(root) {
+        const summary=document.createElement("p");
+        summary.textContent=root.__scTaskSummary||"暂无总结";
+        summary.classList.toggle("sc-task-view__placeholder",!root.__scTaskSummary);
+        return summary;
       }
       function resolveActiveRole(details,state,selectedRoles) {
         if (stoppedStates.has(normalizedStatus(state))) return null;
@@ -313,6 +322,7 @@
       function renderPreviewSize(root) {
         // Natural-size copies retain each role's disclosures so preview changes cannot drop expanded space.
         const copies=[...root.querySelectorAll("[data-sc-role] > [data-sc-detail-body]")].map(source=>cloneRoleDetail(source));
+        if (root.__scSummaryInPreview) copies.push(taskSummaryNode(root));
         root.querySelector("[data-sc-preview-size]").replaceChildren(...copies);
       }
       function syncPreviewSubskills(root) {
@@ -343,6 +353,13 @@
         root.__scRolePreviewMotionCleanup?.();
         root.__scRolePreviewMotionCleanup=undefined;
         if (!role) {
+          if (root.__scSummaryInPreview) {
+            title.textContent="任务总结";
+            status.textContent="";
+            status.className="sc-task-view__preview-state";
+            replacePreviewBody(root,body,taskSummaryNode(root));
+            return;
+          }
           title.textContent="角色详情";
           status.textContent="暂无进行中的角色";
           status.className="sc-task-view__preview-state";
@@ -544,6 +561,8 @@
         root.__scRoleDetails=details;
         root.__scSelectedRoles=selectedRoles;
         root.__scResolvedActiveRole=activeRole;
+        root.__scSummaryInPreview=finishedStatuses.has(normalizedStatus(state))&&!selectedRoles.some(role=>asObject(details[role]).status==="running");
+        root.querySelector(".sc-task-view__task-summary").classList.toggle("is-preview-summary",root.__scSummaryInPreview);
         bindRolePreview(root);
         renderRoles(root,details,activeRole,openRole,selectedRoles,sameView);
         renderPreviewSize(root);
