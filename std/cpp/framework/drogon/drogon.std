@@ -24,7 +24,7 @@
 
 ## 参考依据
 
-0. [drogonframework/drogon](https://github.com/drogonframework/drogon/tree/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb)：固定观察提交 `c9be40f4d61df6ffbaf94b661ca86a3b46c749fb`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [drogonframework/drogon](https://github.com/drogonframework/drogon/tree/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb)：固定观察提交 `c9be40f4d61df6ffbaf94b661ca86a3b46c749fb`。
 1. [README.md](https://github.com/drogonframework/drogon/blob/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb/README.md)：用于核对实际依赖或生成入口。
 2. [drogon_ctl/CMakeLists.txt](https://github.com/drogonframework/drogon/blob/c9be40f4d61df6ffbaf94b661ca86a3b46c749fb/drogon_ctl/CMakeLists.txt)：用于核对实际依赖或生成入口。
 

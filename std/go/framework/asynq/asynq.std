@@ -18,4 +18,4 @@
 - [go-dev-frame/sponge · go.mod · L29](https://github.com/go-dev-frame/sponge/blob/beef9eecdc5e2dc6b1358f130d8e9133771c277b/go.mod#L29)：依赖声明。
 - [flipped-aurora/gin-vue-admin · server/go.mod · L35](https://github.com/flipped-aurora/gin-vue-admin/blob/f7f1009c98e6c180d6d89f897cf36907a85ecc43/server/go.mod#L35)：依赖声明。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

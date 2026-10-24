@@ -26,6 +26,5 @@
 ## 参考依据
 
 0. [flipped-aurora/gin-vue-admin 的构建文件](https://github.com/flipped-aurora/gin-vue-admin/blob/f7f1009c98e6c180d6d89f897cf36907a85ecc43/server/go.mod)：固定提交 `f7f1009c98e6c180d6d89f897cf36907a85ecc43`，路径 `server/go.mod`。
-1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
 
 规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

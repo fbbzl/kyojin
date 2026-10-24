@@ -19,4 +19,4 @@
 - [jhipster/jhipster-sample-app · pom.xml · L194](https://github.com/jhipster/jhipster-sample-app/blob/6b000b5d23a36c45e01472471b84a44fa2464044/pom.xml#L194)：依赖声明；scope=compile(default)。
 - [YunaiV/ruoyi-vue-pro · yudao-dependencies/pom.xml · L185](https://github.com/YunaiV/ruoyi-vue-pro/blob/48809cbd4d4cb5253d4f153640af803981ff3a80/yudao-dependencies/pom.xml#L185)：依赖管理；scope=compile(default)。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

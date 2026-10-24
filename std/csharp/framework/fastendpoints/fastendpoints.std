@@ -26,6 +26,5 @@
 ## 参考依据
 
 0. [ardalis/CleanArchitecture 的构建文件](https://github.com/ardalis/CleanArchitecture/blob/e7c79be54ba0b001a5b332c1efe935f520b9db4b/src/Clean.Architecture.Web/Clean.Architecture.Web.csproj)：固定提交 `e7c79be54ba0b001a5b332c1efe935f520b9db4b`，路径 `src/Clean.Architecture.Web/Clean.Architecture.Web.csproj`。
-1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
 
 规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

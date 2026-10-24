@@ -19,4 +19,4 @@
 - [flipped-aurora/gin-vue-admin · server/go.mod · L21](https://github.com/flipped-aurora/gin-vue-admin/blob/f7f1009c98e6c180d6d89f897cf36907a85ecc43/server/go.mod#L21)：依赖声明。
 - [zeromicro/go-zero · go.mod · L11](https://github.com/zeromicro/go-zero/blob/54e7a937a73ef3493d2dc704af0e87b3951d3adc/go.mod#L11)：依赖声明。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

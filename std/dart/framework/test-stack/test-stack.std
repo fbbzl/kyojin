@@ -19,4 +19,4 @@
 - [wednesday-solutions/flutter_template · pubspec.yaml · L37](https://github.com/wednesday-solutions/flutter_template/blob/41ccdc52b8004bef01469a31f0086cf5ce19c417/pubspec.yaml#L37)：开发或测试。
 - [VeryGoodOpenSource/very_good_core · brick/__brick__/{{project_name.snakeCase()}}/pubspec.yaml · L19](https://github.com/VeryGoodOpenSource/very_good_core/blob/978121a2194a17ee257c1c63ffc46c5ca20b2e3a/brick/__brick__/%7B%7Bproject_name.snakeCase()%7D%7D/pubspec.yaml#L19)：开发或测试。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

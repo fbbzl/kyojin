@@ -17,4 +17,4 @@
 
 - [Kotlin/KMP-App-Template · gradle/libs.versions.toml · L20](https://github.com/Kotlin/KMP-App-Template/blob/6b6d09e4f3f5e845116422d59b658791ed6149c6/gradle/libs.versions.toml#L20)：管理目录或符号定义。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

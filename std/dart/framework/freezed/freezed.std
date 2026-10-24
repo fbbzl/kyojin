@@ -18,4 +18,4 @@
 - [wednesday-solutions/flutter_template · pubspec.yaml · L77](https://github.com/wednesday-solutions/flutter_template/blob/41ccdc52b8004bef01469a31f0086cf5ce19c417/pubspec.yaml#L77)：依赖声明。
 - [VeryGoodOpenSource/very_good_cli · pubspec.yaml · L22](https://github.com/VeryGoodOpenSource/very_good_cli/blob/a2ec7d874641c10f5aa60798f5254d44d39456a3/pubspec.yaml#L22)：依赖声明。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

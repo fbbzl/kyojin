@@ -19,4 +19,4 @@
 - [second-state/dapr-wasm · events-service/Cargo.toml · L12](https://github.com/second-state/dapr-wasm/blob/84c66d7ee19aa9844c642724461883ff6e5e6bba/events-service/Cargo.toml#L12)：依赖声明。
 - [second-state/dapr-wasm · image-api-grayscale/Cargo.toml · L10](https://github.com/second-state/dapr-wasm/blob/84c66d7ee19aa9844c642724461883ff6e5e6bba/image-api-grayscale/Cargo.toml#L10)：依赖声明。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

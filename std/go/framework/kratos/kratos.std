@@ -24,7 +24,7 @@
 
 ## 参考依据
 
-0. [go-kratos/kratos-layout](https://github.com/go-kratos/kratos-layout/tree/59ad406328acba9a70c9e7f426720a75a89a6b9f)：固定观察提交 `59ad406328acba9a70c9e7f426720a75a89a6b9f`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [go-kratos/kratos-layout](https://github.com/go-kratos/kratos-layout/tree/59ad406328acba9a70c9e7f426720a75a89a6b9f)：固定观察提交 `59ad406328acba9a70c9e7f426720a75a89a6b9f`。
 1. [go.mod](https://github.com/go-kratos/kratos-layout/blob/59ad406328acba9a70c9e7f426720a75a89a6b9f/go.mod)：用于核对实际依赖或生成入口。
 
 以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

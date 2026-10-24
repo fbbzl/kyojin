@@ -24,7 +24,7 @@
 
 ## 参考依据
 
-0. [playframework/play-scala-seed.g8](https://github.com/playframework/play-scala-seed.g8/tree/cd3ab7577fe8751567bcfbc360df383deb289c58)：固定观察提交 `cd3ab7577fe8751567bcfbc360df383deb289c58`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [playframework/play-scala-seed.g8](https://github.com/playframework/play-scala-seed.g8/tree/cd3ab7577fe8751567bcfbc360df383deb289c58)：固定观察提交 `cd3ab7577fe8751567bcfbc360df383deb289c58`。
 1. [src/main/g8/build.sbt](https://github.com/playframework/play-scala-seed.g8/blob/cd3ab7577fe8751567bcfbc360df383deb289c58/src/main/g8/build.sbt)：用于核对实际依赖或生成入口。
 2. [src/main/g8/project/plugins.sbt](https://github.com/playframework/play-scala-seed.g8/blob/cd3ab7577fe8751567bcfbc360df383deb289c58/src/main/g8/project/plugins.sbt)：用于核对实际依赖或生成入口。
 

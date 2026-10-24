@@ -25,7 +25,7 @@
 
 ## 参考依据
 
-0. [jasontaylordev/CleanArchitecture](https://github.com/jasontaylordev/CleanArchitecture/tree/968abf7dc4884d14d558e04828dff6d3324b1775)：固定观察提交 `968abf7dc4884d14d558e04828dff6d3324b1775`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [jasontaylordev/CleanArchitecture](https://github.com/jasontaylordev/CleanArchitecture/tree/968abf7dc4884d14d558e04828dff6d3324b1775)：固定观察提交 `968abf7dc4884d14d558e04828dff6d3324b1775`。
 1. [src/Web/Web.csproj](https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Web/Web.csproj)：用于核对实际依赖或生成入口。
 2. [src/Infrastructure/Infrastructure.csproj](https://github.com/jasontaylordev/CleanArchitecture/blob/968abf7dc4884d14d558e04828dff6d3324b1775/src/Infrastructure/Infrastructure.csproj)：用于核对实际依赖或生成入口。
 

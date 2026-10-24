@@ -24,7 +24,7 @@
 
 ## 参考依据
 
-0. [ktorio/ktor-samples](https://github.com/ktorio/ktor-samples/tree/1c9df7cf102d638eadaf545fcce4c0ec5ccad334)：固定观察提交 `1c9df7cf102d638eadaf545fcce4c0ec5ccad334`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [ktorio/ktor-samples](https://github.com/ktorio/ktor-samples/tree/1c9df7cf102d638eadaf545fcce4c0ec5ccad334)：固定观察提交 `1c9df7cf102d638eadaf545fcce4c0ec5ccad334`。
 1. [jwt-auth-tests/build.gradle.kts](https://github.com/ktorio/ktor-samples/blob/1c9df7cf102d638eadaf545fcce4c0ec5ccad334/jwt-auth-tests/build.gradle.kts)：用于核对实际依赖或生成入口。
 
 以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

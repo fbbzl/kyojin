@@ -26,6 +26,5 @@
 ## 参考依据
 
 0. [cookiecutter/cookiecutter-django 的构建文件](https://github.com/cookiecutter/cookiecutter-django/blob/33aca01e5a46c5cf8eb9e405ce133452ba387595/{{cookiecutter.project_slug}}/requirements/base.txt)：固定提交 `33aca01e5a46c5cf8eb9e405ce133452ba387595`，路径 `{{cookiecutter.project_slug}}/requirements/base.txt`。
-1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
 
 规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

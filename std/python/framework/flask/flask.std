@@ -24,7 +24,7 @@
 
 ## 参考依据
 
-0. [cookiecutter-flask/cookiecutter-flask](https://github.com/cookiecutter-flask/cookiecutter-flask/tree/e5666c23a633b5b6fcb0dc2cfda2441d7f885727)：固定观察提交 `e5666c23a633b5b6fcb0dc2cfda2441d7f885727`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [cookiecutter-flask/cookiecutter-flask](https://github.com/cookiecutter-flask/cookiecutter-flask/tree/e5666c23a633b5b6fcb0dc2cfda2441d7f885727)：固定观察提交 `e5666c23a633b5b6fcb0dc2cfda2441d7f885727`。
 1. [{{cookiecutter.app_name}}/requirements/prod.txt](https://github.com/cookiecutter-flask/cookiecutter-flask/blob/e5666c23a633b5b6fcb0dc2cfda2441d7f885727/{{cookiecutter.app_name}}/requirements/prod.txt)：用于核对实际依赖或生成入口。
 
 以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

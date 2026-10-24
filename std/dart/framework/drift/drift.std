@@ -22,4 +22,3 @@
 ## 参考依据
 
 0. [wednesday-solutions/flutter_template 构建文件](https://github.com/wednesday-solutions/flutter_template/blob/41ccdc52b8004bef01469a31f0086cf5ce19c417/pubspec.yaml)，固定提交 `41ccdc52b8004bef01469a31f0086cf5ce19c417`。
-1. [逐语言脚手架证据](../../../scaffold-inventory.json)：含声明行及范围说明；具体 API 按项目版本核对官方实现或文档。

@@ -25,7 +25,7 @@
 
 ## 参考依据
 
-0. [flipped-aurora/gin-vue-admin](https://github.com/flipped-aurora/gin-vue-admin/tree/f7f1009c98e6c180d6d89f897cf36907a85ecc43)：固定观察提交 `f7f1009c98e6c180d6d89f897cf36907a85ecc43`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [flipped-aurora/gin-vue-admin](https://github.com/flipped-aurora/gin-vue-admin/tree/f7f1009c98e6c180d6d89f897cf36907a85ecc43)：固定观察提交 `f7f1009c98e6c180d6d89f897cf36907a85ecc43`。
 1. [server/go.mod](https://github.com/flipped-aurora/gin-vue-admin/blob/f7f1009c98e6c180d6d89f897cf36907a85ecc43/server/go.mod)：用于核对实际依赖或生成入口。
 
 以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

@@ -19,4 +19,4 @@
 - [erikwang2013/e-cat · Cargo.toml · L100](https://github.com/erikwang2013/e-cat/blob/671a4a0e5571b90ce597ceade55722130d4df38d/Cargo.toml#L100)：管理目录或符号定义。
 - [nkz-soft/rust-microservice-template · Cargo.toml · L48](https://github.com/nkz-soft/rust-microservice-template/blob/ab11e641b6b911eea47c5f9958aa744c7cd62e52/Cargo.toml#L48)：管理目录或符号定义。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

@@ -24,7 +24,7 @@
 
 ## 参考依据
 
-0. [nuxt/starter](https://github.com/nuxt/starter/tree/1f391e58fa5f108d2b2bd98c1d604ca625f0290e)：固定观察提交 `1f391e58fa5f108d2b2bd98c1d604ca625f0290e`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [nuxt/starter](https://github.com/nuxt/starter/tree/1f391e58fa5f108d2b2bd98c1d604ca625f0290e)：固定观察提交 `1f391e58fa5f108d2b2bd98c1d604ca625f0290e`。
 1. [README.md](https://github.com/nuxt/starter/blob/1f391e58fa5f108d2b2bd98c1d604ca625f0290e/README.md)：用于核对实际依赖或生成入口。
 
 以上规则是结合本仓库通用规范形成的工程约束，不将脚手架默认配置视为跨项目标准；API 细节必须与项目所用版本对应的官方实现或文档核对。

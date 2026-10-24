@@ -24,7 +24,7 @@
 
 ## 参考依据
 
-0. [zeromicro/go-zero](https://github.com/zeromicro/go-zero/tree/54e7a937a73ef3493d2dc704af0e87b3951d3adc)：固定观察提交 `54e7a937a73ef3493d2dc704af0e87b3951d3adc`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [zeromicro/go-zero](https://github.com/zeromicro/go-zero/tree/54e7a937a73ef3493d2dc704af0e87b3951d3adc)：固定观察提交 `54e7a937a73ef3493d2dc704af0e87b3951d3adc`。
 1. [go.mod](https://github.com/zeromicro/go-zero/blob/54e7a937a73ef3493d2dc704af0e87b3951d3adc/go.mod)：用于核对实际依赖或生成入口。
 2. [readme.md](https://github.com/zeromicro/go-zero/blob/54e7a937a73ef3493d2dc704af0e87b3951d3adc/readme.md)：用于核对实际依赖或生成入口。
 

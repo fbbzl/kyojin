@@ -19,4 +19,4 @@
 - [local:fz-spring-boot-starter · D:/workspace/fz-spring-boot-starter/pom.xml · L214](D:/workspace/fz-spring-boot-starter/pom.xml)：依赖管理；scope=compile(default)。
 - [local:fz-spring-boot-starter · D:/workspace/fz-spring-boot-starter/fz-spring-boot-starter-excel/pom.xml · L18](D:/workspace/fz-spring-boot-starter/fz-spring-boot-starter-excel/pom.xml)：依赖声明；scope=compile(default)。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。本条仅覆盖已有集成，不作为新项目默认选型；本轮未核验上游维护状态。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。本条仅覆盖已有集成，不作为新项目默认选型；本轮未核验上游维护状态。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

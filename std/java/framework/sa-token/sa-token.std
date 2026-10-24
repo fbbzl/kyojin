@@ -29,7 +29,7 @@
 
 ## 参考依据
 
-0. [dromara/RuoYi-Vue-Plus](https://github.com/dromara/RuoYi-Vue-Plus/tree/9227f626a3a37e1546d6c291ed398183e94df92b)：固定观察提交 `9227f626a3a37e1546d6c291ed398183e94df92b`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [dromara/RuoYi-Vue-Plus](https://github.com/dromara/RuoYi-Vue-Plus/tree/9227f626a3a37e1546d6c291ed398183e94df92b)：固定观察提交 `9227f626a3a37e1546d6c291ed398183e94df92b`。
 1. [pom.xml](https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/pom.xml)：用于核对实际依赖或生成入口。
 2. [ruoyi-common/ruoyi-common-mybatis/pom.xml](https://github.com/dromara/RuoYi-Vue-Plus/blob/9227f626a3a37e1546d6c291ed398183e94df92b/ruoyi-common/ruoyi-common-mybatis/pom.xml)：用于核对实际依赖或生成入口。
 

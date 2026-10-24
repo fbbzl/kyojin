@@ -19,4 +19,4 @@
 - [vbenjs/vue-vben-admin · pnpm-workspace.yaml · L55](https://github.com/vbenjs/vue-vben-admin/blob/bd7b04d28a4c7ea87cae72b549d3eecff4643e1e/pnpm-workspace.yaml#L55)：管理目录或符号定义。
 - [vbenjs/vue-vben-admin · apps/web-naive/package.json · L43](https://github.com/vbenjs/vue-vben-admin/blob/bd7b04d28a4c7ea87cae72b549d3eecff4643e1e/apps/web-naive/package.json#L43)：依赖声明。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

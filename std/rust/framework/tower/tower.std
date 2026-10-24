@@ -19,4 +19,4 @@
 - [rust10x/rust-web-app · Cargo.toml · L38](https://github.com/rust10x/rust-web-app/blob/fc681fc9e47663528b5cd8fbe48bd8cad50974ee/Cargo.toml#L38)：管理目录或符号定义。
 - [erikwang2013/e-cat · Cargo.toml · L91](https://github.com/erikwang2013/e-cat/blob/671a4a0e5571b90ce597ceade55722130d4df38d/Cargo.toml#L91)：管理目录或符号定义。
 
-来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。完整来源、规范化内容 SHA-256、命中行与声明范围见 [catalog-audit.json](../../../catalog-audit.json)。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。
+来源核对日期：2026-10-24。构建声明用于发现组件；依赖管理、测试、模板条件或间接依赖均不证明生产启用，不将历史模板版本作为推荐版本。规则为本仓库工程约束的组件化补充，未运行第三方构建或服务。

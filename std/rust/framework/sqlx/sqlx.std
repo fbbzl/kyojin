@@ -26,6 +26,5 @@
 ## 参考依据
 
 0. [launchbadge/realworld-axum-sqlx 的构建文件](https://github.com/launchbadge/realworld-axum-sqlx/blob/f1b25654773228297e35c292f357d33b7121a101/Cargo.toml)：固定提交 `f1b25654773228297e35c292f357d33b7121a101`，路径 `Cargo.toml`。
-1. [逐语言脚手架与依赖证据](../../../scaffold-inventory.json)：记录模板类型、依赖范围、条件选项及正文行号。
 
 规则为本仓库工程约束的框架化补充；具体 API 按项目版本核对官方实现或文档，构建依赖声明不代表已运行验证。

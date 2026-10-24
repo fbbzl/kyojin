@@ -24,7 +24,7 @@
 
 ## 参考依据
 
-0. [loco-rs/loco](https://github.com/loco-rs/loco/tree/c8da43375bfb6542c59a69db4402757afed8eade)：固定观察提交 `c8da43375bfb6542c59a69db4402757afed8eade`；来源类型及依赖摘录见 [框架来源记录](../../../framework-sources.json)。
+0. [loco-rs/loco](https://github.com/loco-rs/loco/tree/c8da43375bfb6542c59a69db4402757afed8eade)：固定观察提交 `c8da43375bfb6542c59a69db4402757afed8eade`。
 1. [Cargo.toml](https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/Cargo.toml)：用于核对实际依赖或生成入口。
 2. [examples/demo/Cargo.toml](https://github.com/loco-rs/loco/blob/c8da43375bfb6542c59a69db4402757afed8eade/examples/demo/Cargo.toml)：用于核对实际依赖或生成入口。
 
