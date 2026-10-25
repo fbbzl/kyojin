@@ -111,6 +111,7 @@ for (const [state, expected] of [["blocked",true],["cr_blocked",true],["qa_faile
 }
 assert.match(appTemplate, /<svg[^>]*data-sc-lane-frame hidden aria-hidden="true" focusable="false"[^>]*><rect><\/rect><\/svg>\s*<div class="sc-task-view__roles"/, "the decorative frame must sit outside the role sequence");
 assert.match(appTemplate, /lane-frame \{[^}]*pointer-events:none/, "the frame must not intercept card or detail interactions");
+assert.match(appTemplate, /\.sc-task-view__workspace \{[^}]*padding-left:8px/, "the workspace must reserve the frame's left gutter inside the context boundary");
 assert.match(appTemplate, /lane-frame rect \{[^}]*stroke-width:2px; stroke-dasharray:6px 6px/, "the workflow frame must use a two-pixel dashed stroke");
 assert.match(appTemplate, /@keyframes sc-lane-flow \{ from \{ stroke-dashoffset:0; \} to \{ stroke-dashoffset:-12px; \} \}/, "the dashes must travel one seamless period without rotating the frame");
 assert.match(appTemplate, /\.sc-task-view\.is-running \.sc-task-view__selection-arrow::before[^}]*animation:sc-preview-flow var\(--motion-period\) linear infinite/, "selection arrow shimmer must reuse the shared activity gate and existing left-to-right effect");
