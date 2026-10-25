@@ -37,12 +37,14 @@
     .sc-task-view.is-running .sc-task-view__selection-arrow::before { content:""; position:absolute; top:0; left:0; width:25%; height:2px; background:linear-gradient(to right,transparent,var(--focus),#fff,transparent); pointer-events:none; animation:sc-preview-flow var(--motion-period) linear infinite; }
     @media (max-width:560px) { .sc-task-view [data-sc-selected-roles] { grid-column:1/-1; } }
     .sc-task-view__role-name { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; min-width:0; }
-    .sc-task-view__role-emoji { display:inline-block; font-size:14px; line-height:1.2; transform-origin:50% 75%; }
-    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji { animation:sc-tool-sway var(--motion-period) ease-in-out infinite; }
+    .sc-task-view__role-emoji { position:relative; display:inline-block; font-size:18px; line-height:1.2; transform-origin:50% 75%; }
+    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji { animation:sc-fire-breathe var(--motion-period) ease-in-out infinite; }
     .sc-task-view.has-waiting-motion .sc-task-view__role-emoji.is-awaiting-user { transform-origin:center; animation:sc-hourglass-flip var(--motion-period) ease-in-out infinite; }
     .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost { animation:sc-ghost-float var(--motion-period) ease-in-out infinite; }
     .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-bug { animation:sc-bug-crawl var(--motion-period) ease-in-out infinite; }
     .sc-task-view__role-emoji.is-celebrating { animation:sc-role-celebrate 650ms ease-out 1; }
+    .sc-task-view__role-emoji.is-celebrating::before, .sc-task-view__role-emoji.is-celebrating::after { content:""; position:absolute; left:50%; top:50%; width:22px; height:22px; pointer-events:none; opacity:0; background:linear-gradient(var(--warn),var(--warn)) 1px 2px/3px 6px no-repeat,linear-gradient(var(--ok),var(--ok)) 10px 0/3px 5px no-repeat,linear-gradient(var(--danger),var(--danger)) 18px 4px/3px 6px no-repeat; animation:sc-confetti-burst 650ms ease-out 1; }
+    .sc-task-view__role-emoji.is-celebrating::after { background:linear-gradient(var(--focus),var(--focus)) 2px 12px/5px 3px no-repeat,linear-gradient(var(--danger),var(--danger)) 12px 17px/3px 5px no-repeat,linear-gradient(var(--ok),var(--ok)) 17px 12px/5px 3px no-repeat; }
     .sc-task-view__summary-content { margin-top:0; }
     .sc-task-view .sc-task-view__summary-title { margin:0 0 8px; color:var(--text); font-size:13px; }
     .sc-task-view__summary-content > section + section { margin-top:12px; }
@@ -132,11 +134,12 @@
     @keyframes sc-preview-reveal { from { opacity:0; } to { opacity:1; } }
     @keyframes sc-preview-flow { 0% { left:0; transform:translateX(0); opacity:0; } 15%,85% { opacity:.92; } 100% { left:100%; transform:translateX(-100%); opacity:0; } }
     @keyframes sc-status-shimmer { from { background-position:100% 0; } to { background-position:0% 0; } }
-    @keyframes sc-tool-sway { 0%,100% { transform:rotate(-8deg); } 50% { transform:rotate(8deg); } }
+    @keyframes sc-fire-breathe { 0%,100% { opacity:.65; } 50% { opacity:1; } }
     @keyframes sc-hourglass-flip { 0%,70% { transform:rotate(0); } 100% { transform:rotate(180deg); } }
     @keyframes sc-ghost-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
     @keyframes sc-bug-crawl { 0%,30%,100% { transform:translateX(0); } 50%,65% { transform:translateX(2px); } 80%,90% { transform:translateX(-2px); } }
-    @keyframes sc-role-celebrate { 0% { transform:scale(.65) rotate(-15deg); } 35% { transform:scale(1.35) rotate(10deg); } 65% { transform:scale(.95) rotate(-5deg); } 100% { transform:scale(1) rotate(0); } }
+    @keyframes sc-role-celebrate { 0% { transform:scale(.65) rotate(-15deg); } 35% { transform:scale(1.25) rotate(10deg); } 65% { transform:scale(.95) rotate(-5deg); } 100% { transform:scale(1) rotate(0); } }
+    @keyframes sc-confetti-burst { 0% { opacity:0; transform:translate(-50%,-30%) scale(.15); } 20% { opacity:1; } 60% { opacity:1; transform:translate(-50%,-70%) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) scale(1); } }
     @keyframes sc-lane-flow { from { stroke-dashoffset:0; } to { stroke-dashoffset:-12px; } }
     @media (prefers-reduced-motion:no-preference) {
       @supports (background-clip:text) or (-webkit-background-clip:text) {
@@ -414,7 +417,9 @@
       }
       function roleEmoji(role,detail) {
         switch (detail.status) {
+          case "running": return {symbol:"🔥",motion:""};
           case "passed": return {symbol:"🎉",motion:""};
+          case "pending":
           case "needs_user_confirm": return {symbol:"⌛",motion:"is-awaiting-user"};
           case "blocked": return ["cr","qa"].includes(role)&&detail.blocker_type==="bug"?{symbol:"🐞",motion:"is-blocked-bug"}:{symbol:"👻",motion:"is-blocked-ghost"};
           default: return {symbol:"🛠️",motion:""};
@@ -516,7 +521,7 @@
         root.addEventListener("toggle",onToggle,true);
         root.__scDetailRevealCleanup=()=>{ root.removeEventListener("toggle",onToggle,true); [...pending.values()].forEach(cleanups=>cleanups.forEach(cleanup=>cleanup())); };
       }
-      function animateOnce(node,className,cleanups,onFinish) { if (!node) return; node.classList.remove(className); void node.offsetWidth; node.classList.add(className); const finish=event=>{ if (event&&event.target!==node) return; node.classList.remove(className); node.removeEventListener("animationend",finish); node.removeEventListener("animationcancel",finish); onFinish?.(); }; node.addEventListener("animationend",finish); node.addEventListener("animationcancel",finish); cleanups.push(finish); }
+      function animateOnce(node,className,cleanups,onFinish) { if (!node) return; node.classList.remove(className); void node.offsetWidth; node.classList.add(className); const finish=event=>{ if (event&&event.target!==node) return; if (className==="is-celebrating"&&event?.pseudoElement) return; node.classList.remove(className); node.removeEventListener("animationend",finish); node.removeEventListener("animationcancel",finish); onFinish?.(); }; node.addEventListener("animationend",finish); node.addEventListener("animationcancel",finish); cleanups.push(finish); }
       function animateRolePasses(root,details,selectedRoles,sameView) {
         root.__scRolePassMotionCleanup?.();
         root.__scRolePassMotionCleanup=undefined;

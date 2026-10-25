@@ -42,8 +42,10 @@ for (const dirty of [true, false]) {
 renderGitInfo(gitRoot, { git: { repository: "kyojin" } });
 assert.equal(gitNode.textContent, "kyojin");
 assert.match(appTemplate, /<header[^>]*>\s*<div class="sc-task-view__topbar">\s*<p[^>]*data-sc-git hidden[^>]*>[\s\S]*?data-sc-field="state"/, "Git and global state must share the first header row in that order");
-assert.match(appTemplate, /\.sc-task-view\.is-running details\.is-active \.sc-task-view__role-emoji \{ animation:sc-tool-sway var\(--motion-period\)/, "only the resolved active role of an unfinished task may animate its emoji");
+assert.match(appTemplate, /\.sc-task-view\.is-running details\.is-active \.sc-task-view__role-emoji \{ animation:sc-fire-breathe var\(--motion-period\)/, "only the resolved active role of an unfinished task may animate its fire");
+assert.match(appTemplate, /@keyframes sc-fire-breathe \{ 0%,100% \{ opacity:\.65; \} 50% \{ opacity:1; \} \}/, "running fire must breathe gently without moving the layout");
 assert.match(appTemplate, /emoji\.setAttribute\("aria-hidden","true"\)/, "the emoji must remain decorative");
+assert.match(appTemplate, /\.sc-task-view__role-emoji \{[^}]*font-size:18px;/, "role emoji must use the larger eighteen-pixel size in its existing position");
 for (const role of ["req","dev","cr","qa"]) {
   for (const blocker_type of [undefined,null,"bug","BUG"," bug ",{},true]) {
     const detail={status:"blocked",blocker_type,summary:"Bug reported"},before=JSON.stringify(detail);
@@ -51,7 +53,7 @@ for (const role of ["req","dev","cr","qa"]) {
     assert.equal(emoji.symbol,bug?"🐞":"👻");assert.equal(emoji.motion,bug?"is-blocked-bug":"is-blocked-ghost");
     assert.equal(JSON.stringify(detail),before,"emoji derivation must preserve the authoritative detail");
   }
-  for (const [status,symbol,motion] of [["passed","🎉",""],["needs_user_confirm","⌛","is-awaiting-user"],["pending","🛠️",""],["running","🛠️",""],["BLOCKED","🛠️",""],[undefined,"🛠️",""]]) {
+  for (const [status,symbol,motion] of [["passed","🎉",""],["needs_user_confirm","⌛","is-awaiting-user"],["pending","⌛","is-awaiting-user"],["running","🔥",""],["BLOCKED","🛠️",""],[undefined,"🛠️",""]]) {
     const emoji=roleEmoji(role,{status,blocker_type:"bug"});assert.equal(emoji.symbol,symbol);assert.equal(emoji.motion,motion);
   }
 }
@@ -60,6 +62,8 @@ assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blo
 assert.match(appTemplate, /\.sc-task-view\.has-waiting-motion \.sc-task-view__role-emoji\.is-awaiting-user \{[^}]*animation:sc-hourglass-flip var\(--motion-period\) ease-in-out infinite/, "waiting hourglasses must animate independently of running-role activity");
 assert.match(appTemplate, /@keyframes sc-hourglass-flip \{ 0%,70% \{ transform:rotate\(0\); \} 100% \{ transform:rotate\(180deg\); \} \}/, "the hourglass must pause between flips");
 assert.match(appTemplate, /role-emoji\.is-celebrating \{ animation:sc-role-celebrate 650ms ease-out 1; \}/, "pass celebrations must be brief and single-shot");
+assert.match(appTemplate, /role-emoji\.is-celebrating::before, \.sc-task-view__role-emoji\.is-celebrating::after \{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:sc-confetti-burst 650ms ease-out 1/, "two decorative CSS layers must visibly spray fixed confetti without changing layout");
+assert.match(appTemplate, /@keyframes sc-confetti-burst \{[^\r\n]*0% \{ opacity:0;[^\r\n]*20% \{ opacity:1;[^\r\n]*100% \{ opacity:0;/, "the single confetti burst must appear then disappear");
 assert.match(appTemplate, /animateRolePasses\(root,details,selectedRoles,sameView&&!!optionalText\(input\.view_id\)\)/, "pass transitions must not cross task identities");
 const passClasses=new Set(),passListeners=new Map();
 const passNode={classList:{add:name=>passClasses.add(name),remove:name=>passClasses.delete(name)},addEventListener:(name,fn)=>passListeners.set(name,fn),removeEventListener:name=>passListeners.delete(name)};
@@ -71,6 +75,7 @@ passRender("passed",false);assert.equal(passClasses.size,0,"historical passes mu
 passRender("passed");assert.equal(passClasses.size,0,"same-status refreshes must stay static");
 for (const status of ["pending","running","blocked","needs_user_confirm"]) {
   passRender(status);passRender("passed");assert.equal(passClasses.has("is-celebrating"),true,"a real pass transition may celebrate");
+  for (const type of ["animationend","animationcancel"]) for (const pseudoElement of ["::before","::after"]) { passListeners.get(type)({target:passNode,pseudoElement});assert.equal(passClasses.has("is-celebrating"),true,"confetti completion or cancellation must not terminate the parent celebration"); }
   passListeners.get("animationend")({target:passNode});assert.equal(passClasses.size,0);assert.equal(passListeners.size,0);
   passRender("passed");assert.equal(passClasses.size,0,"completed animations must not replay on refresh");
 }
@@ -85,6 +90,9 @@ const laneFrame = { toggleAttribute: (name, value) => { assert.equal(name, "hidd
 const laneRoot = { querySelector: () => laneFrame };
 const selectedRoles = ["dev", "cr", "qa"];
 const validDetails = { dev: { status: "running" }, cr: { status: "pending" }, qa: { status: "pending" } };
+renderWorkflowMotion(laneRoot, selectedRoles, resolveActiveRole(validDetails, "dev_in_progress", selectedRoles), "dev_in_progress");
+assert.equal(laneFrame.waiting, true, "pending hourglasses may flip while another role works");
+assert.equal(resolveActiveRole(validDetails, "dev_in_progress", selectedRoles), "dev", "pending hourglasses must not change the sole active role");
 for (const [state, details, expected] of [
   ["dev_in_progress", validDetails, true],
   ...["paused", "waiting", "blocked", "needs_user_confirm", "completed", "workflow_ready", "skipped", "passed", "qa_success"].map(state => [state, validDetails, false]),
