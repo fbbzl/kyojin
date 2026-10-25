@@ -37,7 +37,8 @@ for (const path of [undefined,null,{},42,"","  ","../secret","src/../secret","C:
 assert.equal(filePath(" src/<img onerror=alert(1)>.js "),"src/<img onerror=alert(1)>.js","path text must remain literal for textContent output");
 assert.ok(appTemplate.includes("node.textContent=node.title=value;"),"file paths must use literal textContent and a full-path tooltip");
 assert.ok(appTemplate.includes("if (node.textContent!==value)"),"same-file refresh must preserve horizontal reading position");
-assert.ok(appTemplate.includes("height:44px;")&&appTemplate.includes("height:22px;")&&appTemplate.includes("transform:translateY(-11px);"),"file window must show two half rows around one full current row");
+assert.ok(appTemplate.includes("height:22px;")&&appTemplate.includes("height:11px;")&&appTemplate.includes("transform:translateY(-5.5px);"),"compact file window must show two half rows around one full current row");
+assert.match(appTemplate, /file-activity \{[^}]*box-sizing:content-box;[^}]*height:22px;[^}]*border:2px solid var\(--line\); border-radius:6px;[^}]*font-size:11px; line-height:11px;/, "the border must sit outside the half-height file window without shrinking its eleven-pixel text");
 assert.ok(appTemplate.includes("animation:sc-file-switch 220ms ease-out 1;"),"file changes must use one finite short CSS animation");
 const assertSkillMatch = (pattern, message) => { if (skill) assert.match(skill, pattern, message); };
 const assertSkillDoesNotMatch = (pattern, message) => { if (skill) assert.doesNotMatch(skill, pattern, message); };
@@ -183,6 +184,10 @@ assert.doesNotMatch(appTemplate, /data-sc-exit|sc-task-view__exit|QA · 唯一�
 assert.match(appTemplate, /roleName\.textContent=roleLabels\[role\]/, "role titles must use the plain role label without a QA exit suffix");
 assert.match(appTemplate, /<aside[^>]*data-sc-role-preview[\s\S]*?<div class="sc-task-view__preview-summary" data-sc-preview-summary><\/div>[\s\S]*?<\/aside>/, "task summary must use the same aside and start with no summary DOM");
 assert.doesNotMatch(appTemplate, /data-sc-task-summary|sc-task-view__task-summary/, "the removed bottom summary must not remain in DOM or styles");
+assert.ok(appTemplate.includes(".sc-task-view__role-preview.is-showing-summary { grid-template-rows:minmax(0,1fr); }"), "summary mode must use one grid row without an empty file activity track");
+assert.ok(appTemplate.includes(".sc-task-view__role-preview.is-showing-summary > .sc-task-view__file-activity { display:none; }"), "summary mode must remove the direct file strip from layout while role previews retain their reserved space");
+assert.ok(appTemplate.includes(".sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-size { padding-bottom:36px; }"), "the natural-size reserve must retain the removed file strip height below summary content");
+assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-preview > .sc-task-view__file-activity { display:none; }"), "narrow completed summaries must not regain the file strip when a role is hovered");
 assert.match(appTemplate, /replaceChildren\(\.\.\.\(root\.__scSummaryInPreview\?\[taskSummaryNode\(root\)\]:\[\]\)\)/, "only a finished task without selected running roles may populate the summary");
 assert.doesNotMatch(appTemplate, /empty\.textContent="暂无总结"|if \(!summary\.childElementCount\)/, "missing summary fields must leave the summary body blank without a generated fallback");
 assert.doesNotMatch(appTemplate, /任务上下文|data-sc-context|sc-task-view__context/, "the task context panel must be removed from the view");
