@@ -39,17 +39,21 @@
     .sc-task-view__role-name { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; min-width:0; }
     .sc-task-view__role-emoji { position:relative; display:inline-block; font-size:18px; line-height:1.2; transform-origin:50% 75%; }
     @media (prefers-reduced-motion:no-preference) {
-    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji { animation:sc-fire-flicker var(--motion-period) ease-in-out infinite; }
-    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji::before { content:""; position:absolute; left:5px; top:3px; width:10px; height:16px; border-radius:70% 30% 60% 40%; background:linear-gradient(0deg,#fff3b0,#ffb52e 45%,#f76b20 85%); clip-path:polygon(50% 0,68% 37%,85% 24%,100% 71%,77% 100%,24% 100%,0 72%,21% 43%,30% 63%); transform-origin:50% 100%; pointer-events:none; animation:sc-flame-tongue var(--motion-period) ease-in-out infinite; }
-    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji::after { content:""; position:absolute; left:10px; top:3px; width:2px; height:3px; border-radius:50%; background:#ffd36a; box-shadow:4px 5px #ff922e,-3px 8px #ffe7a0; pointer-events:none; animation:sc-fire-sparks var(--motion-period) linear infinite; }
+    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji { animation:sc-fire-flicker var(--emoji-period) ease-in-out var(--emoji-delay) infinite; }
+    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji::before { content:""; position:absolute; left:5px; top:3px; width:10px; height:16px; border-radius:70% 30% 60% 40%; background:linear-gradient(0deg,#fff3b0,#ffb52e 45%,#f76b20 85%); clip-path:polygon(50% 0,68% 37%,85% 24%,100% 71%,77% 100%,24% 100%,0 72%,21% 43%,30% 63%); transform-origin:50% 100%; pointer-events:none; animation:sc-flame-tongue var(--emoji-period) ease-in-out var(--emoji-delay) infinite; }
+    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji::after { content:""; position:absolute; left:10px; top:3px; width:2px; height:3px; border-radius:50%; background:#ffd36a; box-shadow:4px 5px #ff922e,-3px 8px #ffe7a0; pointer-events:none; animation:sc-fire-sparks var(--emoji-period) linear var(--emoji-delay) infinite; }
     }
-    .sc-task-view.has-waiting-motion .sc-task-view__role-emoji.is-awaiting-user { transform-origin:center; animation:sc-hourglass-flip var(--motion-period) ease-in-out infinite; }
-    .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost { animation:sc-ghost-float var(--motion-period) ease-in-out infinite; }
-    @media (prefers-reduced-motion:no-preference) { .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost::before { content:""; position:absolute; left:10px; top:11px; width:4px; height:7px; border-radius:1px 1px 3px 3px; background:#f48ba7; transform-origin:50% 0; pointer-events:none; animation:sc-ghost-tongue var(--motion-period) ease-in-out infinite; } }
-    .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-bug { animation:sc-bug-crawl var(--motion-period) ease-in-out infinite; }
+    .sc-task-view.has-waiting-motion .sc-task-view__role-emoji.is-awaiting-user { transform-origin:center; animation:sc-hourglass-flip var(--emoji-period) ease-in-out var(--emoji-delay) infinite; }
+    .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost { animation:sc-ghost-float var(--emoji-period) ease-in-out var(--emoji-delay) infinite; }
+    @media (prefers-reduced-motion:no-preference) { .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost::before { content:""; position:absolute; left:10px; top:11px; width:4px; height:7px; border-radius:1px 1px 3px 3px; background:#f48ba7; transform-origin:50% 0; pointer-events:none; animation:sc-ghost-tongue var(--emoji-period) ease-in-out var(--emoji-delay) infinite; } }
+    .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-bug { animation:sc-bug-crawl var(--emoji-period) ease-in-out var(--emoji-delay) infinite; }
     @media (prefers-reduced-motion:no-preference) {
-    .sc-task-view__role-emoji.is-celebrating { animation:sc-role-celebrate var(--motion-period) ease-out infinite; }
-    .sc-task-view__role-emoji.is-celebrating::before, .sc-task-view__role-emoji.is-celebrating::after { --burst-x:-10%; --burst-angle:14deg; content:""; position:absolute; left:50%; top:30%; width:18px; height:18px; pointer-events:none; opacity:0; background:linear-gradient(var(--warn),var(--warn)) 1px 1px/2px 5px no-repeat,linear-gradient(var(--ok),var(--ok)) 8px 0/2px 4px no-repeat,linear-gradient(var(--danger),var(--danger)) 15px 4px/2px 5px no-repeat; animation:sc-confetti-burst var(--motion-period) ease-out infinite; }
+    .sc-task-view details[data-sc-role="req"] { --emoji-period:2.4s; --emoji-delay:-.3s; }
+    .sc-task-view details[data-sc-role="dev"] { --emoji-period:2.9s; --emoji-delay:-1.1s; }
+    .sc-task-view details[data-sc-role="cr"] { --emoji-period:3.4s; --emoji-delay:-2s; }
+    .sc-task-view details[data-sc-role="qa"] { --emoji-period:3.9s; --emoji-delay:-2.8s; }
+    .sc-task-view__role-emoji.is-celebrating { animation:sc-role-celebrate var(--emoji-period) ease-out var(--emoji-delay) infinite; }
+    .sc-task-view__role-emoji.is-celebrating::before, .sc-task-view__role-emoji.is-celebrating::after { --burst-x:-10%; --burst-angle:14deg; content:""; position:absolute; left:50%; top:30%; width:18px; height:18px; pointer-events:none; opacity:0; background:linear-gradient(var(--warn),var(--warn)) 1px 1px/2px 5px no-repeat,linear-gradient(var(--ok),var(--ok)) 8px 0/2px 4px no-repeat,linear-gradient(var(--danger),var(--danger)) 15px 4px/2px 5px no-repeat; animation:sc-confetti-burst var(--emoji-period) ease-out var(--emoji-delay) infinite; }
     .sc-task-view__role-emoji.is-celebrating::after { --burst-x:-40%; --burst-angle:-12deg; background:linear-gradient(var(--focus),var(--focus)) 2px 9px/4px 2px no-repeat,linear-gradient(var(--danger),var(--danger)) 10px 14px/2px 4px no-repeat,linear-gradient(var(--ok),var(--ok)) 14px 10px/4px 2px no-repeat; }
     }
     .sc-task-view__summary-content { margin-top:0; }
@@ -72,8 +76,17 @@
     .sc-task-view__lane-frame rect { x:1px; y:1px; width:calc(100% - 2px); height:calc(100% - 2px); rx:12px; fill:none; stroke:color-mix(in srgb,var(--line) 70%,transparent); stroke-width:2px; stroke-dasharray:6px 6px; }
     .sc-task-view.is-running .sc-task-view__lane-frame rect { animation:sc-lane-flow 1.2s linear infinite; }
     .sc-task-view__roles { position:relative; display:flex; flex:1; flex-direction:column; align-items:stretch; }
-    .sc-task-view__role-preview { display:grid; align-self:stretch; justify-self:end; width:90%; min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
+    .sc-task-view__role-preview { display:grid; grid-template-rows:auto minmax(0,1fr); align-self:stretch; justify-self:end; width:calc(90% + 15px); min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
     .sc-task-view__preview-content { display:grid; min-width:0; overflow-wrap:anywhere; }
+    .sc-task-view__file-activity { align-self:start; min-width:0; height:44px; margin-bottom:10px; overflow:hidden; font-size:11px; line-height:22px; }
+    .sc-task-view__file-activity[aria-hidden="true"] { visibility:hidden; }
+    .sc-task-view__file-track { min-width:0; transform:translateY(-11px); }
+    .sc-task-view__file-track.is-file-switching { animation:sc-file-switch 220ms ease-out 1; }
+    .sc-task-view__file-slot { height:22px; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; color:var(--muted); }
+    .sc-task-view__file-slot:nth-child(2) { color:var(--text); }
+    .sc-task-view [data-sc-role] .sc-task-view__file-activity { display:none; }
+    @media (max-width:560px) { .sc-task-view [data-sc-role] .sc-task-view__file-activity { display:block; margin-bottom:0; } }
+    @keyframes sc-file-switch { from { transform:translateY(11px); } to { transform:translateY(-11px); } }
     .sc-task-view__preview-content .sc-task-view__detail { display:grid; align-content:center; gap:24px; padding:20px 12px; border-top:0; }
     .sc-task-view__preview-body { display:grid; grid-area:1/1; align-self:stretch; min-width:0; }
     .sc-task-view__preview-size { display:grid; grid-area:1/1; align-self:start; min-width:0; visibility:hidden; pointer-events:none; user-select:none; }
@@ -95,8 +108,8 @@
     .sc-task-view details[data-sc-role].is-active { border-color:var(--role-accent); background:var(--panel-active); animation:sc-running-pulse var(--motion-period) ease-in-out infinite; }
     .sc-task-view details[data-sc-role].is-active > * { position:relative; z-index:1; }
     .sc-task-view details[data-sc-role] > summary { position:relative; }
-    /* The right column leaves .3 card widths before the preview; summary excludes two 2px borders. */
-    .sc-task-view__preview-link { position:absolute; left:calc(100% + 2px); top:50%; width:calc(12px + 30% + 1.2px); height:2px; background:var(--focus); box-shadow:0 0 4px color-mix(in srgb,var(--focus) 45%,transparent); pointer-events:none; }
+    /* Expanding the right-aligned preview 15px left shortens its gap; summary excludes two 2px borders. */
+    .sc-task-view__preview-link { position:absolute; left:calc(100% + 2px); top:50%; width:calc(12px + 30% + 1.2px - 15px); height:2px; background:var(--focus); box-shadow:0 0 4px color-mix(in srgb,var(--focus) 45%,transparent); pointer-events:none; }
     .sc-task-view__preview-link:not([hidden])::before { content:""; position:absolute; top:-.5px; left:0; width:25%; height:3px; border-radius:2px; background:linear-gradient(to right,transparent,var(--focus) 35%,#fff 55%,transparent); box-shadow:0 0 6px 1px color-mix(in srgb,var(--focus) 55%,transparent); opacity:0; animation:sc-preview-flow var(--motion-period) linear infinite; }
     .sc-task-view details[data-sc-role].is-handoff-receiving::after { content:""; position:absolute; inset:-2px; border:2px solid var(--focus); border-radius:inherit; pointer-events:none; animation:sc-handoff-receive 420ms ease-out 650ms 1 both; }
     .sc-task-view summary { display:flex; justify-content:space-between; gap:12px; padding:11px 12px; border-radius:5px; cursor:pointer; font-weight:700; list-style-position:inside; overflow-wrap:anywhere; transition:background-color 160ms ease; }
@@ -118,11 +131,9 @@
     .sc-task-view .sc-task-view__state--revision { color:var(--revision); }
     .sc-task-view .sc-task-view__state--unknown { color:var(--unknown); }
     .sc-task-view .sc-task-view__placeholder { color:#fff; }
-    .sc-task-view__detail { padding:12px; border-top:2px solid #273241; }
-    .sc-task-view__detail-field { min-width:0; }
-    .sc-task-view__detail-field + .sc-task-view__detail-field { margin-top:16px; }
+    .sc-task-view__detail { display:grid; gap:16px; padding:12px; border-top:2px solid #273241; }
+    .sc-task-view__detail-field, .sc-task-view__summary-content > section { min-width:0; padding:10px 12px; border:2px solid var(--line); border-radius:6px; }
     .sc-task-view .sc-task-view__detail-field > h3 { margin:0 0 8px; font-size:13px; }
-    .sc-task-view__preview-content .sc-task-view__detail-field { margin:0; }
     .sc-task-view__detail-content:empty { min-height:1.6em; min-height:1lh; }
     .sc-task-view [data-sc-detail-body].is-detail-revealing { animation:sc-detail-reveal 180ms ease-out 1; }
     .sc-task-view [data-sc-preview-body].is-detail-revealing { animation:sc-preview-reveal 180ms ease-out 1; }
@@ -157,7 +168,7 @@
         .sc-task-view .sc-task-view__role-subskill.is-status-running { background-image:linear-gradient(100deg,var(--muted) 38%,var(--text) 47%,#fff 50%,var(--text) 53%,var(--muted) 62%); }
       }
     }
-    @media (max-width:560px) { .sc-task-view { padding:14px; } .sc-task-view__role-state { text-align:left; } .sc-task-view__workspace { display:flex; flex-direction:column; gap:0; } .sc-task-view__role-lane, .sc-task-view__roles { width:100%; } .sc-task-view__connector { flex:none; height:24px; min-height:24px; } .sc-task-view__role-preview, .sc-task-view__preview-link { display:none; } .sc-task-view details[data-sc-role] > [data-sc-detail-body] { display:block; } }
+    @media (max-width:560px) { .sc-task-view { padding:14px; } .sc-task-view__role-state { text-align:left; } .sc-task-view__workspace { display:flex; flex-direction:column; gap:0; } .sc-task-view__role-lane, .sc-task-view__roles { width:100%; } .sc-task-view__connector { flex:none; height:24px; min-height:24px; } .sc-task-view__role-preview, .sc-task-view__preview-link { display:none; } .sc-task-view details[data-sc-role] > [data-sc-detail-body] { display:grid; } }
     @media (max-width:560px) { .sc-task-view.is-finished .sc-task-view__role-preview { display:grid; width:100%; margin-top:18px; } .sc-task-view.is-finished .sc-task-view__preview-summary { display:block; } .sc-task-view.is-finished .sc-task-view__preview-body, .sc-task-view.is-finished .sc-task-view__preview-size { display:none; } }
     @media (prefers-reduced-motion:reduce) { .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { animation:none !important; transition:none !important; } }
   </style>
@@ -188,6 +199,7 @@
         <div class="sc-task-view__roles" data-sc-roles aria-label="REQ、DEV、CR、QA 顺序任务"></div>
       </div>
       <aside class="sc-task-view__role-preview" data-sc-role-preview aria-label="任务信息">
+        <div class="sc-task-view__file-activity" data-sc-file-activity aria-hidden="true"><div class="sc-task-view__file-track" data-sc-file-track><div class="sc-task-view__file-slot" data-sc-file-previous aria-hidden="true"></div><div class="sc-task-view__file-slot" data-sc-file-current aria-label="当前操作文件" tabindex="0"></div><div class="sc-task-view__file-slot" data-sc-file-next aria-hidden="true"></div></div></div>
         <div class="sc-task-view__preview-content">
           <div class="sc-task-view__preview-size" data-sc-preview-size inert aria-hidden="true"></div>
           <div class="sc-task-view__preview-body" data-sc-preview-body tabindex="-1"></div>
@@ -342,9 +354,62 @@
       }
       function cloneRoleDetail(source) {
         const copy=source.cloneNode(true);
+        copy.querySelector("[data-sc-file-activity]")?.remove();
         copy.removeAttribute("data-sc-detail-body");
         copy.classList.remove("is-detail-revealing");
         return copy;
+      }
+      function filePath(value) {
+        const path=optionalText(value);
+        return path&&!/^[/\\]|[:\x00-\x1f]|(?:^|[\\/])[.][.](?:[\\/]|$)/.test(path)?path:"";
+      }
+      function observeFileActivity(previous,input,activeRole) {
+        const raw=asObject(asObject(asObject(input.role_details)[activeRole]).file_activity),current=filePath(raw.current);
+        if (!activeRole||stoppedStates.has(normalizedStatus(input.state))||finishedStatuses.has(normalizedStatus(input.state))||!current) return null;
+        const changed=previous?.viewId===input.view_id&&previous.role===activeRole&&previous.current!==current;
+        return {viewId:input.view_id,role:activeRole,current,previous:filePath(raw.previous),next:filePath(raw.next),changed,fromCurrent:changed?previous.current:""};
+      }
+      function renderFileActivity(root,role,changed=false) {
+        root.__scFileMotionCleanup?.();
+        root.__scFileMotionCleanup=undefined;
+        const cleanups=[],activity=root.__scFileActivity;
+        for (const strip of root.querySelectorAll("[data-sc-file-activity]")) {
+          const owner=strip.closest("[data-sc-role]")?.dataset.scRole||role;
+          const visible=!!activity&&activity.role===owner;
+          strip.setAttribute("aria-hidden",String(!visible));
+          strip.inert=!visible;
+          for (const field of ["previous","current","next"]) {
+            const node=strip.querySelector(`[data-sc-file-${field}]`),value=visible?activity[field]:"";
+            if (node.textContent!==value) { node.textContent=node.title=value; node.scrollLeft=0; }
+          }
+          if (visible&&changed&&!prefersReducedMotion()&&strip.checkVisibility({visibilityProperty:true})) {
+            const oldTrack=strip.querySelector("[data-sc-file-track]"),track=oldTrack.cloneNode(true);
+            track.classList.remove("is-file-switching");
+            oldTrack.replaceWith(track);
+            const previous=track.querySelector("[data-sc-file-previous]");
+            previous.textContent=previous.title=activity.fromCurrent;
+            animateOnce(track,"is-file-switching",cleanups,()=>{ previous.textContent=previous.title=activity.previous; });
+          }
+        }
+        root.__scFileMotionCleanup=()=>cleanups.forEach(cleanup=>cleanup());
+      }
+      function captureFileReading(root) {
+        const node=document.activeElement,activity=root.__scFileActivity;
+        if (!activity||!root.contains(node)||!node.matches("[data-sc-file-current]")||!node.checkVisibility({visibilityProperty:true})) return null;
+        return {viewId:activity.viewId,role:activity.role,current:activity.current,scrollLeft:node.scrollLeft,inline:!!node.closest("[data-sc-role]")};
+      }
+      function restoreFileReading(root,reading) {
+        const activity=root.__scFileActivity;
+        if (!reading) return;
+        if (!activity||["viewId","role","current"].some(key=>reading[key]!==activity[key])) {
+          if (root.contains(document.activeElement)&&document.activeElement.matches("[data-sc-file-current]")) document.activeElement.blur();
+          return;
+        }
+        const scope=reading.inline?`[data-sc-role="${reading.role}"]`:"[data-sc-role-preview]";
+        const node=root.querySelector(`${scope} [data-sc-file-current]`);
+        if (!node?.checkVisibility({visibilityProperty:true})||node.closest("[inert]")) return;
+        node.focus({preventScroll:true});
+        node.scrollLeft=reading.scrollLeft;
       }
       function renderPreviewSize(root) {
         // Natural-size copies reserve the largest role detail and summary during preview changes.
@@ -357,6 +422,7 @@
         if (!force&&role===root.__scPreviewRole) return;
         const body=root.querySelector("[data-sc-preview-body]");
         root.__scPreviewRole=role;
+        renderFileActivity(root,role,force&&root.__scFileActivity?.changed);
         root.querySelector("[data-sc-role-preview]").classList.toggle("is-showing-summary",!role&&root.__scSummaryInPreview);
         root.querySelectorAll("[data-sc-preview-link]").forEach(link=>{ link.hidden=link.closest("[data-sc-role]").dataset.scRole!==role; });
         if (!preserveFocus&&body.contains(document.activeElement)) document.activeElement.blur();
@@ -560,6 +626,7 @@
       window.renderSurveyCorpsTaskView=(root,snapshot,options)=>{
         if (!(root instanceof Element)) throw new TypeError("root 必须是一个 DOM 元素");
         const input=asObject(snapshot),work=asObject(input.work_unit),details=asObject(input.role_details),state=input.state;
+        const fileReading=captureFileReading(root);
         const selectedRoles=[...new Set(asList(work.roles).filter(value=>typeof value==="string").map(value=>value.trim().toLowerCase()).filter(value=>roles.includes(value)))];
         const activeRole=resolveActiveRole(details,state,selectedRoles),userOpenRole=root.querySelector("details[data-sc-role][open]")?.dataset.scRole;
         const sameView=root.__scViewId===input.view_id,openRole=sameView&&root.__scResolvedActiveRole===activeRole&&(userOpenRole===undefined||selectedRoles.includes(userOpenRole))?userOpenRole:activeRole;
@@ -576,6 +643,7 @@
         if (playButton) playButton.hidden=!root.__scDebugMode;
         if (!root.__scDebugMode) { root.__scManualMotionCleanup?.(); root.__scManualMotionCleanup=undefined; }
         root.__scSelectedRoles=selectedRoles;
+        root.__scFileActivity=observeFileActivity(root.__scFileActivity,input,activeRole);
         root.__scResolvedActiveRole=activeRole;
         renderWorkflowMotion(root,selectedRoles,activeRole,state);
         root.__scSummaryInPreview=finishedStatuses.has(normalizedStatus(state))&&!selectedRoles.some(role=>asObject(details[role]).status==="running");
@@ -584,8 +652,15 @@
         root.querySelector("[data-sc-preview-summary]").replaceChildren(...(root.__scSummaryInPreview?[taskSummaryNode(root)]:[]));
         bindRolePreview(root);
         renderRoles(root,details,activeRole,openRole,selectedRoles,sameView);
+        const fileBody=activeRole&&root.querySelector(`[data-sc-role="${activeRole}"] > [data-sc-detail-body]`);
+        if (fileBody) {
+          const inline=root.querySelector("[data-sc-role-preview] > [data-sc-file-activity]").cloneNode(true);
+          inline.querySelector("[data-sc-file-track]").classList.remove("is-file-switching");
+          fileBody.prepend(inline);
+        }
         renderPreviewSize(root);
         renderRolePreview(root,true,sameView);
+        restoreFileReading(root,fileReading);
         const observation=observeHandoff(root.__scHandoffObservation,input,selectedRoles,activeRole);
         root.__scHandoffObservation=observation;
         animateHandoff(root,observation.event);

@@ -12,9 +12,33 @@ assert.ok(!isSourceTree || fs.existsSync(skillPath), "repository Skill is missin
 const skill = isSourceTree ? fs.readFileSync(skillPath, "utf8") : null;
 const script = appTemplate.match(/<script>([\s\S]*?)<\/script>/)[1];
 const context = { window: {} };
-vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,taskSummaryNode,roleEmoji};})();"), context, { timeout: 1000 });
-const { stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, taskSummaryNode, roleEmoji } = context.window.statusContract;
+vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,taskSummaryNode,roleEmoji,filePath,observeFileActivity};})();"), context, { timeout: 1000 });
+const { stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, taskSummaryNode, roleEmoji, filePath, observeFileActivity } = context.window.statusContract;
 const roleStatesLiteral = appTemplate.match(/const roleStates=(\{[^\r\n]+\});/)?.[1] || "";
+const activityInput=(current,view_id="files",state="dev_in_progress")=>({view_id,state,role_details:{dev:{file_activity:{previous:"src/a.js",current,next:"test/c.js"}}}});
+const firstActivity=observeFileActivity(null,activityInput("src/b.js"),"dev");
+assert.equal(firstActivity.changed,false,"first file observation must remain static");
+assert.equal(observeFileActivity(firstActivity,activityInput("src/b.js"),"dev").changed,false,"same file refresh must not roll again");
+assert.equal(observeFileActivity(firstActivity,activityInput("test/c.js"),"dev").changed,true,"a same-task same-role file change must roll once");
+for (const previous of [undefined,"src/stale.js"]) {
+  const input=activityInput("src/c.js");
+  input.role_details.dev.file_activity.previous=previous;
+  const activity=observeFileActivity(firstActivity,input,"dev");
+  assert.equal(activity.fromCurrent,"src/b.js","transition must start with the actual observed previous current");
+  assert.equal(activity.previous,previous||"","settled previous must keep only the reported path");
+}
+assert.ok(appTemplate.includes("previous.textContent=previous.title=activity.fromCurrent;"),"the moving old row must not use stale or missing reported previous");
+assert.equal(observeFileActivity(firstActivity,activityInput("test/c.js","other"),"dev").changed,false,"changing task must not replay a file roll");
+assert.equal(observeFileActivity({...firstActivity,role:"cr"},activityInput("test/c.js"),"dev").changed,false,"changing active roles must not replay a file roll");
+assert.equal(observeFileActivity(firstActivity,activityInput(""),"dev"),null,"clearing current must clear the entire file activity");
+assert.equal(observeFileActivity(firstActivity,activityInput("test/c.js"),null),null,"no legitimate active role may show an operation");
+for (const state of ["paused","waiting","blocked","needs_user_confirm","workflow_ready","skipped"]) assert.equal(observeFileActivity(firstActivity,activityInput("test/c.js","files",state),"dev"),null,"stopped and finished states must hide file activity");
+for (const path of [undefined,null,{},42,"","  ","../secret","src/../secret","C:/private","/private","https://example.test/file","src/line\nfile"]) assert.equal(filePath(path),"","only actual repository-relative paths may be displayed");
+assert.equal(filePath(" src/<img onerror=alert(1)>.js "),"src/<img onerror=alert(1)>.js","path text must remain literal for textContent output");
+assert.ok(appTemplate.includes("node.textContent=node.title=value;"),"file paths must use literal textContent and a full-path tooltip");
+assert.ok(appTemplate.includes("if (node.textContent!==value)"),"same-file refresh must preserve horizontal reading position");
+assert.ok(appTemplate.includes("height:44px;")&&appTemplate.includes("height:22px;")&&appTemplate.includes("transform:translateY(-11px);"),"file window must show two half rows around one full current row");
+assert.ok(appTemplate.includes("animation:sc-file-switch 220ms ease-out 1;"),"file changes must use one finite short CSS animation");
 const assertSkillMatch = (pattern, message) => { if (skill) assert.match(skill, pattern, message); };
 const assertSkillDoesNotMatch = (pattern, message) => { if (skill) assert.doesNotMatch(skill, pattern, message); };
 const snapshotExample = skill?.match(/### 任务视图数据契约[\s\S]*?```yaml\r?\n([\s\S]*?)\r?\n```/)?.[1] || "";
@@ -42,9 +66,9 @@ for (const dirty of [true, false]) {
 renderGitInfo(gitRoot, { git: { repository: "kyojin" } });
 assert.equal(gitNode.textContent, "kyojin");
 assert.match(appTemplate, /<header[^>]*>\s*<div class="sc-task-view__topbar">\s*<p[^>]*data-sc-git hidden[^>]*>[\s\S]*?data-sc-field="state"/, "Git and global state must share the first header row in that order");
-assert.match(appTemplate, /\.sc-task-view\.is-running details\.is-active \.sc-task-view__role-emoji \{ animation:sc-fire-flicker var\(--motion-period\)/, "only the resolved active role of an unfinished task may animate its fire");
+assert.match(appTemplate, /\.sc-task-view\.is-running details\.is-active \.sc-task-view__role-emoji \{ animation:sc-fire-flicker var\(--emoji-period\)/, "only the resolved active role of an unfinished task may animate its fire");
 assert.match(appTemplate, /@keyframes sc-fire-flicker \{[^\r\n]*scale\(\.96,1\.04\)[^\r\n]*scale\(1\.04,\.96\)/, "running fire must visibly deform through each shared period");
-for (const [pseudo,motion] of [["before","sc-flame-tongue"],["after","sc-fire-sparks"]]) assert.match(appTemplate, new RegExp('is-running details\\.is-active \\.sc-task-view__role-emoji::'+pseudo+' \\{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:'+motion+' var\\(--motion-period\\)'), "fire tongue and sparks must share the existing activity gate and period");
+for (const [pseudo,motion] of [["before","sc-flame-tongue"],["after","sc-fire-sparks"]]) assert.match(appTemplate, new RegExp('is-running details\\.is-active \\.sc-task-view__role-emoji::'+pseudo+' \\{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:'+motion+' var\\(--emoji-period\\)'), "fire tongue and sparks must share the existing activity gate and period");
 assert.match(appTemplate, /@keyframes sc-fire-sparks \{[^\r\n]*translate\(2px,-9px\)/, "fixed sparks must visibly rise without a particle system");
 assert.match(appTemplate, /emoji\.setAttribute\("aria-hidden","true"\)/, "the emoji must remain decorative");
 assert.match(appTemplate, /\.sc-task-view__role-emoji \{[^}]*font-size:18px;/, "role emoji must use the larger eighteen-pixel size in its existing position");
@@ -59,15 +83,21 @@ for (const role of ["req","dev","cr","qa"]) {
     const emoji=roleEmoji(role,{status,blocker_type:"bug"});assert.equal(emoji.symbol,symbol);assert.equal(emoji.motion,motion);
   }
 }
-assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-ghost \{ animation:sc-ghost-float var\(--motion-period\)/, "ordinary blockers must use the shared gentle float period");
-assert.match(appTemplate, /@media \(prefers-reduced-motion:no-preference\) \{ \.sc-task-view\.has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-ghost::before \{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:sc-ghost-tongue var\(--motion-period\)/, "ghost tongues must reuse the blocker gate and disappear under reduced motion");
+assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-ghost \{ animation:sc-ghost-float var\(--emoji-period\)/, "ordinary blockers must use the shared gentle float period");
+assert.match(appTemplate, /@media \(prefers-reduced-motion:no-preference\) \{ \.sc-task-view\.has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-ghost::before \{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:sc-ghost-tongue var\(--emoji-period\)/, "ghost tongues must reuse the blocker gate and disappear under reduced motion");
 assert.match(appTemplate, /@keyframes sc-ghost-tongue \{ 0%,20%,85%,100% \{ transform:scaleY\(0\); \} 40%,65% \{ transform:scaleY\(1\); \} \}/, "the tongue must extend and retract continuously within the existing period");
-assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-bug \{ animation:sc-bug-crawl var\(--motion-period\)/, "explicit CR and QA bugs must use the shared crawl period");
-assert.match(appTemplate, /\.sc-task-view\.has-waiting-motion \.sc-task-view__role-emoji\.is-awaiting-user \{[^}]*animation:sc-hourglass-flip var\(--motion-period\) ease-in-out infinite/, "waiting hourglasses must animate independently of running-role activity");
+assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-bug \{ animation:sc-bug-crawl var\(--emoji-period\)/, "explicit CR and QA bugs must use the shared crawl period");
+assert.match(appTemplate, /\.sc-task-view\.has-waiting-motion \.sc-task-view__role-emoji\.is-awaiting-user \{[^}]*animation:sc-hourglass-flip var\(--emoji-period\) ease-in-out var[(]--emoji-delay[)] infinite/, "waiting hourglasses must animate independently of running-role activity");
 assert.match(appTemplate, /@keyframes sc-hourglass-flip \{ 0%,70% \{ transform:rotate\(0\); \} 100% \{ transform:rotate\(180deg\); \} \}/, "the hourglass must pause between flips");
-assert.match(appTemplate, /role-emoji[.]is-celebrating [{] animation:sc-role-celebrate var[(]--motion-period[)] ease-out infinite;/, "passed roles must celebrate continuously on the shared period");
-assert.match(appTemplate, /animation:sc-confetti-burst var[(]--motion-period[)] ease-out infinite;/, "confetti must repeat with each celebration cycle");
-assert.match(appTemplate, /36%,100% [{] opacity:0; transform:translate[(]var[(]--burst-x[)],-65%[)]/, "each burst must finish near 650ms and rest for the remainder");
+for (const [role,period,delay] of [["req","2.4s","-.3s"],["dev","2.9s","-1.1s"],["cr","3.4s","-2s"],["qa","3.9s","-2.8s"]]) {
+  assert.ok(appTemplate.includes(`details[data-sc-role="${role}"] { --emoji-period:${period}; --emoji-delay:${delay}; }`), "each role must use its own celebration period and negative phase");
+}
+assert.match(appTemplate, /role-emoji[.]is-celebrating [{] animation:sc-role-celebrate var[(]--emoji-period[)] ease-out var[(]--emoji-delay[)] infinite;/, "passed roles must celebrate continuously on their local period and phase");
+assert.match(appTemplate, /animation:sc-confetti-burst var[(]--emoji-period[)] ease-out var[(]--emoji-delay[)] infinite;/, "confetti must share its emoji period and phase");
+assert.match(appTemplate, /36%,100% [{] opacity:0; transform:translate[(]var[(]--burst-x[)],-65%[)]/, "each burst must finish within the first 36 percent and rest for the remainder");
+assert.ok(appTemplate.includes(".sc-task-view__detail-field, .sc-task-view__summary-content > section { min-width:0; padding:10px 12px; border:2px solid var(--line); border-radius:6px; }"), "detail and summary groups must share lightweight bordered sections");
+assert.ok(appTemplate.includes(".sc-task-view__detail { display:grid; gap:16px;"), "inline detail groups must use a vertical grid gap");
+assert.ok(!appTemplate.includes(".sc-task-view__detail-field + .sc-task-view__detail-field"), "detail spacing must not combine sibling margins and grid gaps");
 assert.doesNotMatch(appTemplate, /animateRolePasses|__scRoleStatuses|__scRolePassMotionCleanup|className==="is-celebrating"/, "state-driven celebration must remove obsolete one-shot lifecycle management");
 
 const laneFrame = { toggleAttribute: (name, value) => { assert.equal(name, "hidden"); laneFrame.hidden = value; }, closest: selector => { assert.equal(selector, ".sc-task-view"); return { classList: { toggle: (name, value) => { const field={"is-running":"running","has-waiting-motion":"waiting","has-blocked-motion":"blocked"}[name];assert.ok(field);laneFrame[field]=value; } } }; } };
@@ -245,8 +275,8 @@ assert.match(appTemplate, /setAttribute\("aria-keyshortcuts","ArrowRight"\)/, "t
 assert.match(appTemplate, /event\.key==="ArrowRight"\|\|\(event\.key==="Tab"&&!event\.shiftKey\)/, "keyboard users must have a direct route from each role card into its preview");
 assert.match(appTemplate, /event\.key==="Tab"&&event\.shiftKey&&event\.target===first/, "Shift+Tab at the first preview control must return to its owning role");
 assert.match(appTemplate, /onPointerOut=event=>\{ if \(lane\.contains\(event\.relatedTarget\)\) return;/, "pointer movement across the workspace gap must keep the preview stable");
-assert.match(appTemplate, /\.sc-task-view__role-preview, \.sc-task-view__preview-link \{ display:none; \}[^}]*details\[data-sc-role\] > \[data-sc-detail-body\] \{ display:block; \}/, "narrow layouts must stack cards and hide the independent detail and its link");
-assert.match(appTemplate, /sc-task-view__role-preview \{[^}]*align-self:stretch;[^}]*justify-self:end; width:90%/, "the independent preview must reserve the role chain height, align its right edge and use ninety percent of its column");
+assert.match(appTemplate, /\.sc-task-view__role-preview, \.sc-task-view__preview-link \{ display:none; \}[^}]*details\[data-sc-role\] > \[data-sc-detail-body\] \{ display:grid; \}/, "narrow layouts must stack cards and hide the independent detail and its link");
+assert.match(appTemplate, /sc-task-view__role-preview \{[^}]*align-self:stretch;[^}]*justify-self:end; width:calc\(90% \+ 15px\)/, "the preview must preserve its right edge and expand fifteen pixels left from ninety percent");
 assert.match(appTemplate, /data-sc-preview-size inert aria-hidden="true"/, "natural-size reserve copies must be inert and absent from the accessible tree");
 assert.match(appTemplate, /sc-task-view__preview-size \{[^}]*visibility:hidden; pointer-events:none/, "size reserve copies must never display or intercept a pointer");
 assert.match(appTemplate, /function cloneRoleDetail\(source\)/, "visible and natural-size detail copies share one clone helper");
