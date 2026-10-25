@@ -257,8 +257,8 @@ for(const status of ['running','preparing','in_progress','working','active','sta
 snapshot.state='ready_for_qa';snapshot.role_details.qa={status:'running'};window.renderSurveyCorpsTaskView(root,snapshot,{debug:true});root.querySelector('[data-sc-play-animation]').click();
 const connectors=[...root.querySelectorAll('.sc-task-view__connector')].map(node=>{const stem=getComputedStyle(node,'::before'),head=getComputedStyle(node,'::after');return {width:node.offsetWidth,height:node.offsetHeight,stemWidth:stem.width,stemHeight:stem.height,headTransform:head.transform,left:head.borderLeftWidth,right:head.borderRightWidth,top:head.borderTopWidth,bottom:head.borderBottomWidth,topColor:head.borderTopColor,leftColor:head.borderLeftColor,rightColor:head.borderRightColor,color:getComputedStyle(node).color,hidden:node.getAttribute('aria-hidden'),next:node.nextElementSibling.dataset.scRole,animation:getComputedStyle(node).animationName};});
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches,view=root.querySelector('.sc-task-view'),active=root.querySelector('details.is-active');
-const header=root.querySelector('.sc-task-view__header'),status=root.querySelector('[data-sc-field=state]'),headerRect=header.getBoundingClientRect(),statusRect=status.getBoundingClientRect();
-const statusLayout={centerOffset:Math.abs((statusRect.left+statusRect.right)/2-(headerRect.left+headerRect.right)/2),fontSize:getComputedStyle(status).fontSize,eyebrowCount:root.querySelectorAll('.sc-task-view__root > .sc-task-view__muted').length,titleCount:root.querySelectorAll('h2').length};
+const topbar=root.querySelector('.sc-task-view__topbar'),git=root.querySelector('[data-sc-git]'),status=root.querySelector('[data-sc-field=state]'),topbarRect=topbar.getBoundingClientRect(),gitRect=git.getBoundingClientRect(),statusRect=status.getBoundingClientRect();
+const statusLayout={sameParent:git.parentElement===topbar&&status.parentElement===topbar,topOffset:Math.abs(statusRect.top-topbarRect.top),rightOffset:Math.abs(statusRect.right-topbarRect.right),gitVisible:!git.hidden,gitLeftOffset:Math.abs(gitRect.left-topbarRect.left),gitTopOffset:Math.abs(gitRect.top-statusRect.top),nonOverlapping:gitRect.right<=statusRect.left,fontSize:getComputedStyle(status).fontSize,eyebrowCount:root.querySelectorAll('.sc-task-view__root > .sc-task-view__muted').length,titleCount:root.querySelectorAll('h2').length};
 const idle=root.querySelector('[data-sc-role=req]');const result={roleLines,listHeights,pulseFrames,pulseStatics,lineInteraction,lineSummary,summaryRemoval,partitions,summaryTypography,roleTones,globalTones,roleColors,globalColors,activeRoleMotion,connectors,statusLayout,reduced,viewAnimation:getComputedStyle(view).animationName,activeAnimation:getComputedStyle(active,'::before').animationName,idleAnimation:getComputedStyle(idle,'::before').animationName,replay:active.classList.contains('is-manual-replay'),viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth};parent.postMessage({scVisualResult:result},'*');
 </script></body></html>`;
 
@@ -418,8 +418,11 @@ try {
       if(item.kind==="empty")for(const field of item.empty){assert.equal(field.text,"");assert.ok(field.height>=field.lineHeight-1,"empty fields reserve a blank content line");}
     }
     assert.ok(observed.partitions[2].height>observed.partitions[0].height,"long text expands the detail instead of clipping");assert.deepEqual(observed.summaryTypography,{title:"13px",heading:"11px",body:"13px"},"role title changes do not change task-summary typography");
-    assert.ok(observed.statusLayout.centerOffset<=1,"global status must remain centered in the header");
-    assert.equal(observed.statusLayout.fontSize,"18px","global status must use enlarged type");
+    assert.equal(observed.statusLayout.sameParent,true,"Git and global status share the same topbar");
+    assert.ok(observed.statusLayout.topOffset<=1,"global status aligns to the top of the topbar");
+    assert.ok(observed.statusLayout.rightOffset<=1,"global status stays right aligned even without Git metadata");
+    if(observed.statusLayout.gitVisible){assert.ok(observed.statusLayout.gitLeftOffset<=1,"Git stays at the left edge of the topbar");assert.ok(observed.statusLayout.gitTopOffset<=1,"Git and global status align at the top");assert.equal(observed.statusLayout.nonOverlapping,true,"Git and global status do not overlap");}
+    assert.equal(observed.statusLayout.fontSize,"20px","global status must use the approved 20px type");
     assert.equal(observed.statusLayout.eyebrowCount,0,"work unit eyebrow must not render");
     assert.equal(observed.statusLayout.titleCount,0,"the redundant task-flow title must not render");
     assert.ok(Object.hasOwn(observed.roleColors,"__proto__"),"prototype-name role color cases must execute");

@@ -12,13 +12,137 @@ assert.ok(!isSourceTree || fs.existsSync(skillPath), "repository Skill is missin
 const skill = isSourceTree ? fs.readFileSync(skillPath, "utf8") : null;
 const script = appTemplate.match(/<script>([\s\S]*?)<\/script>/)[1];
 const context = { window: {} };
-vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass};})();"), context, { timeout: 1000 });
-const { stateText, stateClass } = context.window.statusContract;
+vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,animateRolePasses,roleEmoji};})();"), context, { timeout: 1000 });
+const { stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, animateRolePasses, roleEmoji } = context.window.statusContract;
 const roleStatesLiteral = appTemplate.match(/const roleStates=(\{[^\r\n]+\});/)?.[1] || "";
 const assertSkillMatch = (pattern, message) => { if (skill) assert.match(skill, pattern, message); };
 const assertSkillDoesNotMatch = (pattern, message) => { if (skill) assert.doesNotMatch(skill, pattern, message); };
 const snapshotExample = skill?.match(/### 任务视图数据契约[\s\S]*?```yaml\r?\n([\s\S]*?)\r?\n```/)?.[1] || "";
 const workUnitExample = snapshotExample.match(/^work_unit:\r?\n([\s\S]*?)(?=^[^\s#][^:\r\n]*:)/m)?.[1] || "";
+
+const gitNode = {};
+const gitRoot = { querySelector: () => gitNode };
+const gitPayload = '<img src=x onerror="alert(1)">';
+const gitWork = { git: { repository: " kyojin ", branch: gitPayload, commit: "abcdef1234567890", dirty: true } };
+renderGitInfo(gitRoot, gitWork);
+assert.equal(gitNode.textContent, `kyojin · ${gitPayload}`, "Git display must contain only literal repository and branch names");
+assert.equal(gitNode.hidden, false);
+assert.equal(gitWork.git.commit, "abcdef1234567890", "hidden legacy metadata must remain in the snapshot");
+for (const git of [undefined, null, [], "main", {}, { repository: 42, branch: {}, commit: "invalid", dirty: "true" }, { repository: "  ", branch: " ", commit: "abcdef", dirty: false }, { commit: "abcdef1234567890" }, { dirty: true }, { commit: "abcdef1234567890", dirty: false }]) {
+  renderGitInfo(gitRoot, { git });
+  assert.equal(gitNode.hidden, true, "missing or invalid Git metadata must hide the whole row");
+  assert.equal(gitNode.textContent, "", "rerender must clear stale Git information");
+}
+renderGitInfo(gitRoot, { git: { branch: "main", dirty: false } });
+assert.equal(gitNode.textContent, "main", "partial metadata must not invent a prefix or missing repository");
+for (const dirty of [true, false]) {
+  renderGitInfo(gitRoot, { git: { repository: " kyojin ", branch: " codex/sc-git-animated-emoji ", commit: "abcdef1234567890", dirty } });
+  assert.equal(gitNode.textContent, "kyojin · codex/sc-git-animated-emoji", "commit and dirty values must never add visible metadata");
+}
+renderGitInfo(gitRoot, { git: { repository: "kyojin" } });
+assert.equal(gitNode.textContent, "kyojin");
+assert.match(appTemplate, /<header[^>]*>\s*<div class="sc-task-view__topbar">\s*<p[^>]*data-sc-git hidden[^>]*>[\s\S]*?data-sc-field="state"/, "Git and global state must share the first header row in that order");
+assert.match(appTemplate, /\.sc-task-view\.is-running details\.is-active \.sc-task-view__role-emoji \{ animation:sc-tool-sway var\(--motion-period\)/, "only the resolved active role of an unfinished task may animate its emoji");
+assert.match(appTemplate, /emoji\.setAttribute\("aria-hidden","true"\)/, "the emoji must remain decorative");
+for (const role of ["req","dev","cr","qa"]) {
+  for (const blocker_type of [undefined,null,"bug","BUG"," bug ",{},true]) {
+    const detail={status:"blocked",blocker_type,summary:"Bug reported"},before=JSON.stringify(detail);
+    const bug=["cr","qa"].includes(role)&&blocker_type==="bug",emoji=roleEmoji(role,detail);
+    assert.equal(emoji.symbol,bug?"🐞":"👻");assert.equal(emoji.motion,bug?"is-blocked-bug":"is-blocked-ghost");
+    assert.equal(JSON.stringify(detail),before,"emoji derivation must preserve the authoritative detail");
+  }
+  for (const [status,symbol,motion] of [["passed","🎉",""],["needs_user_confirm","⌛","is-awaiting-user"],["pending","🛠️",""],["running","🛠️",""],["BLOCKED","🛠️",""],[undefined,"🛠️",""]]) {
+    const emoji=roleEmoji(role,{status,blocker_type:"bug"});assert.equal(emoji.symbol,symbol);assert.equal(emoji.motion,motion);
+  }
+}
+assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-ghost \{ animation:sc-ghost-float var\(--motion-period\)/, "ordinary blockers must use the shared gentle float period");
+assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-bug \{ animation:sc-bug-crawl var\(--motion-period\)/, "explicit CR and QA bugs must use the shared crawl period");
+assert.match(appTemplate, /\.sc-task-view\.has-waiting-motion \.sc-task-view__role-emoji\.is-awaiting-user \{[^}]*animation:sc-hourglass-flip var\(--motion-period\) ease-in-out infinite/, "waiting hourglasses must animate independently of running-role activity");
+assert.match(appTemplate, /@keyframes sc-hourglass-flip \{ 0%,70% \{ transform:rotate\(0\); \} 100% \{ transform:rotate\(180deg\); \} \}/, "the hourglass must pause between flips");
+assert.match(appTemplate, /role-emoji\.is-celebrating \{ animation:sc-role-celebrate 650ms ease-out 1; \}/, "pass celebrations must be brief and single-shot");
+assert.match(appTemplate, /animateRolePasses\(root,details,selectedRoles,sameView&&!!optionalText\(input\.view_id\)\)/, "pass transitions must not cross task identities");
+const passClasses=new Set(),passListeners=new Map();
+const passNode={classList:{add:name=>passClasses.add(name),remove:name=>passClasses.delete(name)},addEventListener:(name,fn)=>passListeners.set(name,fn),removeEventListener:name=>passListeners.delete(name)};
+const passRoot={querySelector:()=>passNode};
+let reducePassMotion=false;
+context.matchMedia=()=>({matches:reducePassMotion});
+const passRender=(status,sameView=true,selected=["dev"])=>animateRolePasses(passRoot,{dev:{status}},selected,sameView);
+passRender("passed",false);assert.equal(passClasses.size,0,"historical passes must load without celebration");
+passRender("passed");assert.equal(passClasses.size,0,"same-status refreshes must stay static");
+for (const status of ["pending","running","blocked","needs_user_confirm"]) {
+  passRender(status);passRender("passed");assert.equal(passClasses.has("is-celebrating"),true,"a real pass transition may celebrate");
+  passListeners.get("animationend")({target:passNode});assert.equal(passClasses.size,0);assert.equal(passListeners.size,0);
+  passRender("passed");assert.equal(passClasses.size,0,"completed animations must not replay on refresh");
+}
+passRender("running");passRender("passed");passRender("passed",false);assert.equal(passClasses.size,0);assert.equal(passListeners.size,0,"switching tasks must clear animation listeners");
+passRender("running");passRender("passed");passRender("passed",true,[]);assert.equal(passClasses.size,0);assert.equal(passListeners.size,0,"role removal must clear animation listeners");
+passRender("passed");assert.equal(passClasses.size,0,"re-added historical passes must stay static");
+passRender("running");reducePassMotion=true;passRender("passed");assert.equal(passClasses.size,0,"reduced motion must consume transitions without animating");
+reducePassMotion=false;passRender("passed");assert.equal(passClasses.size,0,"re-enabling motion must not replay a consumed pass");
+for (const invalid of [undefined,"unknown"," PASSED "]) {passRender(invalid);passRender("passed");assert.equal(passClasses.size,0,"missing or invalid statuses must not invent a transition");}
+
+const laneFrame = { toggleAttribute: (name, value) => { assert.equal(name, "hidden"); laneFrame.hidden = value; }, closest: selector => { assert.equal(selector, ".sc-task-view"); return { classList: { toggle: (name, value) => { const field={"is-running":"running","has-waiting-motion":"waiting","has-blocked-motion":"blocked"}[name];assert.ok(field);laneFrame[field]=value; } } }; } };
+const laneRoot = { querySelector: () => laneFrame };
+const selectedRoles = ["dev", "cr", "qa"];
+const validDetails = { dev: { status: "running" }, cr: { status: "pending" }, qa: { status: "pending" } };
+for (const [state, details, expected] of [
+  ["dev_in_progress", validDetails, true],
+  ...["paused", "waiting", "blocked", "needs_user_confirm", "completed", "workflow_ready", "skipped", "passed", "qa_success"].map(state => [state, validDetails, false]),
+  ["planned", { dev: { status: "pending" } }, false],
+  ["ready_for_cr", { dev: { status: "running" }, cr: { status: "running" } }, false],
+  ["ready_for_qa", { cr: { status: "pending" }, qa: { status: "running" } }, false],
+  ["ready_for_qa", { cr: { status: "passed" }, qa: { status: "running" } }, true],
+]) {
+  renderWorkflowMotion(laneRoot, selectedRoles, resolveActiveRole(details, state, selectedRoles), state);
+  assert.equal(laneFrame.hidden, false, "selected role chains retain their frame");
+  assert.equal(laneFrame.running, expected, `${state} must not invent workflow activity`);
+}
+renderWorkflowMotion(laneRoot, [], null, "planned");
+assert.equal(laneFrame.hidden, true, "an empty role selection must not show an empty frame");
+assert.equal(laneFrame.running, false);
+for (const [state, expected] of [["needs_user_confirm", true], ["dev_in_progress", true], ["paused", false], ["waiting", false], ["blocked", false], ["cancelled", false], ["workflow_ready", false], ["completed", false], ["skipped", false]]) {
+  renderWorkflowMotion(laneRoot, selectedRoles, null, state);
+  assert.equal(laneFrame.waiting, expected, state + " must preserve the waiting animation gate");
+  assert.equal(laneFrame.running, false, "waiting motion must not invent an active role");
+}
+for (const [state, expected] of [["blocked",true],["cr_blocked",true],["qa_failed",true],["needs_user_confirm",true],["paused",false],["waiting",false],["cancelled",false],["canceled",false],["completed",false],["workflow_ready",false],["skipped",false]]) {
+  renderWorkflowMotion(laneRoot,selectedRoles,null,state);assert.equal(laneFrame.blocked,expected,state+" blocker motion gate");
+  assert.equal(laneFrame.running,false,"blocker animation must not invent role activity");
+}
+assert.match(appTemplate, /<svg[^>]*data-sc-lane-frame hidden aria-hidden="true" focusable="false"[^>]*><rect><\/rect><\/svg>\s*<div class="sc-task-view__roles"/, "the decorative frame must sit outside the role sequence");
+assert.match(appTemplate, /lane-frame \{[^}]*pointer-events:none/, "the frame must not intercept card or detail interactions");
+assert.match(appTemplate, /lane-frame rect \{[^}]*stroke-width:2px; stroke-dasharray:6px 6px/, "the workflow frame must use a two-pixel dashed stroke");
+assert.match(appTemplate, /@keyframes sc-lane-flow \{ from \{ stroke-dashoffset:0; \} to \{ stroke-dashoffset:-12px; \} \}/, "the dashes must travel one seamless period without rotating the frame");
+assert.match(appTemplate, /\.sc-task-view\.is-running \.sc-task-view__selection-arrow::before[^}]*animation:sc-preview-flow var\(--motion-period\) linear infinite/, "selection arrow shimmer must reuse the shared activity gate and existing left-to-right effect");
+assert.match(appTemplate, /selection-role \{[^}]*border:2px solid var\(--line\); border-radius:6px/, "selection labels must use compact two-pixel rounded frames");
+assert.match(appTemplate, /selection-arrow \{[^}]*height:2px;[^}]*font-size:0; line-height:0/, "selection shafts must use fixed geometry rather than font baselines");
+assert.match(appTemplate, /selection-arrow::before \{[^}]*top:0;[^}]*height:2px/, "the highlight must share the two-pixel shaft's vertical extent");
+assert.match(appTemplate, /selection-arrow::after \{[^}]*right:0; top:50%;[^}]*transform:translateY\(-50%\)/, "the arrow tip must share the shaft centerline and its right endpoint");
+assert.doesNotMatch(appTemplate, /(?:\[data-sc-selected-roles\]|selection-step) \{[^}]*gap:/, "selection arrows must touch both adjoining label borders");
+assert.match(appTemplate, /selection-arrow \{[^}]*flex:0 0 22px/, "arrow lengths must remain fixed on both wide and narrow screens");
+assert.match(appTemplate, /@media \(max-width:560px\) \{ \.sc-task-view \[data-sc-selected-roles\] \{ grid-column:1\/-1; \} \}/, "narrow role chains must span the metadata below their label without shrinking typography");
+
+function selectionNode(tagName) {
+  return { tagName, children: [], attributes: {}, classList: { toggle() {} },
+    get textContent() { return this.children.map(node => node.textContent).join(""); },
+    set textContent(value) { this.children = [{ textContent: value }]; },
+    append(...nodes) { this.children.push(...nodes); },
+    replaceChildren(...nodes) { this.children = nodes; },
+    setAttribute(name, value) { this.attributes[name] = value; } };
+}
+context.document = { createElement: selectionNode };
+const selection = selectionNode("dd"), selectionRoot = { querySelector: () => selection };
+for (const [selected, text] of [[[], "尚未选择"], [["cr"], "CR"], [["cr", "dev", "qa"], "CR → DEV → QA"], [["req", "dev", "cr", "qa"], "REQ → DEV → CR → QA"], [[], "尚未选择"]]) {
+  const work = { roles: selected, summary: "保留结果", next_action: "权威下一步" }, before = JSON.stringify(work);
+  renderRootMetadata(selectionRoot, work, selected);
+  assert.equal(selection.textContent, text, "selection must retain the declared role order and clear stale nodes");
+  assert.equal(JSON.stringify(work), before, "metadata rendering must not mutate its snapshot");
+  if (!selected.length) continue;
+  assert.equal(selection.children.length, selected.length);
+  assert.deepEqual(selection.children.map(step => step.children.at(-1).className), selected.map(() => "sc-task-view__selection-role"));
+  assert.deepEqual(selection.children.map(step => step.children.length), selected.map((_, index) => index ? 2 : 1), "arrows must only separate adjacent role labels");
+  for (const step of selection.children.slice(1)) assert.equal(step.children[0].attributes["aria-hidden"], "true", "decorative arrows must not imply handoff controls");
+}
 
 assert.match(appTemplate, /font:13px\/1\.6 "Segoe UI Variable","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif/, "task view body copy must prefer readable system CJK sans-serif fonts");
 assert.doesNotMatch(appTemplate, /font:13px\/1\.5 ui-monospace/, "task view body copy must not default to a monospace font");
@@ -56,15 +180,17 @@ assert.match(appTemplate, /\.sc-task-view__metadata \{[^}]*grid-template-columns
 assert.match(appTemplate, /\.sc-task-view__metadata dd \{[^}]*min-width:0;[^}]*margin:0;[^}]*overflow-wrap:anywhere/, "long metadata values must stay inside the value column");
 assert.doesNotMatch(appTemplate, /sc-task-view__eyebrow|data-sc-field="project_name"|data-sc-field="view_id"|SURVEY CORPS \/|view_id:input\.view_id/, "the top metadata row and its project/view identifiers must not render");
 assert.doesNotMatch(appTemplate, /SC \/ WORK UNIT/, "the work unit eyebrow must not render");
-assert.match(appTemplate, /\.sc-task-view__header \{[^}]*position:relative;[^}]*justify-content:center/, "the global status must remain centered without an empty title placeholder");
-assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:18px/, "the global status must use larger type");
-assert.match(appTemplate, /data-sc-field="state" aria-live="polite"[\s\S]*?header-controls/, "the global state must be a separate centered header item from debug controls");
+assert.match(appTemplate, /\.sc-task-view__topbar \{[^}]*grid-template-columns:minmax\(0,1fr\) auto;[^}]*align-items:start/, "the top row must reserve a wrapping Git column and an independent right status column");
+assert.match(appTemplate, /\.sc-task-view__status \{[^}]*grid-column:2; justify-self:end/, "the status must remain on the right even without Git metadata");
+assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:20px/, "the global status must use the confirmed twenty-pixel type");
+assert.match(appTemplate, /data-sc-field="state" aria-live="polite"[\s\S]*?<\/div>[\s\S]*?header-controls/, "debug controls must remain outside the Git and status row");
 assert.match(appTemplate, /<details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>[\s\S]*?项目 MCP[\s\S]*?data-sc-project-mcp-list/, "project MCP names must render as a default-collapsed left header section");
 assert.match(appTemplate, /function renderProjectMcps\(root,work\)[\s\S]*?work\.project_mcps[\s\S]*?section\.hidden=!mcps\.length[\s\S]*?item\.textContent=name/, "project MCPs must be supplied by the snapshot, hidden when absent, and rendered as text only");
 assert.match(appTemplate, /projectMcpName=value=>\{ const name=optionalText\(value\)\.toLowerCase\(\); return \/\^\[a-z\]/, "project MCP names must be normalized and restricted to safe identifiers");
 assertSkillMatch(/project_mcps: \[\].*当前项目已生效的 MCP 名称/, "snapshot contract must declare explicit project MCP names");
 assertSkillMatch(/视图不得读取或推断本机宿主配置/, "project MCP display must not scan local host configuration");
-assert.match(appTemplate, /@media \(max-width:560px\)[\s\S]*?\.sc-task-view__header \{ flex-direction:column/, "the header must keep a responsive single-column layout on narrow screens");
+assert.doesNotMatch(appTemplate, /@media \(max-width:560px\)[^\r\n]*\.sc-task-view__(?:header|topbar) \{/, "narrow screens must retain the same two-column Git and status layout");
+assert.match(appTemplate, /header-controls:has\(> button\[hidden\]\) \{ display:none; \}/, "hidden debug controls must not reserve an empty toolbar row");
 assertSkillMatch(/project_name:\s+# 可选；当前会话所属项目名称，UI 不展示，不得猜测/, "the optional project name must remain in the snapshot contract without rendering");
 assert.doesNotMatch(appTemplate, /data-sc-agent-name|sc-task-view__agent-name/, "subagent names must not render in role cards");
 assert.match(appTemplate, /data-sc-play-animation hidden/, "animation replay is a hidden debug control by default");

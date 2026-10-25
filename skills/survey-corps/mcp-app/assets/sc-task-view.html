@@ -8,16 +8,19 @@
     .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { box-sizing:inherit; }
     .sc-task-view h3, .sc-task-view p { margin:0; }
     .sc-task-view h3 { margin-top:10px; color:var(--muted); font-size:11px; text-transform:uppercase; }
-    .sc-task-view__header { position:relative; display:flex; justify-content:center; align-items:center; min-height:34px; padding-bottom:14px; border-bottom:2px solid var(--line); }
-    .sc-task-view__project-mcps { position:absolute; left:0; top:0; max-width:min(48%,260px); border:0; background:transparent; }
+    .sc-task-view .sc-task-view__git { min-width:0; color:var(--muted); font-size:11px; text-align:left; overflow-wrap:anywhere; }
+    .sc-task-view__header { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:8px 12px; padding-bottom:14px; border-bottom:2px solid var(--line); }
+    .sc-task-view__topbar { display:grid; grid-column:1/-1; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:12px; }
+    .sc-task-view__project-mcps { grid-column:1; justify-self:start; max-width:100%; border:0; background:transparent; }
     .sc-task-view__project-mcps > summary { display:flex; align-items:center; gap:6px; padding:5px 0; color:var(--muted); font-weight:400; }
     .sc-task-view__project-mcps > summary:hover { color:var(--focus); }
     .sc-task-view__project-mcp-count { color:var(--text); }
     .sc-task-view__project-mcp-list { display:grid; gap:4px; margin:4px 0 0; padding:8px 10px; border:2px solid var(--line); background:var(--panel); list-style:none; }
     .sc-task-view__project-mcp-list li { overflow-wrap:anywhere; }
-    .sc-task-view__header-controls { position:absolute; right:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .sc-task-view__header-controls { grid-column:2; display:flex; align-items:center; justify-content:flex-end; }
+    .sc-task-view__header-controls:has(> button[hidden]) { display:none; }
     .sc-task-view__muted { color:var(--muted); }
-    .sc-task-view__status { justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:18px; font-weight:700; text-align:center; overflow-wrap:anywhere; }
+    .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:20px; font-weight:700; text-align:center; white-space:nowrap; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
     .sc-task-view__root { padding:14px; border-width:2px; }
@@ -26,7 +29,20 @@
     .sc-task-view__metadata { display:grid; grid-template-columns:6em minmax(0,1fr); align-items:baseline; column-gap:12px; row-gap:6px; width:min(100%,560px); margin:12px auto 0; text-align:left; }
     .sc-task-view__metadata dt { color:var(--muted); text-align:right; }
     .sc-task-view__metadata dd { min-width:0; margin:0; overflow-wrap:anywhere; }
+    .sc-task-view [data-sc-selected-roles] { display:flex; align-items:center; }
+    .sc-task-view__selection-step { display:contents; }
+    .sc-task-view__selection-role { flex:none; padding:0 6px; border:2px solid var(--line); border-radius:6px; line-height:1.6; }
+    .sc-task-view__selection-arrow { position:relative; flex:0 0 22px; height:2px; background:var(--muted); color:var(--muted); font-size:0; line-height:0; }
+    .sc-task-view__selection-arrow::after { content:""; position:absolute; right:0; top:50%; width:6px; height:8px; transform:translateY(-50%); background:currentColor; clip-path:polygon(0 0,100% 50%,0 100%,0 75%,50% 50%,0 25%); }
+    .sc-task-view.is-running .sc-task-view__selection-arrow::before { content:""; position:absolute; top:0; left:0; width:25%; height:2px; background:linear-gradient(to right,transparent,var(--focus),#fff,transparent); pointer-events:none; animation:sc-preview-flow var(--motion-period) linear infinite; }
+    @media (max-width:560px) { .sc-task-view [data-sc-selected-roles] { grid-column:1/-1; } }
     .sc-task-view__role-name { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; min-width:0; }
+    .sc-task-view__role-emoji { display:inline-block; font-size:14px; line-height:1.2; transform-origin:50% 75%; }
+    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji { animation:sc-tool-sway var(--motion-period) ease-in-out infinite; }
+    .sc-task-view.has-waiting-motion .sc-task-view__role-emoji.is-awaiting-user { transform-origin:center; animation:sc-hourglass-flip var(--motion-period) ease-in-out infinite; }
+    .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost { animation:sc-ghost-float var(--motion-period) ease-in-out infinite; }
+    .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-bug { animation:sc-bug-crawl var(--motion-period) ease-in-out infinite; }
+    .sc-task-view__role-emoji.is-celebrating { animation:sc-role-celebrate 650ms ease-out 1; }
     .sc-task-view__summary-content { margin-top:0; }
     .sc-task-view .sc-task-view__summary-title { margin:0 0 8px; color:var(--text); font-size:13px; }
     .sc-task-view__summary-content > section + section { margin-top:12px; }
@@ -42,8 +58,11 @@
     .sc-task-view__connector.is-handoff-reverse::before { animation-direction:reverse; }
     .sc-task-view__connector.is-handoff-reverse::after { top:0; bottom:auto; border-top:0; border-bottom:7px solid currentColor; }
     .sc-task-view__workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,3fr); gap:12px; align-items:start; padding-top:20px; }
-    .sc-task-view__role-lane { display:flex; align-self:stretch; min-width:0; }
-    .sc-task-view__roles { display:flex; flex:1; flex-direction:column; align-items:stretch; }
+    .sc-task-view__role-lane { position:relative; display:flex; align-self:stretch; min-width:0; }
+    .sc-task-view__lane-frame { position:absolute; left:-8px; top:-8px; width:calc(100% + 16px); height:calc(100% + 16px); pointer-events:none; }
+    .sc-task-view__lane-frame rect { x:1px; y:1px; width:calc(100% - 2px); height:calc(100% - 2px); rx:12px; fill:none; stroke:color-mix(in srgb,var(--line) 70%,transparent); stroke-width:2px; stroke-dasharray:6px 6px; }
+    .sc-task-view.is-running .sc-task-view__lane-frame rect { animation:sc-lane-flow var(--motion-period) linear infinite; }
+    .sc-task-view__roles { position:relative; display:flex; flex:1; flex-direction:column; align-items:stretch; }
     .sc-task-view__role-preview { display:grid; align-self:stretch; justify-self:end; width:90%; min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
     .sc-task-view__preview-content { display:grid; min-width:0; overflow-wrap:anywhere; }
     .sc-task-view__preview-content .sc-task-view__detail { display:grid; align-content:center; gap:24px; padding:20px 12px; border-top:0; }
@@ -113,22 +132,31 @@
     @keyframes sc-preview-reveal { from { opacity:0; } to { opacity:1; } }
     @keyframes sc-preview-flow { 0% { left:0; transform:translateX(0); opacity:0; } 15%,85% { opacity:.92; } 100% { left:100%; transform:translateX(-100%); opacity:0; } }
     @keyframes sc-status-shimmer { from { background-position:100% 0; } to { background-position:0% 0; } }
+    @keyframes sc-tool-sway { 0%,100% { transform:rotate(-8deg); } 50% { transform:rotate(8deg); } }
+    @keyframes sc-hourglass-flip { 0%,70% { transform:rotate(0); } 100% { transform:rotate(180deg); } }
+    @keyframes sc-ghost-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
+    @keyframes sc-bug-crawl { 0%,30%,100% { transform:translateX(0); } 50%,65% { transform:translateX(2px); } 80%,90% { transform:translateX(-2px); } }
+    @keyframes sc-role-celebrate { 0% { transform:scale(.65) rotate(-15deg); } 35% { transform:scale(1.35) rotate(10deg); } 65% { transform:scale(.95) rotate(-5deg); } 100% { transform:scale(1) rotate(0); } }
+    @keyframes sc-lane-flow { from { stroke-dashoffset:0; } to { stroke-dashoffset:-12px; } }
     @media (prefers-reduced-motion:no-preference) {
       @supports (background-clip:text) or (-webkit-background-clip:text) {
         .sc-task-view .sc-task-view__role-state.is-status-running, .sc-task-view .sc-task-view__role-subskill.is-status-running { color:transparent; -webkit-text-fill-color:transparent; background-image:linear-gradient(100deg,var(--active) 38%,var(--focus) 47%,#fff 50%,var(--focus) 53%,var(--active) 62%); background-size:250% 100%; background-clip:text; -webkit-background-clip:text; animation:sc-status-shimmer var(--motion-period) linear infinite; }
         .sc-task-view .sc-task-view__role-subskill.is-status-running { background-image:linear-gradient(100deg,var(--muted) 38%,var(--text) 47%,#fff 50%,var(--text) 53%,var(--muted) 62%); }
       }
     }
-    @media (max-width:560px) { .sc-task-view { padding:14px; } .sc-task-view__header { flex-direction:column; } .sc-task-view__project-mcps, .sc-task-view__header-controls { position:static; align-self:flex-start; max-width:100%; } .sc-task-view__header-controls { align-self:flex-end; } .sc-task-view__project-mcps > summary { flex-direction:row; } .sc-task-view__role-state { text-align:left; } .sc-task-view__workspace { display:flex; flex-direction:column; gap:0; } .sc-task-view__role-lane, .sc-task-view__roles { width:100%; } .sc-task-view__connector { flex:none; height:24px; min-height:24px; } .sc-task-view__role-preview, .sc-task-view__preview-link { display:none; } .sc-task-view details[data-sc-role] > [data-sc-detail-body] { display:block; } }
+    @media (max-width:560px) { .sc-task-view { padding:14px; } .sc-task-view__role-state { text-align:left; } .sc-task-view__workspace { display:flex; flex-direction:column; gap:0; } .sc-task-view__role-lane, .sc-task-view__roles { width:100%; } .sc-task-view__connector { flex:none; height:24px; min-height:24px; } .sc-task-view__role-preview, .sc-task-view__preview-link { display:none; } .sc-task-view details[data-sc-role] > [data-sc-detail-body] { display:block; } }
     @media (max-width:560px) { .sc-task-view.is-finished .sc-task-view__role-preview { display:grid; width:100%; margin-top:18px; } .sc-task-view.is-finished .sc-task-view__preview-summary { display:block; } .sc-task-view.is-finished .sc-task-view__preview-body, .sc-task-view.is-finished .sc-task-view__preview-size { display:none; } }
     @media (prefers-reduced-motion:reduce) { .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { animation:none !important; transition:none !important; } }
   </style>
   <header class="sc-task-view__header">
+    <div class="sc-task-view__topbar">
+      <p class="sc-task-view__git" data-sc-git hidden aria-label="Git 信息"></p>
+      <span class="sc-task-view__status" data-sc-field="state" aria-live="polite">未知</span>
+    </div>
     <details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>
       <summary><span>项目 MCP</span><span class="sc-task-view__project-mcp-count" data-sc-project-mcp-count></span></summary>
       <ul class="sc-task-view__project-mcp-list" data-sc-project-mcp-list></ul>
     </details>
-    <span class="sc-task-view__status" data-sc-field="state" aria-live="polite">未知</span>
     <div class="sc-task-view__header-controls"><button type="button" class="sc-task-view__play" data-sc-play-animation hidden aria-label="播放任务视图动画">播放动画</button></div>
   </header>
   <section class="sc-task-view__flow" data-sc-flow aria-label="SC 到 QA 的主工作流程">
@@ -142,7 +170,10 @@
       </dl>
     </article>
     <div class="sc-task-view__workspace" data-sc-workspace>
-      <div class="sc-task-view__role-lane"><div class="sc-task-view__roles" data-sc-roles aria-label="REQ、DEV、CR、QA 顺序任务"></div></div>
+      <div class="sc-task-view__role-lane">
+        <svg class="sc-task-view__lane-frame" data-sc-lane-frame hidden aria-hidden="true" focusable="false"><rect></rect></svg>
+        <div class="sc-task-view__roles" data-sc-roles aria-label="REQ、DEV、CR、QA 顺序任务"></div>
+      </div>
       <aside class="sc-task-view__role-preview" data-sc-role-preview aria-label="任务信息">
         <div class="sc-task-view__preview-content">
           <div class="sc-task-view__preview-size" data-sc-preview-size inert aria-hidden="true"></div>
@@ -199,6 +230,12 @@
         root.querySelector('[data-sc-task-elapsed-label]').hidden=!finished;
       }
       const projectMcpName=value=>{ const name=optionalText(value).toLowerCase(); return /^[a-z][a-z0-9._-]{0,63}$/.test(name)?name:""; };
+      function renderGitInfo(root,work) {
+        const git=asObject(work.git),node=root.querySelector("[data-sc-git]");
+        const parts=[optionalText(git.repository),optionalText(git.branch)].filter(Boolean);
+        node.hidden=!parts.length;
+        node.textContent=parts.join(" · ");
+      }
       function renderProjectMcps(root,work) {
         const mcps=[...new Set(asList(work.project_mcps).map(projectMcpName).filter(Boolean))];
         const section=root.querySelector("[data-sc-project-mcps]"),count=root.querySelector("[data-sc-project-mcp-count]"),list=root.querySelector("[data-sc-project-mcp-list]");
@@ -209,7 +246,16 @@
       }
       function renderRootMetadata(root,work,selected) {
         const selectedNode=root.querySelector("[data-sc-selected-roles]");
-        selectedNode.textContent=selected.length?selected.map(role=>roleLabels[role]).join(" → "):"尚未选择";
+        selectedNode.replaceChildren(...selected.map((role,index)=>{
+          const step=document.createElement("span"),label=document.createElement("span");
+          step.className="sc-task-view__selection-step";
+          if (index) { const arrow=document.createElement("span"); arrow.className="sc-task-view__selection-arrow"; arrow.textContent=" → "; arrow.setAttribute("aria-hidden","true"); step.append(arrow); }
+          label.className="sc-task-view__selection-role";
+          label.textContent=roleLabels[role];
+          step.append(label);
+          return step;
+        }));
+        if (!selected.length) selectedNode.textContent="尚未选择";
         selectedNode.classList.toggle("sc-task-view__placeholder",!selected.length);
         root.__scTaskSummary={
           result:optionalText(work.summary),verified:stringList(work.verified_scope),
@@ -246,6 +292,14 @@
         if (active.length!==1) return null;
         if (active[0]==="qa"&&(!selectedRoles.includes("cr")||asObject(details.cr).status!=="passed")) return null;
         return active[0];
+      }
+      function renderWorkflowMotion(root,selectedRoles,activeRole,state) {
+        const frame=root.querySelector("[data-sc-lane-frame]");
+        frame.toggleAttribute("hidden",!selectedRoles.length);
+        const view=frame.closest(".sc-task-view"),taskState=normalizedStatus(state);
+        view.classList.toggle("is-running",!!activeRole&&!finishedStatuses.has(taskState));
+        view.classList.toggle("has-waiting-motion",taskState==="needs_user_confirm"||!stoppedStates.has(taskState)&&!finishedStatuses.has(taskState));
+        view.classList.toggle("has-blocked-motion",!["paused","waiting","cancelled","canceled"].includes(taskState)&&!finishedStatuses.has(taskState));
       }
       function renderList(container,value) { const values=asList(value).map(safeText).filter(text=>text.trim()); container.replaceChildren(); if (!values.length) return; const list=document.createElement("ul"); values.forEach(text=>{ const item=document.createElement("li"); item.textContent=text; list.append(item); }); container.append(list); }
       function detailField(body,label,value) {
@@ -358,6 +412,14 @@
         root.__scRolePreviewBound=true;
         root.__scRolePreviewCleanup=()=>listeners.forEach(args=>lane.removeEventListener(...args));
       }
+      function roleEmoji(role,detail) {
+        switch (detail.status) {
+          case "passed": return {symbol:"🎉",motion:""};
+          case "needs_user_confirm": return {symbol:"⌛",motion:"is-awaiting-user"};
+          case "blocked": return ["cr","qa"].includes(role)&&detail.blocker_type==="bug"?{symbol:"🐞",motion:"is-blocked-bug"}:{symbol:"👻",motion:"is-blocked-ghost"};
+          default: return {symbol:"🛠️",motion:""};
+        }
+      }
       function roleNode(role,detail,activeRole,openRole) {
         const node=document.createElement("details"),summary=document.createElement("summary"),name=document.createElement("span"),status=document.createElement("span"),body=document.createElement("div");
         const active=role===activeRole,state=roleStatus(detail.status);
@@ -369,6 +431,12 @@
         const roleName=document.createElement("span");
         roleName.textContent=roleLabels[role];
         name.append(roleName);
+        const emoji=document.createElement("span");
+        const decoration=roleEmoji(role,detail);
+        emoji.className="sc-task-view__role-emoji"+(decoration.motion?" "+decoration.motion:"");
+        emoji.textContent=decoration.symbol;
+        emoji.setAttribute("aria-hidden","true");
+        name.append(emoji);
         summary.setAttribute("aria-keyshortcuts","ArrowRight");
         summary.title="按 → 键进入右侧详情";
         status.className=`sc-task-view__role-state sc-task-view__state--${state.tone}`;
@@ -449,6 +517,20 @@
         root.__scDetailRevealCleanup=()=>{ root.removeEventListener("toggle",onToggle,true); [...pending.values()].forEach(cleanups=>cleanups.forEach(cleanup=>cleanup())); };
       }
       function animateOnce(node,className,cleanups,onFinish) { if (!node) return; node.classList.remove(className); void node.offsetWidth; node.classList.add(className); const finish=event=>{ if (event&&event.target!==node) return; node.classList.remove(className); node.removeEventListener("animationend",finish); node.removeEventListener("animationcancel",finish); onFinish?.(); }; node.addEventListener("animationend",finish); node.addEventListener("animationcancel",finish); cleanups.push(finish); }
+      function animateRolePasses(root,details,selectedRoles,sameView) {
+        root.__scRolePassMotionCleanup?.();
+        root.__scRolePassMotionCleanup=undefined;
+        const previous=sameView?root.__scRoleStatuses:undefined;
+        root.__scRoleStatuses=Object.fromEntries(selectedRoles.map(role=>[role,asObject(details[role]).status]));
+        if (!previous||prefersReducedMotion()) return;
+        const cleanups=[];
+        selectedRoles.forEach(role=>{
+          if (asObject(details[role]).status==="passed"&&Object.hasOwn(roleStates,previous[role])&&previous[role]!=="passed") {
+            animateOnce(root.querySelector('[data-sc-role="'+role+'"] .sc-task-view__role-emoji'),"is-celebrating",cleanups);
+          }
+        });
+        root.__scRolePassMotionCleanup=()=>cleanups.forEach(cleanup=>cleanup());
+      }
       function observeHandoff(previous,input,selectedRoles,activeRole=resolveActiveRole(asObject(input.role_details),input.state,selectedRoles)) {
         const viewId=optionalText(input.view_id),sameView=!!viewId&&previous?.viewId===viewId;
         const seen=new Set(sameView?previous.seen:[]),records=Array.isArray(input.handoffs)?input.handoffs.map(value=>{
@@ -490,6 +572,7 @@
         Object.entries(values).forEach(([name,value])=>root.querySelectorAll(`[data-sc-field="${name}"]`).forEach(node=>{ node.textContent=safeText(value); node.classList.toggle("sc-task-view__placeholder",missing(value)); }));
         const status=root.querySelector('[data-sc-field="state"]');
         if (status) { status.textContent=stateText(state); status.className=`sc-task-view__status ${stateClass(state)}`; }
+        renderGitInfo(root,work);
         renderProjectMcps(root,work);
         renderRootMetadata(root,work,selectedRoles);
         renderTaskMetrics(root,work,state);
@@ -499,12 +582,14 @@
         if (!root.__scDebugMode) { root.__scManualMotionCleanup?.(); root.__scManualMotionCleanup=undefined; }
         root.__scSelectedRoles=selectedRoles;
         root.__scResolvedActiveRole=activeRole;
+        renderWorkflowMotion(root,selectedRoles,activeRole,state);
         root.__scSummaryInPreview=finishedStatuses.has(normalizedStatus(state))&&!selectedRoles.some(role=>asObject(details[role]).status==="running");
         const view=root.matches(".sc-task-view")?root:root.querySelector(".sc-task-view");
         view.classList.toggle("is-finished",root.__scSummaryInPreview);
         root.querySelector("[data-sc-preview-summary]").replaceChildren(...(root.__scSummaryInPreview?[taskSummaryNode(root)]:[]));
         bindRolePreview(root);
         renderRoles(root,details,activeRole,openRole,selectedRoles,sameView);
+        animateRolePasses(root,details,selectedRoles,sameView&&!!optionalText(input.view_id));
         renderPreviewSize(root);
         renderRolePreview(root,true,sameView);
         const observation=observeHandoff(root.__scHandoffObservation,input,selectedRoles,activeRole);
