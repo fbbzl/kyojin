@@ -20,7 +20,7 @@
     .sc-task-view__header-controls { grid-column:2; display:flex; align-items:center; justify-content:flex-end; }
     .sc-task-view__header-controls:has(> button[hidden]) { display:none; }
     .sc-task-view__muted { color:var(--muted); }
-    .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:22px; font-weight:700; text-align:center; white-space:nowrap; }
+    .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:24px; line-height:1.3; font-weight:700; text-align:center; white-space:nowrap; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
     .sc-task-view__root { padding:14px; border-width:2px; }
@@ -38,13 +38,17 @@
     @media (max-width:560px) { .sc-task-view [data-sc-selected-roles] { grid-column:1/-1; } }
     .sc-task-view__role-name { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 10px; min-width:0; }
     .sc-task-view__role-emoji { position:relative; display:inline-block; font-size:18px; line-height:1.2; transform-origin:50% 75%; }
-    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji { animation:sc-fire-breathe var(--motion-period) ease-in-out infinite; }
+    @media (prefers-reduced-motion:no-preference) {
+    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji { animation:sc-fire-flicker var(--motion-period) ease-in-out infinite; }
+    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji::before { content:""; position:absolute; left:5px; top:3px; width:10px; height:16px; border-radius:70% 30% 60% 40%; background:linear-gradient(0deg,#fff3b0,#ffb52e 45%,#f76b20 85%); clip-path:polygon(50% 0,68% 37%,85% 24%,100% 71%,77% 100%,24% 100%,0 72%,21% 43%,30% 63%); transform-origin:50% 100%; pointer-events:none; animation:sc-flame-tongue var(--motion-period) ease-in-out infinite; }
+    .sc-task-view.is-running details.is-active .sc-task-view__role-emoji::after { content:""; position:absolute; left:10px; top:3px; width:2px; height:3px; border-radius:50%; background:#ffd36a; box-shadow:4px 5px #ff922e,-3px 8px #ffe7a0; pointer-events:none; animation:sc-fire-sparks var(--motion-period) linear infinite; }
+    }
     .sc-task-view.has-waiting-motion .sc-task-view__role-emoji.is-awaiting-user { transform-origin:center; animation:sc-hourglass-flip var(--motion-period) ease-in-out infinite; }
     .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost { animation:sc-ghost-float var(--motion-period) ease-in-out infinite; }
     .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-bug { animation:sc-bug-crawl var(--motion-period) ease-in-out infinite; }
     .sc-task-view__role-emoji.is-celebrating { animation:sc-role-celebrate 650ms ease-out 1; }
-    .sc-task-view__role-emoji.is-celebrating::before, .sc-task-view__role-emoji.is-celebrating::after { content:""; position:absolute; left:50%; top:50%; width:22px; height:22px; pointer-events:none; opacity:0; background:linear-gradient(var(--warn),var(--warn)) 1px 2px/3px 6px no-repeat,linear-gradient(var(--ok),var(--ok)) 10px 0/3px 5px no-repeat,linear-gradient(var(--danger),var(--danger)) 18px 4px/3px 6px no-repeat; animation:sc-confetti-burst 650ms ease-out 1; }
-    .sc-task-view__role-emoji.is-celebrating::after { background:linear-gradient(var(--focus),var(--focus)) 2px 12px/5px 3px no-repeat,linear-gradient(var(--danger),var(--danger)) 12px 17px/3px 5px no-repeat,linear-gradient(var(--ok),var(--ok)) 17px 12px/5px 3px no-repeat; }
+    .sc-task-view__role-emoji.is-celebrating::before, .sc-task-view__role-emoji.is-celebrating::after { --burst-x:-10%; --burst-angle:14deg; content:""; position:absolute; left:50%; top:30%; width:18px; height:18px; pointer-events:none; opacity:0; background:linear-gradient(var(--warn),var(--warn)) 1px 1px/2px 5px no-repeat,linear-gradient(var(--ok),var(--ok)) 8px 0/2px 4px no-repeat,linear-gradient(var(--danger),var(--danger)) 15px 4px/2px 5px no-repeat; animation:sc-confetti-burst 650ms ease-out 1; }
+    .sc-task-view__role-emoji.is-celebrating::after { --burst-x:-40%; --burst-angle:-12deg; background:linear-gradient(var(--focus),var(--focus)) 2px 9px/4px 2px no-repeat,linear-gradient(var(--danger),var(--danger)) 10px 14px/2px 4px no-repeat,linear-gradient(var(--ok),var(--ok)) 14px 10px/4px 2px no-repeat; }
     .sc-task-view__summary-content { margin-top:0; }
     .sc-task-view .sc-task-view__summary-title { margin:0 0 8px; color:var(--text); font-size:13px; }
     .sc-task-view__summary-content > section + section { margin-top:12px; }
@@ -63,7 +67,7 @@
     .sc-task-view__role-lane { position:relative; display:flex; align-self:stretch; min-width:0; }
     .sc-task-view__lane-frame { position:absolute; left:-8px; top:-8px; width:calc(100% + 16px); height:calc(100% + 16px); pointer-events:none; }
     .sc-task-view__lane-frame rect { x:1px; y:1px; width:calc(100% - 2px); height:calc(100% - 2px); rx:12px; fill:none; stroke:color-mix(in srgb,var(--line) 70%,transparent); stroke-width:2px; stroke-dasharray:6px 6px; }
-    .sc-task-view.is-running .sc-task-view__lane-frame rect { animation:sc-lane-flow var(--motion-period) linear infinite; }
+    .sc-task-view.is-running .sc-task-view__lane-frame rect { animation:sc-lane-flow 1.2s linear infinite; }
     .sc-task-view__roles { position:relative; display:flex; flex:1; flex-direction:column; align-items:stretch; }
     .sc-task-view__role-preview { display:grid; align-self:stretch; justify-self:end; width:90%; min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
     .sc-task-view__preview-content { display:grid; min-width:0; overflow-wrap:anywhere; }
@@ -134,12 +138,14 @@
     @keyframes sc-preview-reveal { from { opacity:0; } to { opacity:1; } }
     @keyframes sc-preview-flow { 0% { left:0; transform:translateX(0); opacity:0; } 15%,85% { opacity:.92; } 100% { left:100%; transform:translateX(-100%); opacity:0; } }
     @keyframes sc-status-shimmer { from { background-position:100% 0; } to { background-position:0% 0; } }
-    @keyframes sc-fire-breathe { 0%,100% { opacity:.65; } 50% { opacity:1; } }
+    @keyframes sc-fire-flicker { 0%,100% { transform:scale(.96,1.04) rotate(-2deg); } 25%,65% { transform:scale(1.04,.96) rotate(2deg); } 45%,85% { transform:scale(.94,1.08) rotate(-1deg); } }
+    @keyframes sc-flame-tongue { 0%,100% { opacity:.5; transform:scale(.75,.85) skewX(-8deg); } 20%,60% { opacity:.9; transform:translateY(-2px) scale(.9,1.1) skewX(9deg); } 40%,80% { opacity:.65; transform:translateY(-1px) scale(1,.9) skewX(-5deg); } }
+    @keyframes sc-fire-sparks { 0%,55%,100% { opacity:0; transform:translate(0,0) scale(.6); } 12%,68% { opacity:1; } 45%,95% { opacity:0; transform:translate(2px,-9px) scale(.3); } }
     @keyframes sc-hourglass-flip { 0%,70% { transform:rotate(0); } 100% { transform:rotate(180deg); } }
     @keyframes sc-ghost-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
     @keyframes sc-bug-crawl { 0%,30%,100% { transform:translateX(0); } 50%,65% { transform:translateX(2px); } 80%,90% { transform:translateX(-2px); } }
-    @keyframes sc-role-celebrate { 0% { transform:scale(.65) rotate(-15deg); } 35% { transform:scale(1.25) rotate(10deg); } 65% { transform:scale(.95) rotate(-5deg); } 100% { transform:scale(1) rotate(0); } }
-    @keyframes sc-confetti-burst { 0% { opacity:0; transform:translate(-50%,-30%) scale(.15); } 20% { opacity:1; } 60% { opacity:1; transform:translate(-50%,-70%) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) scale(1); } }
+    @keyframes sc-role-celebrate { 0% { transform:translate(0,0) rotate(0); } 12% { transform:translate(-2px,2px) rotate(-14deg); } 35% { transform:translate(0,-1px) rotate(7deg); } 65% { transform:translate(0,0) rotate(-3deg); } 100% { transform:translate(0,0) rotate(0); } }
+    @keyframes sc-confetti-burst { 0% { opacity:0; transform:translate(-60%,40%) scale(.08); } 20% { opacity:1; transform:translate(-35%,-25%) scale(.5); } 65% { opacity:1; transform:translate(var(--burst-x),-90%) scale(.95) rotate(var(--burst-angle)); } 100% { opacity:0; transform:translate(var(--burst-x),-65%) scale(1) rotate(var(--burst-angle)); } }
     @keyframes sc-lane-flow { from { stroke-dashoffset:0; } to { stroke-dashoffset:-12px; } }
     @media (prefers-reduced-motion:no-preference) {
       @supports (background-clip:text) or (-webkit-background-clip:text) {

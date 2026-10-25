@@ -42,8 +42,10 @@ for (const dirty of [true, false]) {
 renderGitInfo(gitRoot, { git: { repository: "kyojin" } });
 assert.equal(gitNode.textContent, "kyojin");
 assert.match(appTemplate, /<header[^>]*>\s*<div class="sc-task-view__topbar">\s*<p[^>]*data-sc-git hidden[^>]*>[\s\S]*?data-sc-field="state"/, "Git and global state must share the first header row in that order");
-assert.match(appTemplate, /\.sc-task-view\.is-running details\.is-active \.sc-task-view__role-emoji \{ animation:sc-fire-breathe var\(--motion-period\)/, "only the resolved active role of an unfinished task may animate its fire");
-assert.match(appTemplate, /@keyframes sc-fire-breathe \{ 0%,100% \{ opacity:\.65; \} 50% \{ opacity:1; \} \}/, "running fire must breathe gently without moving the layout");
+assert.match(appTemplate, /\.sc-task-view\.is-running details\.is-active \.sc-task-view__role-emoji \{ animation:sc-fire-flicker var\(--motion-period\)/, "only the resolved active role of an unfinished task may animate its fire");
+assert.match(appTemplate, /@keyframes sc-fire-flicker \{[^\r\n]*scale\(\.96,1\.04\)[^\r\n]*scale\(1\.04,\.96\)/, "running fire must visibly deform through each shared period");
+for (const [pseudo,motion] of [["before","sc-flame-tongue"],["after","sc-fire-sparks"]]) assert.match(appTemplate, new RegExp('is-running details\\.is-active \\.sc-task-view__role-emoji::'+pseudo+' \\{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:'+motion+' var\\(--motion-period\\)'), "fire tongue and sparks must share the existing activity gate and period");
+assert.match(appTemplate, /@keyframes sc-fire-sparks \{[^\r\n]*translate\(2px,-9px\)/, "fixed sparks must visibly rise without a particle system");
 assert.match(appTemplate, /emoji\.setAttribute\("aria-hidden","true"\)/, "the emoji must remain decorative");
 assert.match(appTemplate, /\.sc-task-view__role-emoji \{[^}]*font-size:18px;/, "role emoji must use the larger eighteen-pixel size in its existing position");
 for (const role of ["req","dev","cr","qa"]) {
@@ -64,6 +66,8 @@ assert.match(appTemplate, /@keyframes sc-hourglass-flip \{ 0%,70% \{ transform:r
 assert.match(appTemplate, /role-emoji\.is-celebrating \{ animation:sc-role-celebrate 650ms ease-out 1; \}/, "pass celebrations must be brief and single-shot");
 assert.match(appTemplate, /role-emoji\.is-celebrating::before, \.sc-task-view__role-emoji\.is-celebrating::after \{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:sc-confetti-burst 650ms ease-out 1/, "two decorative CSS layers must visibly spray fixed confetti without changing layout");
 assert.match(appTemplate, /@keyframes sc-confetti-burst \{[^\r\n]*0% \{ opacity:0;[^\r\n]*20% \{ opacity:1;[^\r\n]*100% \{ opacity:0;/, "the single confetti burst must appear then disappear");
+assert.match(appTemplate, /@keyframes sc-confetti-burst \{[^\r\n]*translate\(-60%,40%\) scale\(\.08\)[^\r\n]*translate\(var\(--burst-x\),-90%\) scale\(\.95\)/, "confetti must shoot up and right from the small muzzle origin before dispersing");
+assert.match(appTemplate, /@keyframes sc-role-celebrate \{[^\r\n]*translate\(-2px,2px\)/, "the popper body must recoil briefly");
 assert.match(appTemplate, /animateRolePasses\(root,details,selectedRoles,sameView&&!!optionalText\(input\.view_id\)\)/, "pass transitions must not cross task identities");
 const passClasses=new Set(),passListeners=new Map();
 const passNode={classList:{add:name=>passClasses.add(name),remove:name=>passClasses.delete(name)},addEventListener:(name,fn)=>passListeners.set(name,fn),removeEventListener:name=>passListeners.delete(name)};
@@ -122,6 +126,7 @@ assert.match(appTemplate, /lane-frame \{[^}]*pointer-events:none/, "the frame mu
 assert.match(appTemplate, /\.sc-task-view__workspace \{[^}]*padding-left:8px/, "the workspace must reserve the frame's left gutter inside the context boundary");
 assert.match(appTemplate, /lane-frame rect \{[^}]*stroke-width:2px; stroke-dasharray:6px 6px/, "the workflow frame must use a two-pixel dashed stroke");
 assert.match(appTemplate, /@keyframes sc-lane-flow \{ from \{ stroke-dashoffset:0; \} to \{ stroke-dashoffset:-12px; \} \}/, "the dashes must travel one seamless period without rotating the frame");
+assert.match(appTemplate, /\.sc-task-view\.is-running \.sc-task-view__lane-frame rect \{ animation:sc-lane-flow 1\.2s linear infinite;/, "only the outer dashed frame uses the faster 1.2-second period");
 assert.match(appTemplate, /\.sc-task-view\.is-running \.sc-task-view__selection-arrow::before[^}]*animation:sc-preview-flow var\(--motion-period\) linear infinite/, "selection arrow shimmer must reuse the shared activity gate and existing left-to-right effect");
 assert.match(appTemplate, /selection-role \{[^}]*border:2px solid var\(--line\); border-radius:6px/, "selection labels must use compact two-pixel rounded frames");
 assert.match(appTemplate, /selection-arrow \{[^}]*height:2px;[^}]*font-size:0; line-height:0/, "selection shafts must use fixed geometry rather than font baselines");
@@ -191,7 +196,7 @@ assert.doesNotMatch(appTemplate, /sc-task-view__eyebrow|data-sc-field="project_n
 assert.doesNotMatch(appTemplate, /SC \/ WORK UNIT/, "the work unit eyebrow must not render");
 assert.match(appTemplate, /\.sc-task-view__topbar \{[^}]*grid-template-columns:minmax\(0,1fr\) auto;[^}]*align-items:start/, "the top row must reserve a wrapping Git column and an independent right status column");
 assert.match(appTemplate, /\.sc-task-view__status \{[^}]*grid-column:2; justify-self:end/, "the status must remain on the right even without Git metadata");
-assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:22px/, "the global status must use the confirmed twenty-two-pixel type");
+assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:24px; line-height:1[.]3;/, "the global status must use twenty-four-pixel type and the tighter 1.3 line height");
 assert.match(appTemplate, /data-sc-field="state" aria-live="polite"[\s\S]*?<\/div>[\s\S]*?header-controls/, "debug controls must remain outside the Git and status row");
 assert.match(appTemplate, /<details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>[\s\S]*?项目 MCP[\s\S]*?data-sc-project-mcp-list/, "project MCP names must render as a default-collapsed left header section");
 assert.match(appTemplate, /function renderProjectMcps\(root,work\)[\s\S]*?work\.project_mcps[\s\S]*?section\.hidden=!mcps\.length[\s\S]*?item\.textContent=name/, "project MCPs must be supplied by the snapshot, hidden when absent, and rendered as text only");
