@@ -20,7 +20,7 @@
     .sc-task-view__header-controls { grid-column:2; display:flex; align-items:center; justify-content:flex-end; }
     .sc-task-view__header-controls:has(> button[hidden]) { display:none; }
     .sc-task-view__muted { color:var(--muted); }
-    .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:24px; line-height:1.3; font-weight:700; text-align:center; white-space:nowrap; }
+    .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:26px; line-height:31.2px; font-weight:700; text-align:center; white-space:nowrap; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
     .sc-task-view__root { padding:14px; border-width:2px; }
@@ -45,10 +45,13 @@
     }
     .sc-task-view.has-waiting-motion .sc-task-view__role-emoji.is-awaiting-user { transform-origin:center; animation:sc-hourglass-flip var(--motion-period) ease-in-out infinite; }
     .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost { animation:sc-ghost-float var(--motion-period) ease-in-out infinite; }
+    @media (prefers-reduced-motion:no-preference) { .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-ghost::before { content:""; position:absolute; left:10px; top:11px; width:4px; height:7px; border-radius:1px 1px 3px 3px; background:#f48ba7; transform-origin:50% 0; pointer-events:none; animation:sc-ghost-tongue var(--motion-period) ease-in-out infinite; } }
     .sc-task-view.has-blocked-motion .sc-task-view__role-emoji.is-blocked-bug { animation:sc-bug-crawl var(--motion-period) ease-in-out infinite; }
-    .sc-task-view__role-emoji.is-celebrating { animation:sc-role-celebrate 650ms ease-out 1; }
-    .sc-task-view__role-emoji.is-celebrating::before, .sc-task-view__role-emoji.is-celebrating::after { --burst-x:-10%; --burst-angle:14deg; content:""; position:absolute; left:50%; top:30%; width:18px; height:18px; pointer-events:none; opacity:0; background:linear-gradient(var(--warn),var(--warn)) 1px 1px/2px 5px no-repeat,linear-gradient(var(--ok),var(--ok)) 8px 0/2px 4px no-repeat,linear-gradient(var(--danger),var(--danger)) 15px 4px/2px 5px no-repeat; animation:sc-confetti-burst 650ms ease-out 1; }
+    @media (prefers-reduced-motion:no-preference) {
+    .sc-task-view__role-emoji.is-celebrating { animation:sc-role-celebrate var(--motion-period) ease-out infinite; }
+    .sc-task-view__role-emoji.is-celebrating::before, .sc-task-view__role-emoji.is-celebrating::after { --burst-x:-10%; --burst-angle:14deg; content:""; position:absolute; left:50%; top:30%; width:18px; height:18px; pointer-events:none; opacity:0; background:linear-gradient(var(--warn),var(--warn)) 1px 1px/2px 5px no-repeat,linear-gradient(var(--ok),var(--ok)) 8px 0/2px 4px no-repeat,linear-gradient(var(--danger),var(--danger)) 15px 4px/2px 5px no-repeat; animation:sc-confetti-burst var(--motion-period) ease-out infinite; }
     .sc-task-view__role-emoji.is-celebrating::after { --burst-x:-40%; --burst-angle:-12deg; background:linear-gradient(var(--focus),var(--focus)) 2px 9px/4px 2px no-repeat,linear-gradient(var(--danger),var(--danger)) 10px 14px/2px 4px no-repeat,linear-gradient(var(--ok),var(--ok)) 14px 10px/4px 2px no-repeat; }
+    }
     .sc-task-view__summary-content { margin-top:0; }
     .sc-task-view .sc-task-view__summary-title { margin:0 0 8px; color:var(--text); font-size:13px; }
     .sc-task-view__summary-content > section + section { margin-top:12px; }
@@ -143,9 +146,10 @@
     @keyframes sc-fire-sparks { 0%,55%,100% { opacity:0; transform:translate(0,0) scale(.6); } 12%,68% { opacity:1; } 45%,95% { opacity:0; transform:translate(2px,-9px) scale(.3); } }
     @keyframes sc-hourglass-flip { 0%,70% { transform:rotate(0); } 100% { transform:rotate(180deg); } }
     @keyframes sc-ghost-float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
+    @keyframes sc-ghost-tongue { 0%,20%,85%,100% { transform:scaleY(0); } 40%,65% { transform:scaleY(1); } }
     @keyframes sc-bug-crawl { 0%,30%,100% { transform:translateX(0); } 50%,65% { transform:translateX(2px); } 80%,90% { transform:translateX(-2px); } }
-    @keyframes sc-role-celebrate { 0% { transform:translate(0,0) rotate(0); } 12% { transform:translate(-2px,2px) rotate(-14deg); } 35% { transform:translate(0,-1px) rotate(7deg); } 65% { transform:translate(0,0) rotate(-3deg); } 100% { transform:translate(0,0) rotate(0); } }
-    @keyframes sc-confetti-burst { 0% { opacity:0; transform:translate(-60%,40%) scale(.08); } 20% { opacity:1; transform:translate(-35%,-25%) scale(.5); } 65% { opacity:1; transform:translate(var(--burst-x),-90%) scale(.95) rotate(var(--burst-angle)); } 100% { opacity:0; transform:translate(var(--burst-x),-65%) scale(1) rotate(var(--burst-angle)); } }
+    @keyframes sc-role-celebrate { 0% { transform:translate(0,0) rotate(0); } 4% { transform:translate(-2px,2px) rotate(-14deg); } 13% { transform:translate(0,-1px) rotate(7deg); } 24% { transform:translate(0,0) rotate(-3deg); } 36%,100% { transform:translate(0,0) rotate(0); } }
+    @keyframes sc-confetti-burst { 0% { opacity:0; transform:translate(-60%,40%) scale(.08); } 7% { opacity:1; transform:translate(-35%,-25%) scale(.5); } 24% { opacity:1; transform:translate(var(--burst-x),-90%) scale(.95) rotate(var(--burst-angle)); } 36%,100% { opacity:0; transform:translate(var(--burst-x),-65%) scale(1) rotate(var(--burst-angle)); } }
     @keyframes sc-lane-flow { from { stroke-dashoffset:0; } to { stroke-dashoffset:-12px; } }
     @media (prefers-reduced-motion:no-preference) {
       @supports (background-clip:text) or (-webkit-background-clip:text) {
@@ -283,12 +287,6 @@
           section.append(heading,content);
           summary.append(section);
         });
-        if (!summary.childElementCount) {
-          const empty=document.createElement("p");
-          empty.className="sc-task-view__placeholder";
-          empty.textContent="暂无总结";
-          summary.append(empty);
-        }
         const title=document.createElement("h3");
         title.className="sc-task-view__summary-title";
         title.textContent="任务总结";
@@ -424,7 +422,7 @@
       function roleEmoji(role,detail) {
         switch (detail.status) {
           case "running": return {symbol:"🔥",motion:""};
-          case "passed": return {symbol:"🎉",motion:""};
+          case "passed": return {symbol:"🎉",motion:"is-celebrating"};
           case "pending":
           case "needs_user_confirm": return {symbol:"⌛",motion:"is-awaiting-user"};
           case "blocked": return ["cr","qa"].includes(role)&&detail.blocker_type==="bug"?{symbol:"🐞",motion:"is-blocked-bug"}:{symbol:"👻",motion:"is-blocked-ghost"};
@@ -527,21 +525,7 @@
         root.addEventListener("toggle",onToggle,true);
         root.__scDetailRevealCleanup=()=>{ root.removeEventListener("toggle",onToggle,true); [...pending.values()].forEach(cleanups=>cleanups.forEach(cleanup=>cleanup())); };
       }
-      function animateOnce(node,className,cleanups,onFinish) { if (!node) return; node.classList.remove(className); void node.offsetWidth; node.classList.add(className); const finish=event=>{ if (event&&event.target!==node) return; if (className==="is-celebrating"&&event?.pseudoElement) return; node.classList.remove(className); node.removeEventListener("animationend",finish); node.removeEventListener("animationcancel",finish); onFinish?.(); }; node.addEventListener("animationend",finish); node.addEventListener("animationcancel",finish); cleanups.push(finish); }
-      function animateRolePasses(root,details,selectedRoles,sameView) {
-        root.__scRolePassMotionCleanup?.();
-        root.__scRolePassMotionCleanup=undefined;
-        const previous=sameView?root.__scRoleStatuses:undefined;
-        root.__scRoleStatuses=Object.fromEntries(selectedRoles.map(role=>[role,asObject(details[role]).status]));
-        if (!previous||prefersReducedMotion()) return;
-        const cleanups=[];
-        selectedRoles.forEach(role=>{
-          if (asObject(details[role]).status==="passed"&&Object.hasOwn(roleStates,previous[role])&&previous[role]!=="passed") {
-            animateOnce(root.querySelector('[data-sc-role="'+role+'"] .sc-task-view__role-emoji'),"is-celebrating",cleanups);
-          }
-        });
-        root.__scRolePassMotionCleanup=()=>cleanups.forEach(cleanup=>cleanup());
-      }
+      function animateOnce(node,className,cleanups,onFinish) { if (!node) return; node.classList.remove(className); void node.offsetWidth; node.classList.add(className); const finish=event=>{ if (event&&event.target!==node) return; node.classList.remove(className); node.removeEventListener("animationend",finish); node.removeEventListener("animationcancel",finish); onFinish?.(); }; node.addEventListener("animationend",finish); node.addEventListener("animationcancel",finish); cleanups.push(finish); }
       function observeHandoff(previous,input,selectedRoles,activeRole=resolveActiveRole(asObject(input.role_details),input.state,selectedRoles)) {
         const viewId=optionalText(input.view_id),sameView=!!viewId&&previous?.viewId===viewId;
         const seen=new Set(sameView?previous.seen:[]),records=Array.isArray(input.handoffs)?input.handoffs.map(value=>{
@@ -600,7 +584,6 @@
         root.querySelector("[data-sc-preview-summary]").replaceChildren(...(root.__scSummaryInPreview?[taskSummaryNode(root)]:[]));
         bindRolePreview(root);
         renderRoles(root,details,activeRole,openRole,selectedRoles,sameView);
-        animateRolePasses(root,details,selectedRoles,sameView&&!!optionalText(input.view_id));
         renderPreviewSize(root);
         renderRolePreview(root,true,sameView);
         const observation=observeHandoff(root.__scHandoffObservation,input,selectedRoles,activeRole);

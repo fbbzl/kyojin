@@ -12,8 +12,8 @@ assert.ok(!isSourceTree || fs.existsSync(skillPath), "repository Skill is missin
 const skill = isSourceTree ? fs.readFileSync(skillPath, "utf8") : null;
 const script = appTemplate.match(/<script>([\s\S]*?)<\/script>/)[1];
 const context = { window: {} };
-vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,animateRolePasses,roleEmoji};})();"), context, { timeout: 1000 });
-const { stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, animateRolePasses, roleEmoji } = context.window.statusContract;
+vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,taskSummaryNode,roleEmoji};})();"), context, { timeout: 1000 });
+const { stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, taskSummaryNode, roleEmoji } = context.window.statusContract;
 const roleStatesLiteral = appTemplate.match(/const roleStates=(\{[^\r\n]+\});/)?.[1] || "";
 const assertSkillMatch = (pattern, message) => { if (skill) assert.match(skill, pattern, message); };
 const assertSkillDoesNotMatch = (pattern, message) => { if (skill) assert.doesNotMatch(skill, pattern, message); };
@@ -55,40 +55,20 @@ for (const role of ["req","dev","cr","qa"]) {
     assert.equal(emoji.symbol,bug?"🐞":"👻");assert.equal(emoji.motion,bug?"is-blocked-bug":"is-blocked-ghost");
     assert.equal(JSON.stringify(detail),before,"emoji derivation must preserve the authoritative detail");
   }
-  for (const [status,symbol,motion] of [["passed","🎉",""],["needs_user_confirm","⌛","is-awaiting-user"],["pending","⌛","is-awaiting-user"],["running","🔥",""],["BLOCKED","🛠️",""],[undefined,"🛠️",""]]) {
+  for (const [status,symbol,motion] of [["passed","🎉","is-celebrating"],["needs_user_confirm","⌛","is-awaiting-user"],["pending","⌛","is-awaiting-user"],["running","🔥",""],["BLOCKED","🛠️",""],[undefined,"🛠️",""]]) {
     const emoji=roleEmoji(role,{status,blocker_type:"bug"});assert.equal(emoji.symbol,symbol);assert.equal(emoji.motion,motion);
   }
 }
 assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-ghost \{ animation:sc-ghost-float var\(--motion-period\)/, "ordinary blockers must use the shared gentle float period");
+assert.match(appTemplate, /@media \(prefers-reduced-motion:no-preference\) \{ \.sc-task-view\.has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-ghost::before \{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:sc-ghost-tongue var\(--motion-period\)/, "ghost tongues must reuse the blocker gate and disappear under reduced motion");
+assert.match(appTemplate, /@keyframes sc-ghost-tongue \{ 0%,20%,85%,100% \{ transform:scaleY\(0\); \} 40%,65% \{ transform:scaleY\(1\); \} \}/, "the tongue must extend and retract continuously within the existing period");
 assert.match(appTemplate, /has-blocked-motion \.sc-task-view__role-emoji\.is-blocked-bug \{ animation:sc-bug-crawl var\(--motion-period\)/, "explicit CR and QA bugs must use the shared crawl period");
 assert.match(appTemplate, /\.sc-task-view\.has-waiting-motion \.sc-task-view__role-emoji\.is-awaiting-user \{[^}]*animation:sc-hourglass-flip var\(--motion-period\) ease-in-out infinite/, "waiting hourglasses must animate independently of running-role activity");
 assert.match(appTemplate, /@keyframes sc-hourglass-flip \{ 0%,70% \{ transform:rotate\(0\); \} 100% \{ transform:rotate\(180deg\); \} \}/, "the hourglass must pause between flips");
-assert.match(appTemplate, /role-emoji\.is-celebrating \{ animation:sc-role-celebrate 650ms ease-out 1; \}/, "pass celebrations must be brief and single-shot");
-assert.match(appTemplate, /role-emoji\.is-celebrating::before, \.sc-task-view__role-emoji\.is-celebrating::after \{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:sc-confetti-burst 650ms ease-out 1/, "two decorative CSS layers must visibly spray fixed confetti without changing layout");
-assert.match(appTemplate, /@keyframes sc-confetti-burst \{[^\r\n]*0% \{ opacity:0;[^\r\n]*20% \{ opacity:1;[^\r\n]*100% \{ opacity:0;/, "the single confetti burst must appear then disappear");
-assert.match(appTemplate, /@keyframes sc-confetti-burst \{[^\r\n]*translate\(-60%,40%\) scale\(\.08\)[^\r\n]*translate\(var\(--burst-x\),-90%\) scale\(\.95\)/, "confetti must shoot up and right from the small muzzle origin before dispersing");
-assert.match(appTemplate, /@keyframes sc-role-celebrate \{[^\r\n]*translate\(-2px,2px\)/, "the popper body must recoil briefly");
-assert.match(appTemplate, /animateRolePasses\(root,details,selectedRoles,sameView&&!!optionalText\(input\.view_id\)\)/, "pass transitions must not cross task identities");
-const passClasses=new Set(),passListeners=new Map();
-const passNode={classList:{add:name=>passClasses.add(name),remove:name=>passClasses.delete(name)},addEventListener:(name,fn)=>passListeners.set(name,fn),removeEventListener:name=>passListeners.delete(name)};
-const passRoot={querySelector:()=>passNode};
-let reducePassMotion=false;
-context.matchMedia=()=>({matches:reducePassMotion});
-const passRender=(status,sameView=true,selected=["dev"])=>animateRolePasses(passRoot,{dev:{status}},selected,sameView);
-passRender("passed",false);assert.equal(passClasses.size,0,"historical passes must load without celebration");
-passRender("passed");assert.equal(passClasses.size,0,"same-status refreshes must stay static");
-for (const status of ["pending","running","blocked","needs_user_confirm"]) {
-  passRender(status);passRender("passed");assert.equal(passClasses.has("is-celebrating"),true,"a real pass transition may celebrate");
-  for (const type of ["animationend","animationcancel"]) for (const pseudoElement of ["::before","::after"]) { passListeners.get(type)({target:passNode,pseudoElement});assert.equal(passClasses.has("is-celebrating"),true,"confetti completion or cancellation must not terminate the parent celebration"); }
-  passListeners.get("animationend")({target:passNode});assert.equal(passClasses.size,0);assert.equal(passListeners.size,0);
-  passRender("passed");assert.equal(passClasses.size,0,"completed animations must not replay on refresh");
-}
-passRender("running");passRender("passed");passRender("passed",false);assert.equal(passClasses.size,0);assert.equal(passListeners.size,0,"switching tasks must clear animation listeners");
-passRender("running");passRender("passed");passRender("passed",true,[]);assert.equal(passClasses.size,0);assert.equal(passListeners.size,0,"role removal must clear animation listeners");
-passRender("passed");assert.equal(passClasses.size,0,"re-added historical passes must stay static");
-passRender("running");reducePassMotion=true;passRender("passed");assert.equal(passClasses.size,0,"reduced motion must consume transitions without animating");
-reducePassMotion=false;passRender("passed");assert.equal(passClasses.size,0,"re-enabling motion must not replay a consumed pass");
-for (const invalid of [undefined,"unknown"," PASSED "]) {passRender(invalid);passRender("passed");assert.equal(passClasses.size,0,"missing or invalid statuses must not invent a transition");}
+assert.match(appTemplate, /role-emoji[.]is-celebrating [{] animation:sc-role-celebrate var[(]--motion-period[)] ease-out infinite;/, "passed roles must celebrate continuously on the shared period");
+assert.match(appTemplate, /animation:sc-confetti-burst var[(]--motion-period[)] ease-out infinite;/, "confetti must repeat with each celebration cycle");
+assert.match(appTemplate, /36%,100% [{] opacity:0; transform:translate[(]var[(]--burst-x[)],-65%[)]/, "each burst must finish near 650ms and rest for the remainder");
+assert.doesNotMatch(appTemplate, /animateRolePasses|__scRoleStatuses|__scRolePassMotionCleanup|className==="is-celebrating"/, "state-driven celebration must remove obsolete one-shot lifecycle management");
 
 const laneFrame = { toggleAttribute: (name, value) => { assert.equal(name, "hidden"); laneFrame.hidden = value; }, closest: selector => { assert.equal(selector, ".sc-task-view"); return { classList: { toggle: (name, value) => { const field={"is-running":"running","has-waiting-motion":"waiting","has-blocked-motion":"blocked"}[name];assert.ok(field);laneFrame[field]=value; } } }; } };
 const laneRoot = { querySelector: () => laneFrame };
@@ -141,11 +121,18 @@ function selectionNode(tagName) {
     get textContent() { return this.children.map(node => node.textContent).join(""); },
     set textContent(value) { this.children = [{ textContent: value }]; },
     append(...nodes) { this.children.push(...nodes); },
+    prepend(...nodes) { this.children.unshift(...nodes); },
     replaceChildren(...nodes) { this.children = nodes; },
     setAttribute(name, value) { this.attributes[name] = value; } };
 }
 context.document = { createElement: selectionNode };
 const selection = selectionNode("dd"), selectionRoot = { querySelector: () => selection };
+for (const [summary,count] of [[undefined,1],["",1],["   ",1],["暂无总结",2]]) {
+  renderRootMetadata(selectionRoot,{summary},[]); const node=taskSummaryNode(selectionRoot);
+  assert.equal(node.children.length,count,"missing content leaves only the title; explicit literal content remains valid");
+  assert.equal(node.children[0].textContent,"任务总结");
+  if (count===2) assert.equal(node.children[1].children[1].textContent,"暂无总结");
+}
 for (const [selected, text] of [[[], "尚未选择"], [["cr"], "CR"], [["cr", "dev", "qa"], "CR → DEV → QA"], [["req", "dev", "cr", "qa"], "REQ → DEV → CR → QA"], [[], "尚未选择"]]) {
   const work = { roles: selected, summary: "保留结果", next_action: "权威下一步" }, before = JSON.stringify(work);
   renderRootMetadata(selectionRoot, work, selected);
@@ -167,6 +154,7 @@ assert.match(appTemplate, /roleName\.textContent=roleLabels\[role\]/, "role titl
 assert.match(appTemplate, /<aside[^>]*data-sc-role-preview[\s\S]*?<div class="sc-task-view__preview-summary" data-sc-preview-summary><\/div>[\s\S]*?<\/aside>/, "task summary must use the same aside and start with no summary DOM");
 assert.doesNotMatch(appTemplate, /data-sc-task-summary|sc-task-view__task-summary/, "the removed bottom summary must not remain in DOM or styles");
 assert.match(appTemplate, /replaceChildren\(\.\.\.\(root\.__scSummaryInPreview\?\[taskSummaryNode\(root\)\]:\[\]\)\)/, "only a finished task without selected running roles may populate the summary");
+assert.doesNotMatch(appTemplate, /empty\.textContent="暂无总结"|if \(!summary\.childElementCount\)/, "missing summary fields must leave the summary body blank without a generated fallback");
 assert.doesNotMatch(appTemplate, /任务上下文|data-sc-context|sc-task-view__context/, "the task context panel must be removed from the view");
 assert.match(appTemplate, /data-sc-selected-roles>尚未选择</, "the view must not infer all roles as selected");
 assert.doesNotMatch(appTemplate, /SC TASK FLOW|<h2\b/, "the redundant visual task-flow title must not render");
@@ -196,7 +184,7 @@ assert.doesNotMatch(appTemplate, /sc-task-view__eyebrow|data-sc-field="project_n
 assert.doesNotMatch(appTemplate, /SC \/ WORK UNIT/, "the work unit eyebrow must not render");
 assert.match(appTemplate, /\.sc-task-view__topbar \{[^}]*grid-template-columns:minmax\(0,1fr\) auto;[^}]*align-items:start/, "the top row must reserve a wrapping Git column and an independent right status column");
 assert.match(appTemplate, /\.sc-task-view__status \{[^}]*grid-column:2; justify-self:end/, "the status must remain on the right even without Git metadata");
-assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:24px; line-height:1[.]3;/, "the global status must use twenty-four-pixel type and the tighter 1.3 line height");
+assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:26px; line-height:31[.]2px;/, "the global status must use twenty-six-pixel type without increasing its fixed 31.2px line height");
 assert.match(appTemplate, /data-sc-field="state" aria-live="polite"[\s\S]*?<\/div>[\s\S]*?header-controls/, "debug controls must remain outside the Git and status row");
 assert.match(appTemplate, /<details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>[\s\S]*?项目 MCP[\s\S]*?data-sc-project-mcp-list/, "project MCP names must render as a default-collapsed left header section");
 assert.match(appTemplate, /function renderProjectMcps\(root,work\)[\s\S]*?work\.project_mcps[\s\S]*?section\.hidden=!mcps\.length[\s\S]*?item\.textContent=name/, "project MCPs must be supplied by the snapshot, hidden when absent, and rendered as text only");
