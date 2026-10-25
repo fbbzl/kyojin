@@ -191,7 +191,7 @@ assert.doesNotMatch(appTemplate, /sc-task-view__eyebrow|data-sc-field="project_n
 assert.doesNotMatch(appTemplate, /SC \/ WORK UNIT/, "the work unit eyebrow must not render");
 assert.match(appTemplate, /\.sc-task-view__topbar \{[^}]*grid-template-columns:minmax\(0,1fr\) auto;[^}]*align-items:start/, "the top row must reserve a wrapping Git column and an independent right status column");
 assert.match(appTemplate, /\.sc-task-view__status \{[^}]*grid-column:2; justify-self:end/, "the status must remain on the right even without Git metadata");
-assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:20px/, "the global status must use the confirmed twenty-pixel type");
+assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:22px/, "the global status must use the confirmed twenty-two-pixel type");
 assert.match(appTemplate, /data-sc-field="state" aria-live="polite"[\s\S]*?<\/div>[\s\S]*?header-controls/, "debug controls must remain outside the Git and status row");
 assert.match(appTemplate, /<details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>[\s\S]*?项目 MCP[\s\S]*?data-sc-project-mcp-list/, "project MCP names must render as a default-collapsed left header section");
 assert.match(appTemplate, /function renderProjectMcps\(root,work\)[\s\S]*?work\.project_mcps[\s\S]*?section\.hidden=!mcps\.length[\s\S]*?item\.textContent=name/, "project MCPs must be supplied by the snapshot, hidden when absent, and rendered as text only");

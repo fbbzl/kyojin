@@ -422,7 +422,7 @@ try {
     assert.ok(observed.statusLayout.topOffset<=1,"global status aligns to the top of the topbar");
     assert.ok(observed.statusLayout.rightOffset<=1,"global status stays right aligned even without Git metadata");
     if(observed.statusLayout.gitVisible){assert.ok(observed.statusLayout.gitLeftOffset<=1,"Git stays at the left edge of the topbar");assert.ok(observed.statusLayout.gitTopOffset<=1,"Git and global status align at the top");assert.equal(observed.statusLayout.nonOverlapping,true,"Git and global status do not overlap");}
-    assert.equal(observed.statusLayout.fontSize,"20px","global status must use the approved 20px type");
+    assert.equal(observed.statusLayout.fontSize,"22px","global status must use the approved 22px type");
     assert.equal(observed.statusLayout.eyebrowCount,0,"work unit eyebrow must not render");
     assert.equal(observed.statusLayout.titleCount,0,"the redundant task-flow title must not render");
     assert.ok(Object.hasOwn(observed.roleColors,"__proto__"),"prototype-name role color cases must execute");
