@@ -80,6 +80,8 @@
     .sc-task-view__connector.is-handoff-reverse::after { top:0; bottom:auto; border-top:0; border-bottom:7px solid currentColor; }
     .sc-task-view__workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,3fr); gap:12px; align-items:start; padding-top:20px; padding-left:8px; }
     .sc-task-view__role-lane { position:relative; display:flex; align-self:start; min-width:0; }
+    .sc-task-view__role-lane:has(.sc-task-view__connector) { align-self:stretch; }
+    .sc-task-view__role-lane:has(.sc-task-view__connector) .sc-task-view__connector { flex-grow:1; }
     .sc-task-view__lane-frame { position:absolute; left:-8px; top:-8px; width:calc(100% + 16px); height:calc(100% + 16px); pointer-events:none; }
     .sc-task-view__lane-frame rect { x:1px; y:1px; width:calc(100% - 2px); height:calc(100% - 2px); rx:12px; fill:none; stroke:color-mix(in srgb,var(--line) 70%,transparent); stroke-width:2px; stroke-dasharray:6px 6px; }
     .sc-task-view.is-running .sc-task-view__lane-frame rect { animation:sc-lane-flow 1.2s linear infinite; }
