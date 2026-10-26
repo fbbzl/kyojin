@@ -184,10 +184,9 @@ assert.doesNotMatch(appTemplate, /data-sc-exit|sc-task-view__exit|QA · 唯一�
 assert.match(appTemplate, /roleName\.textContent=roleLabels\[role\]/, "role titles must use the plain role label without a QA exit suffix");
 assert.match(appTemplate, /<aside[^>]*data-sc-role-preview[\s\S]*?<div class="sc-task-view__preview-summary" data-sc-preview-summary><\/div>[\s\S]*?<\/aside>/, "task summary must use the same aside and start with no summary DOM");
 assert.doesNotMatch(appTemplate, /data-sc-task-summary|sc-task-view__task-summary/, "the removed bottom summary must not remain in DOM or styles");
-assert.ok(appTemplate.includes(".sc-task-view__role-preview.is-showing-summary { grid-template-rows:minmax(0,1fr); }"), "summary mode must use one grid row without an empty file activity track");
-assert.ok(appTemplate.includes(".sc-task-view__role-preview.is-showing-summary > .sc-task-view__file-activity { display:none; }"), "summary mode must remove the direct file strip from layout while role previews retain their reserved space");
-assert.ok(appTemplate.includes(".sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-size { padding-bottom:36px; }"), "the natural-size reserve must retain the removed file strip height below summary content");
-assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-preview > .sc-task-view__file-activity { display:none; }"), "narrow completed summaries must not regain the file strip when a role is hovered");
+assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-preview { grid-template-rows:minmax(0,1fr); }"), "completed summaries and role previews must share a single grid row at every width");
+assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-preview > .sc-task-view__file-activity { display:none; }"), "completed previews must not regain an empty file strip when a role is hovered");
+assert.doesNotMatch(appTemplate, /is-showing-summary[^}]*\{[^}]*(?:grid-template-rows|padding-bottom)|@media[^}]*is-finished[^}]*grid-template-rows/, "summary switching must not change grid tracks or compensate for scaled file strip borders");
 assert.match(appTemplate, /replaceChildren\(\.\.\.\(root\.__scSummaryInPreview\?\[taskSummaryNode\(root\)\]:\[\]\)\)/, "only a finished task without selected running roles may populate the summary");
 assert.doesNotMatch(appTemplate, /empty\.textContent="暂无总结"|if \(!summary\.childElementCount\)/, "missing summary fields must leave the summary body blank without a generated fallback");
 assert.doesNotMatch(appTemplate, /任务上下文|data-sc-context|sc-task-view__context/, "the task context panel must be removed from the view");

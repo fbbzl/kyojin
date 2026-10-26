@@ -94,10 +94,9 @@
     .sc-task-view__preview-summary { display:none; }
     .sc-task-view__preview-summary { grid-area:1/1; align-self:start; min-width:0; }
     .sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-summary { display:block; }
-    .sc-task-view__role-preview.is-showing-summary { grid-template-rows:minmax(0,1fr); }
-    .sc-task-view__role-preview.is-showing-summary > .sc-task-view__file-activity { display:none; }
-    .sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-size { padding-bottom:36px; }
-    @media (max-width:560px) { .sc-task-view.is-finished .sc-task-view__role-preview { grid-template-rows:minmax(0,1fr); } .sc-task-view.is-finished .sc-task-view__role-preview > .sc-task-view__file-activity { display:none; } }
+    /* Completed previews share one size model; scaled borders must not need pixel compensation. */
+    .sc-task-view.is-finished .sc-task-view__role-preview { grid-template-rows:minmax(0,1fr); }
+    .sc-task-view.is-finished .sc-task-view__role-preview > .sc-task-view__file-activity { display:none; }
     .sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-body { display:none; }
     .sc-task-view__preview-body:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
     .sc-task-view__preview-empty { color:var(--muted); }
