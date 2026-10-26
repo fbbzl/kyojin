@@ -20,7 +20,7 @@
     .sc-task-view__header-controls { grid-column:2; display:flex; align-items:center; justify-content:flex-end; }
     .sc-task-view__header-controls:has(> button[hidden]) { display:none; }
     .sc-task-view__muted { color:var(--muted); }
-    .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:26px; line-height:31.2px; font-weight:700; text-align:center; white-space:nowrap; }
+    .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:4px 10px; border:2px solid var(--line); border-radius:6px; color:var(--muted); font-size:33.8px; line-height:31.2px; font-weight:700; text-align:center; white-space:nowrap; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
     .sc-task-view__root { padding:14px; border-width:2px; }
@@ -76,24 +76,18 @@
     .sc-task-view__lane-frame rect { x:1px; y:1px; width:calc(100% - 2px); height:calc(100% - 2px); rx:12px; fill:none; stroke:color-mix(in srgb,var(--line) 70%,transparent); stroke-width:2px; stroke-dasharray:6px 6px; }
     .sc-task-view.is-running .sc-task-view__lane-frame rect { animation:sc-lane-flow 1.2s linear infinite; }
     .sc-task-view__roles { position:relative; display:flex; flex:1; flex-direction:column; align-items:stretch; }
-    .sc-task-view__role-preview { display:grid; grid-template-rows:auto minmax(0,1fr); align-self:stretch; justify-self:end; width:calc(90% + 15px); min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
+    .sc-task-view__role-preview { display:grid; grid-template-rows:auto minmax(0,1fr); align-self:stretch; justify-self:end; width:calc(90% + 27px); min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
     .sc-task-view__preview-content { display:grid; min-width:0; overflow-wrap:anywhere; }
-    .sc-task-view__file-activity { align-self:start; box-sizing:content-box; min-width:0; height:22px; margin-bottom:10px; border:2px solid var(--line); border-radius:6px; overflow:hidden; font-size:11px; line-height:11px; perspective:160px; background:linear-gradient(to bottom,#0005,transparent 30%,#ffffff0a 50%,transparent 70%,#0005); box-shadow:inset 0 3px 5px #0003,inset 0 -3px 5px #0003; }
+    .sc-task-view__file-activity { align-self:start; box-sizing:content-box; min-width:0; height:22px; margin-bottom:10px; border:2px solid var(--line); border-radius:6px; overflow:hidden; font-size:11px; line-height:11px; }
     .sc-task-view__file-activity[aria-hidden="true"] { visibility:hidden; }
-    .sc-task-view__file-track { position:relative; min-width:0; height:22px; transform-style:preserve-3d; transform:translateZ(-11px); }
+    .sc-task-view__file-track { min-width:0; transform:translateY(-5.5px); }
     .sc-task-view__file-track.is-file-switching { animation:sc-file-switch 220ms ease-out 1; }
-    .sc-task-view__file-slot { position:absolute; top:5.5px; width:100%; height:11px; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; color:var(--muted); backface-visibility:hidden; opacity:.45; pointer-events:none; }
-    .sc-task-view__file-slot:first-child { transform:rotateX(60deg) translateZ(11px); }
-    .sc-task-view__file-slot:nth-child(2) { color:var(--text); transform:translateZ(11px); opacity:1; pointer-events:auto; }
-    .sc-task-view__file-slot:last-child { transform:rotateX(-60deg) translateZ(11px); }
-    .sc-task-view__file-track.is-file-switching > :first-child { animation:sc-file-recede 220ms ease-out 1; }
-    .sc-task-view__file-track.is-file-switching > :nth-child(2) { animation:sc-file-arrive 220ms ease-out 1; }
+    .sc-task-view__file-slot { height:11px; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; color:var(--muted); }
+    .sc-task-view__file-slot:nth-child(2) { color:var(--text); }
     .sc-task-view [data-sc-role] .sc-task-view__file-activity { display:none; }
     @media (max-width:560px) { .sc-task-view [data-sc-role] .sc-task-view__file-activity { display:block; margin-bottom:0; } }
-    @keyframes sc-file-switch { from { transform:translateZ(-11px) rotateX(-60deg); } to { transform:translateZ(-11px) rotateX(0); } }
-    @keyframes sc-file-recede { from { opacity:1; } to { opacity:.45; } }
-    @keyframes sc-file-arrive { from { opacity:.45; } to { opacity:1; } }
-    .sc-task-view__preview-content .sc-task-view__detail { display:grid; align-content:center; gap:24px; padding:20px 12px; border-top:0; }
+    @keyframes sc-file-switch { from { transform:translateY(5.5px); } to { transform:translateY(-5.5px); } }
+    .sc-task-view__preview-content .sc-task-view__detail { display:grid; align-content:center; gap:24px; padding:20px 0; border-top:0; }
     .sc-task-view__preview-body { display:grid; grid-area:1/1; align-self:stretch; min-width:0; }
     .sc-task-view__preview-size { display:grid; grid-area:1/1; align-self:start; min-width:0; visibility:hidden; pointer-events:none; user-select:none; }
     .sc-task-view__preview-size > * { grid-area:1/1; align-self:start; min-width:0; }
@@ -117,8 +111,8 @@
     .sc-task-view details[data-sc-role].is-active { border-color:var(--role-accent); background:var(--panel-active); animation:sc-running-pulse var(--motion-period) ease-in-out infinite; }
     .sc-task-view details[data-sc-role].is-active > * { position:relative; z-index:1; }
     .sc-task-view details[data-sc-role] > summary { position:relative; }
-    /* Expanding the right-aligned preview 15px left shortens its gap; summary excludes two 2px borders. */
-    .sc-task-view__preview-link { position:absolute; left:calc(100% + 2px); top:50%; width:calc(12px + 30% + 1.2px - 15px); height:2px; background:var(--focus); box-shadow:0 0 4px color-mix(in srgb,var(--focus) 45%,transparent); pointer-events:none; }
+    /* Expanding the right-aligned preview 27px left shortens its gap; summary excludes two 2px borders. */
+    .sc-task-view__preview-link { position:absolute; left:calc(100% + 2px); top:50%; width:calc(12px + 30% + 1.2px - 27px); height:2px; background:var(--focus); box-shadow:0 0 4px color-mix(in srgb,var(--focus) 45%,transparent); pointer-events:none; }
     .sc-task-view__preview-link:not([hidden])::before { content:""; position:absolute; top:-.5px; left:0; width:25%; height:3px; border-radius:2px; background:linear-gradient(to right,transparent,var(--focus) 35%,#fff 55%,transparent); box-shadow:0 0 6px 1px color-mix(in srgb,var(--focus) 55%,transparent); opacity:0; animation:sc-preview-flow var(--motion-period) linear infinite; }
     .sc-task-view details[data-sc-role].is-handoff-receiving::after { content:""; position:absolute; inset:-2px; border:2px solid var(--focus); border-radius:inherit; pointer-events:none; animation:sc-handoff-receive 420ms ease-out 650ms 1 both; }
     .sc-task-view summary { display:flex; justify-content:space-between; gap:12px; padding:11px 12px; border-radius:5px; cursor:pointer; font-weight:700; list-style-position:inside; overflow-wrap:anywhere; transition:background-color 160ms ease; }
@@ -140,7 +134,7 @@
     .sc-task-view .sc-task-view__state--revision { color:var(--revision); }
     .sc-task-view .sc-task-view__state--unknown { color:var(--unknown); }
     .sc-task-view .sc-task-view__placeholder { color:#fff; }
-    .sc-task-view__detail { display:grid; gap:16px; padding:12px; border-top:2px solid #273241; }
+    .sc-task-view__detail { display:grid; gap:16px; padding:12px 0; border-top:2px solid #273241; }
     .sc-task-view__detail-field, .sc-task-view__summary-content > section { min-width:0; padding:10px 12px; border:2px solid var(--line); border-radius:6px; }
     .sc-task-view .sc-task-view__detail-field > h3 { margin:0 0 8px; font-size:13px; }
     .sc-task-view__detail-content:empty { min-height:1.6em; min-height:1lh; }
@@ -270,22 +264,27 @@
         node.hidden=!parts.length;
         node.textContent=parts.join(" · ");
       }
+      function textElement(tag,text) {
+        const node=document.createElement(tag);
+        node.textContent=text;
+        return node;
+      }
+      const listItems=values=>values.map(text=>textElement("li",text));
       function renderProjectMcps(root,work) {
         const mcps=[...new Set(asList(work.project_mcps).map(projectMcpName).filter(Boolean))];
         const section=root.querySelector("[data-sc-project-mcps]"),count=root.querySelector("[data-sc-project-mcp-count]"),list=root.querySelector("[data-sc-project-mcp-list]");
         section.hidden=!mcps.length;
         if (!mcps.length) { list.replaceChildren(); return; }
         count.textContent=`(${mcps.length})`;
-        list.replaceChildren(...mcps.map(name=>{ const item=document.createElement("li"); item.textContent=name; return item; }));
+        list.replaceChildren(...listItems(mcps));
       }
       function renderRootMetadata(root,work,selected) {
         const selectedNode=root.querySelector("[data-sc-selected-roles]");
         selectedNode.replaceChildren(...selected.map((role,index)=>{
-          const step=document.createElement("span"),label=document.createElement("span");
+          const step=document.createElement("span"),label=textElement("span",roleLabels[role]);
           step.className="sc-task-view__selection-step";
           if (index) { const arrow=document.createElement("span"); arrow.className="sc-task-view__selection-arrow"; arrow.textContent=" → "; arrow.setAttribute("aria-hidden","true"); step.append(arrow); }
           label.className="sc-task-view__selection-role";
-          label.textContent=roleLabels[role];
           step.append(label);
           return step;
         }));
@@ -301,16 +300,14 @@
         summary.className="sc-task-view__summary-content";
         [["结果",data.result],["已验证",data.verified],["注意事项",data.notes]].forEach(([label,value])=>{
           if (!value.length) return;
-          const section=document.createElement("section"),heading=document.createElement("h4"),content=document.createElement(Array.isArray(value)?"ul":"p");
-          heading.textContent=label;
-          if (Array.isArray(value)) value.forEach(text=>{ const item=document.createElement("li"); item.textContent=text; content.append(item); });
+          const section=document.createElement("section"),content=document.createElement(Array.isArray(value)?"ul":"p");
+          if (Array.isArray(value)) content.append(...listItems(value));
           else content.textContent=value;
-          section.append(heading,content);
+          section.append(textElement("h4",label),content);
           summary.append(section);
         });
-        const title=document.createElement("h3");
+        const title=textElement("h3","任务总结");
         title.className="sc-task-view__summary-title";
-        title.textContent="任务总结";
         summary.prepend(title);
         return summary;
       }
@@ -329,14 +326,13 @@
         view.classList.toggle("has-waiting-motion",taskState==="needs_user_confirm"||!stoppedStates.has(taskState)&&!finishedStatuses.has(taskState));
         view.classList.toggle("has-blocked-motion",!["paused","waiting","cancelled","canceled"].includes(taskState)&&!finishedStatuses.has(taskState));
       }
-      function renderList(container,value) { const values=asList(value).map(safeText).filter(text=>text.trim()); container.replaceChildren(); if (!values.length) return; const list=document.createElement("ul"); values.forEach(text=>{ const item=document.createElement("li"); item.textContent=text; list.append(item); }); container.append(list); }
+      function renderList(container,value) { const values=asList(value).map(safeText).filter(text=>text.trim()); container.replaceChildren(); if (!values.length) return; const list=document.createElement("ul"); list.append(...listItems(values)); container.append(list); }
       function detailField(body,label,value) {
-        const section=document.createElement("section"),heading=document.createElement("h3"),content=document.createElement("div");
+        const section=document.createElement("section"),content=document.createElement("div");
         section.className="sc-task-view__detail-field";
-        heading.textContent=label;
         content.className="sc-task-view__detail-content";
         renderList(content,value);
-        section.append(heading,content);
+        section.append(textElement("h3",label),content);
         body.append(section);
       }
       const subskillNames={req:["align-with-visuals","grill-with-docs"],dev:["tech-select","refactor-with-goal","bug-fix","bug-cause","optimize"],cr:["review-with-goal"],qa:["test-with-goal"]};
@@ -512,13 +508,10 @@
         node.dataset.scRole=role;
         if (active) node.setAttribute("aria-current","step");
         name.className="sc-task-view__role-name";
-        const roleName=document.createElement("span");
-        roleName.textContent=roleLabels[role];
-        name.append(roleName);
-        const emoji=document.createElement("span");
+        name.append(textElement("span",roleLabels[role]));
         const decoration=roleEmoji(role,detail);
+        const emoji=textElement("span",decoration.symbol);
         emoji.className="sc-task-view__role-emoji"+(decoration.motion?" "+decoration.motion:"");
-        emoji.textContent=decoration.symbol;
         emoji.setAttribute("aria-hidden","true");
         name.append(emoji);
         summary.setAttribute("aria-keyshortcuts","ArrowRight");
@@ -535,9 +528,8 @@
         progress.className="sc-task-view__role-progress";
         progress.append(status);
         if (detail.status==="passed") {
-          const elapsed=document.createElement("span"),value=document.createElement("span");
+          const elapsed=textElement("span","耗时 "),value=document.createElement("span");
           elapsed.className="sc-task-view__role-elapsed";
-          elapsed.textContent="耗时 ";
           setMetric(value,asObject(detail.metrics).elapsed_ms,formatElapsed);
           elapsed.append(value);
           progress.append(elapsed);

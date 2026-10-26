@@ -37,13 +37,7 @@ for (const path of [undefined,null,{},42,"","  ","../secret","src/../secret","C:
 assert.equal(filePath(" src/<img onerror=alert(1)>.js "),"src/<img onerror=alert(1)>.js","path text must remain literal for textContent output");
 assert.ok(appTemplate.includes("node.textContent=node.title=value;"),"file paths must use literal textContent and a full-path tooltip");
 assert.ok(appTemplate.includes("if (node.textContent!==value)"),"same-file refresh must preserve horizontal reading position");
-assert.match(appTemplate, /file-activity \{[^}]*perspective:160px;[^}]*background:linear-gradient[^}]*box-shadow:inset/,"the compact file window must shade a cylindrical surface locally");
-assert.match(appTemplate, /file-track \{[^}]*height:22px; transform-style:preserve-3d; transform:translateZ\(-11px\);/,"the three file faces must rotate around a shared eleven-pixel radius");
-assert.match(appTemplate, /file-slot \{[^}]*top:5\.5px;[^}]*height:11px;[^}]*backface-visibility:hidden; opacity:\.45;/,"file faces retain full eleven-pixel rows with dimmed receding surfaces");
-assert.match(appTemplate, /file-slot \{[^}]*pointer-events:none; \}/,"receding file faces must not intercept pointer interaction");
-assert.match(appTemplate, /file-slot:nth-child\(2\) \{[^}]*pointer-events:auto; \}/,"only the front current file retains horizontal reading interaction");
-for (const [face,transform] of [["first-child","rotateX(60deg) translateZ(11px)"],["nth-child(2)","translateZ(11px)"],["last-child","rotateX(-60deg) translateZ(11px)"]]) assert.ok(appTemplate.includes(".sc-task-view__file-slot:"+face+" {")&&appTemplate.includes("transform:"+transform+";"),"reported file faces must lie on the cylinder with the current file at the front");
-assert.match(appTemplate, /@keyframes sc-file-switch \{ from \{ transform:translateZ\(-11px\) rotateX\(-60deg\); \} to \{ transform:translateZ\(-11px\) rotateX\(0\); \} \}/,"file switches must rotate around the horizontal axis rather than slide a flat track");
+assert.ok(appTemplate.includes("height:22px;")&&appTemplate.includes("height:11px;")&&appTemplate.includes("transform:translateY(-5.5px);"),"compact file window must show two half rows around one full current row");
 assert.match(appTemplate, /file-activity \{[^}]*box-sizing:content-box;[^}]*height:22px;[^}]*border:2px solid var\(--line\); border-radius:6px;[^}]*font-size:11px; line-height:11px;/, "the border must sit outside the half-height file window without shrinking its eleven-pixel text");
 assert.ok(appTemplate.includes("animation:sc-file-switch 220ms ease-out 1;"),"file changes must use one finite short CSS animation");
 const assertSkillMatch = (pattern, message) => { if (skill) assert.match(skill, pattern, message); };
@@ -187,7 +181,7 @@ assert.doesNotMatch(appTemplate, /font:13px\/1\.5 ui-monospace/, "task view body
 assert.match(appTemplate, /const roles=\["req","dev","cr","qa"\]/, "task flow must retain the canonical role set");
 assert.match(appTemplate, /selectedRoles\.forEach\(\(role,index\)=>/, "task flow must render selected roles in declared order");
 assert.doesNotMatch(appTemplate, /data-sc-exit|sc-task-view__exit|QA · 唯一任务出口/, "QA exit must not render a separate node or retain its styles");
-assert.match(appTemplate, /roleName\.textContent=roleLabels\[role\]/, "role titles must use the plain role label without a QA exit suffix");
+assert.ok(appTemplate.includes('name.append(textElement("span",roleLabels[role]));'), "role titles must use the plain role label without a QA exit suffix");
 assert.match(appTemplate, /<aside[^>]*data-sc-role-preview[\s\S]*?<div class="sc-task-view__preview-summary" data-sc-preview-summary><\/div>[\s\S]*?<\/aside>/, "task summary must use the same aside and start with no summary DOM");
 assert.doesNotMatch(appTemplate, /data-sc-task-summary|sc-task-view__task-summary/, "the removed bottom summary must not remain in DOM or styles");
 assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-preview { grid-template-rows:minmax(0,1fr); }"), "completed summaries and role previews must share a single grid row at every width");
@@ -224,10 +218,11 @@ assert.doesNotMatch(appTemplate, /sc-task-view__eyebrow|data-sc-field="project_n
 assert.doesNotMatch(appTemplate, /SC \/ WORK UNIT/, "the work unit eyebrow must not render");
 assert.match(appTemplate, /\.sc-task-view__topbar \{[^}]*grid-template-columns:minmax\(0,1fr\) auto;[^}]*align-items:start/, "the top row must reserve a wrapping Git column and an independent right status column");
 assert.match(appTemplate, /\.sc-task-view__status \{[^}]*grid-column:2; justify-self:end/, "the status must remain on the right even without Git metadata");
-assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:26px; line-height:31[.]2px;/, "the global status must use twenty-six-pixel type without increasing its fixed 31.2px line height");
+assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:33[.]8px; line-height:31[.]2px;/, "the global status must use 33.8px type without increasing its fixed 31.2px line height");
 assert.match(appTemplate, /data-sc-field="state" aria-live="polite"[\s\S]*?<\/div>[\s\S]*?header-controls/, "debug controls must remain outside the Git and status row");
 assert.match(appTemplate, /<details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>[\s\S]*?项目 MCP[\s\S]*?data-sc-project-mcp-list/, "project MCP names must render as a default-collapsed left header section");
-assert.match(appTemplate, /function renderProjectMcps\(root,work\)[\s\S]*?work\.project_mcps[\s\S]*?section\.hidden=!mcps\.length[\s\S]*?item\.textContent=name/, "project MCPs must be supplied by the snapshot, hidden when absent, and rendered as text only");
+assert.match(appTemplate, /function renderProjectMcps\(root,work\)[\s\S]*?work\.project_mcps[\s\S]*?section\.hidden=!mcps\.length[\s\S]*?list\.replaceChildren\(\.\.\.listItems\(mcps\)\)/, "project MCPs must be supplied by the snapshot, hidden when absent, and rendered as text only");
+assert.match(appTemplate, /function textElement\(tag,text\)[\s\S]*?node\.textContent=text[\s\S]*?const listItems=values=>values\.map\(text=>textElement\("li",text\)\)/, "shared text and list helpers must preserve literal output");
 assert.match(appTemplate, /projectMcpName=value=>\{ const name=optionalText\(value\)\.toLowerCase\(\); return \/\^\[a-z\]/, "project MCP names must be normalized and restricted to safe identifiers");
 assertSkillMatch(/project_mcps: \[\].*当前项目已生效的 MCP 名称/, "snapshot contract must declare explicit project MCP names");
 assertSkillMatch(/视图不得读取或推断本机宿主配置/, "project MCP display must not scan local host configuration");
@@ -286,7 +281,9 @@ assert.match(appTemplate, /event\.key==="ArrowRight"\|\|\(event\.key==="Tab"&&!e
 assert.match(appTemplate, /event\.key==="Tab"&&event\.shiftKey&&event\.target===first/, "Shift+Tab at the first preview control must return to its owning role");
 assert.match(appTemplate, /onPointerOut=event=>\{ if \(lane\.contains\(event\.relatedTarget\)\) return;/, "pointer movement across the workspace gap must keep the preview stable");
 assert.match(appTemplate, /\.sc-task-view__role-preview, \.sc-task-view__preview-link \{ display:none; \}[^}]*details\[data-sc-role\] > \[data-sc-detail-body\] \{ display:grid; \}/, "narrow layouts must stack cards and hide the independent detail and its link");
-assert.match(appTemplate, /sc-task-view__role-preview \{[^}]*align-self:stretch;[^}]*justify-self:end; width:calc\(90% \+ 15px\)/, "the preview must preserve its right edge and expand fifteen pixels left from ninety percent");
+assert.match(appTemplate, /sc-task-view__role-preview \{[^}]*align-self:stretch;[^}]*justify-self:end; width:calc\(90% \+ 27px\)/, "the preview must preserve its right edge and expand twenty-seven pixels left from ninety percent");
+assert.match(appTemplate, /preview-content \.sc-task-view__detail \{[^}]*padding:20px 0;/, "desktop field frames must share the file strip width without horizontal detail padding");
+assert.match(appTemplate, /sc-task-view__detail \{ display:grid; gap:16px; padding:12px 0;/, "inline field frames must share the file strip width");
 assert.match(appTemplate, /data-sc-preview-size inert aria-hidden="true"/, "natural-size reserve copies must be inert and absent from the accessible tree");
 assert.match(appTemplate, /sc-task-view__preview-size \{[^}]*visibility:hidden; pointer-events:none/, "size reserve copies must never display or intercept a pointer");
 assert.match(appTemplate, /function cloneRoleDetail\(source\)/, "visible and natural-size detail copies share one clone helper");

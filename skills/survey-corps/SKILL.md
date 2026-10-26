@@ -26,38 +26,41 @@ metadata:
 
 ### 快照更新与输出
 
-支持脚本状态保存时，以 `view_id` 隔离缓存工具成功接收的 `structuredContent.snapshot`。后续更新先复制缓存，再改本轮变化字段，仍向工具发送完整快照；只有成功且返回 ID 匹配时才替换缓存。失败须报告实际错误、保留旧缓存并停止交接；脚本状态丢失则按当前权威记录重建。`{}` 只恢复服务端最近快照，须核对 `view_id`，不能代替状态更新。
+按 `view_id` 缓存成功接收的 `structuredContent.snapshot`；更新时复制缓存、只改变化字段，仍发送完整快照。成功且返回 ID 匹配才替换缓存；失败报告实际错误、保留旧值并停止交接。缓存丢失按权威记录重建；`{}` 仅恢复服务端最近快照，须核对 ID，不能代替更新。只输出真实 `result.content` 文本，不输出或顶层返回整份 result/snapshot。
 
-完整快照继续供工具契约和 UI 使用；脚本对外仅输出真实 `result.content` 文本确认，不输出整份 `result`、`snapshot`，也不以顶层 `return` 返回它们。以下为当前 `functions.exec` 的后续更新示例；首次提交时按权威记录构建完整 `snapshot`，沿用相同成功校验与缓存步骤。工具名以当前可用声明为准。
+当前 `functions.exec` 每会话只定义一次 helper；`store` 保存静态源码字符串，不保存函数。工具名以当前声明为准；首次可把完整权威快照作为第三参数，后续仅传变化。
 
 ```javascript
-const viewId = "sc-task-view:<work_unit_id>";
-const key = `sc-snapshot:${viewId}`;
-const saved = load(key);
+store("sc-update", `async (viewId, change, initial) => {
+const key = "sc-snapshot:" + viewId, saved = initial ?? load(key);
 if (!saved || saved.view_id !== viewId) throw new Error("缺少当前任务缓存；按权威记录重建完整快照。");
 const snapshot = JSON.parse(JSON.stringify(saved));
-snapshot.role_details.dev.summary = "填写本轮实际变化";
+change(snapshot);
 const result = await tools.mcp__survey_corps_task_view__show_sc_task_view({ snapshot });
 for (const item of result.content ?? []) if (item.type === "text") text(item.text);
 if (result.isError) throw new Error("视图更新失败，停止交接；实际错误见工具返回。");
 const accepted = result.structuredContent?.snapshot;
-if (accepted?.view_id !== viewId) throw new Error(`快照 ID 不匹配：${accepted?.view_id ?? "缺失"}；停止交接。`);
+if (accepted?.view_id !== viewId) throw new Error("快照 ID 不匹配；停止交接。");
 store(key, accepted);
+}`);
+// 后续调用只需这两行；eval 的输入仅限本会话定义的静态 helper。
+const update = eval(load("sc-update"));
+await update("sc-task-view:<work_unit_id>", snapshot => { snapshot.role_details.dev.summary = "本轮实际变化"; });
 ```
 
 ### 任务视图数据契约
 
 当前角色可上报可选 `role_details.<role>.file_activity={previous?,current,next?}`，值均为完整仓库相对路径；REQ/DEV/CR/QA 在实际文件操作开始前或切换时通过协作消息报告给唯一快照写者，完成后清除 current，同文件连续操作不重复上报，next 仅填写已确定的下一文件。编排者收到切换立即刷新；不扫描 mtime、不解析摘要、不轮询或宣称自动捕获。右侧详情顶部文件条只展示当前预览且唯一合法活动角色的上报：上一文件露下半行、当前完整一行、明确下一文件露上半行，长路径可横向滚动，无前后项留白；窄屏在活动角色内联详情顶部复用同源文件条，桌面正文副本移除该内联条；无效路径、停止或预览其他角色时清空但保留固定高度。同任务同活动角色有效 current 变更向上滚动一次 220ms，初载、同值刷新、换任务/角色不补播，减少动态偏好下静态。
 
-右上总状态使用 26px 字号、固定 31.2px 行高。角色状态精确为 `pending` 或 `needs_user_confirm` 时，角色名旁改用装饰性 ⌛，沿用所属角色周期，前 70% 静止后翻转；等待动效不依赖角色运行高亮，任务进行中的非活动待开始角色也可播放，仅提示等待、不表示执行或改变门禁。总状态为 `needs_user_confirm` 时仍播放，`paused`、`waiting`、`blocked`、取消或结束及减少动态偏好下静止；这一停止规则仅指沙漏，不限制下述阻断角色提示。
+右上总状态使用 33.8px 字号、固定 31.2px 行高。角色状态精确为 `pending` 或 `needs_user_confirm` 时，角色名旁改用装饰性 ⌛，沿用所属角色周期，前 70% 静止后翻转；等待动效不依赖角色运行高亮，任务进行中的非活动待开始角色也可播放，仅提示等待、不表示执行或改变门禁。总状态为 `needs_user_confirm` 时仍播放，`paused`、`waiting`、`blocked`、取消或结束及减少动态偏好下静止；这一停止规则仅指沙漏，不限制下述阻断角色提示。
 
-角色精确为 `passed` 时展示 🎉 并持续间歇庆祝：全部角色表情（沙漏、火焰、幽灵、Bug、礼炮）按 REQ、DEV、CR、QA 分别使用 2.4、2.9、3.4、3.9 秒周期及不同负延迟错相，各自伪元素沿用所属角色时序，不影响卡片呼吸、状态文字、连线和外框周期；炮身和两个固定 CSS 彩带共用所属角色的周期与相位，每轮前 36% 轻微后坐、向右上喷射并散开消失，余下时间静止。历史加载、同状态刷新与任务完成后仍持续；退出 `passed` 或移除角色即停止。减少动态偏好下图案静止且不生成彩带装饰；不新增快照字段、计时器、canvas、动态粒子系统或依赖。彩带仅为角色名内的两个装饰伪元素，不占布局，不再维护一次性通过历史或动画监听。
+角色精确为 `passed` 时展示 🎉 并持续间歇庆祝；历史加载、同值刷新和任务完成后继续，退出 `passed` 或移除角色停止。全部角色表情按 REQ/DEV/CR/QA 使用 2.4/2.9/3.4/3.9 秒周期及不同负延迟，伪元素沿用角色时序，不影响卡片、状态、连线和外框周期。庆祝仅用两个固定 CSS 伪元素，不占布局，不新增字段、计时器、canvas、粒子系统或依赖；减少动态下静止且无彩带。喷射轨迹等视觉参数见 [MCP App README](mcp-app/README.md#git-信息与角色表情)。
 
 角色精确为 `blocked` 时，默认使用 👻 轻微上下漂浮并渐伸、收回固定 CSS 舌头；只有 CR 或 QA 且 `blocker_type` 精确为 `bug` 时，改用 🐞 小幅左右爬动并间歇停顿。两者复用所属角色周期，在总状态为阻断时仍提示，真正暂停、取消、结束或减少动态偏好下静止。`blocker_type` 是可选装饰原因；无字段或其他值均为普通阻断，不根据摘要关键词推断，不改变状态或门禁。
 
 可选 `work_unit.git` 在整个视图最左上角、项目 MCP 上方仅展示仓库名和分支名，以“ · ”连接，不加 Git 前缀；旧 `commit`、`dirty` 兼容保留但不展示。它与右侧总状态共用同一顶栏；宽窄屏均保持左右布局，仓库名和分支名均无有效值时隐藏该内容，状态仍靠右，长文本在左列自然换行，不挤压或覆盖状态。仅在任务开始或交接等明确刷新时采集，不增加 Git 后台读取或轮询。角色精确为 `running` 时，角色名旁显示装饰性 🔥，仅复用合法活动角色判定播放所属角色周期的燃烧动效：火焰轻微非均匀摆动，固定 CSS 火舌变化、火星上升；任务停止、非法活动快照和减少动态偏好下静止，不改变状态标签或交互，也不采集或推测 token 用量。
 
-左侧参与角色链外有一个 2px 圆角虚线框，不包含右侧任务详情；未选择角色时隐藏。框随内容自然增高，仅在任务未结束且有唯一合法活动角色时，虚线段以 1.2 秒周期沿固定外框路径匀速流动；停止、结束、无活动角色、非法活动快照和减少动态偏好下静止。装饰层不拦截交互，不改变角色卡、竖向箭头和横向归属线的布局，不增加轮询或 JavaScript 帧循环。
+左侧角色链圆角虚线框随内容增高，无角色时隐藏；仅合法活动且任务未结束时沿框流动，否则及减少动态下静止。不包含详情、不拦截交互、不改变布局、不新增轮询或 JS 帧循环；线宽和周期见 [MCP App README](mcp-app/README.md#git-信息与角色表情)。
 
 “参与角色”按同一有效去重原序显示为紧凑的 2px 圆角标签，相邻名称以长 22px、粗 2px 的水平箭杆连接，箭尾、箭尖贴住两侧标签边框，亮条与箭杆共用中心线。窄屏将角色链放在字段名下一整行并跨满元数据两列，保留标签字号、内距和箭头长度，其他字段位置不变。箭头亮条与角色链虚线框共用合法运行判定，箭头保持 1.8 秒周期，外框为 1.2 秒，仅为流程装饰，不表示真实交接；停止、结束、非法活动和减少动态偏好下静止，不新增状态或数据字段。
 
