@@ -12,8 +12,8 @@ assert.ok(!isSourceTree || fs.existsSync(skillPath), "repository Skill is missin
 const skill = isSourceTree ? fs.readFileSync(skillPath, "utf8") : null;
 const script = appTemplate.match(/<script>([\s\S]*?)<\/script>/)[1];
 const context = { window: {} };
-vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,taskSummaryNode,roleEmoji,filePath,observeFileActivity,handoffFiles};})();"), context, { timeout: 1000 });
-const { stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, taskSummaryNode, roleEmoji, filePath, observeFileActivity, handoffFiles } = context.window.statusContract;
+vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,taskSummaryNode,roleEmoji,filePath,observeFileActivity,handoffFiles,displayFilePath,setFileSlot};})();"), context, { timeout: 1000 });
+const { stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, taskSummaryNode, roleEmoji, filePath, observeFileActivity, handoffFiles, displayFilePath, setFileSlot } = context.window.statusContract;
 const roleStatesLiteral = appTemplate.match(/const roleStates=(\{[^\r\n]+\});/)?.[1] || "";
 const activityInput=(current,view_id="files",state="dev_in_progress")=>({view_id,state,role_details:{dev:{file_activity:{previous:"src/a.js",current,next:"test/c.js"}}}});
 const firstActivity=observeFileActivity(null,activityInput("src/b.js"),"dev");
@@ -27,7 +27,7 @@ for (const previous of [undefined,"src/stale.js"]) {
   assert.equal(activity.fromCurrent,"src/b.js","transition must start with the actual observed previous current");
   assert.equal(activity.previous,previous||"","settled previous must keep only the reported path");
 }
-assert.ok(appTemplate.includes("previous.textContent=previous.title=activity.fromCurrent;"),"the moving old row must not use stale or missing reported previous");
+assert.ok(appTemplate.includes("setFileSlot(previous,activity.fromCurrent,activity.projectRoot);"),"the moving old row must not use stale or missing reported previous");
 assert.equal(observeFileActivity(firstActivity,activityInput("test/c.js","other"),"dev").changed,false,"changing task must not replay a file roll");
 assert.equal(observeFileActivity({...firstActivity,role:"cr"},activityInput("test/c.js"),"dev").changed,false,"changing active roles must not replay a file roll");
 assert.equal(observeFileActivity(firstActivity,activityInput(""),"dev"),null,"clearing current must clear the entire file activity");
@@ -36,6 +36,13 @@ for (const state of ["paused","waiting","blocked","needs_user_confirm","workflow
 for (const path of [undefined,null,{},42,"","  ","../secret","src/../secret","C:private","C:/src/../secret","/src/../secret","//server/share","C:/folder/","file:///private","https://example.test/file","src/line\nfile"]) assert.equal(filePath(path),"","only local paths without traversal, UNC, schemes or controls may be displayed");
 for (const path of ["src/file.js","D:/workspace/kyojin/src/file.js","D:\\workspace\\kyojin\\src\\file.js","/workspace/kyojin/src/file.js"]) assert.equal(filePath(path),path,"absolute local paths and legacy relative paths remain literal");
 assert.equal(filePath(String.fromCharCode(92,92)+"server/share"),"","UNC paths are outside the local reporting contract");
+for (const [value,root,expected] of [["D:/workspace/kyojin/skills/dev/SKILL.md","D:/workspace/kyojin","skills/dev/SKILL.md"],["d:/WORKSPACE/KYOJIN/src/File.js","D:/workspace/kyojin/","src/File.js"],["D:\\workspace\\kyojin\\src\\file.js","D:/workspace/kyojin","src/file.js"],["/workspace/project/src/file.js","/workspace/project/","src/file.js"],["/workspace/Project/file.js","/workspace/project","/workspace/Project/file.js"],["D:/workspace/kyojin-other/file.js","D:/workspace/kyojin","D:/workspace/kyojin-other/file.js"],["skills/file.js","D:/workspace/kyojin","skills/file.js"],["D:/file.js","D:/","file.js"],["/file.js","/","file.js"]]) assert.equal(displayFilePath(value,root),expected,"only explicit root descendants become project paths");
+for (const root of [undefined,null,{},"","project","D:","../project","D:/workspace/../kyojin","https://example.test/project","//server/project",String.fromCharCode(92,92)+"server/project","D:/work"+String.fromCharCode(10)]) assert.equal(displayFilePath("D:/work/src/file.js",root),"D:/work/src/file.js","unknown or invalid roots never shorten a path");
+const pathNode={textContent:"",title:"",scrollLeft:0};
+setFileSlot(pathNode,"D:/work/src/file.js","D:/work");assert.equal(pathNode.textContent,"src/file.js");assert.equal(pathNode.title,"D:/work/src/file.js");
+pathNode.scrollLeft=18;setFileSlot(pathNode,"D:/work/src/file.js","D:/work");assert.equal(pathNode.scrollLeft,18,"unchanged display preserves horizontal reading");
+setFileSlot(pathNode,"D:/work/src/file.js","D:/");assert.equal(pathNode.textContent,"work/src/file.js");assert.equal(pathNode.scrollLeft,0,"changed root refreshes display");
+const rooted=activityInput("D:/work/src/file.js");rooted.work_unit={project_root:"D:/work"};const rootedActivity=observeFileActivity(null,rooted,"dev");rooted.work_unit.project_root="D:/";assert.equal(observeFileActivity(rootedActivity,rooted,"dev").changed,false,"root display changes do not change actual file identity");
 const transfer = fields => ({work_unit_id:"unit",from:"req",to:"dev",handoff_result:"accepted",files:["docs/需求.md"],...fields});
 const transferred = (records,unit="unit") => Array.from(handoffFiles({work_unit:{work_unit_id:unit},handoffs:records},"req","dev"));
 assert.deepEqual(transferred([transfer({})]),["docs/需求.md"]);
@@ -45,8 +52,8 @@ for (const fields of [{handoff_result:"pending"},{handoff_result:"needs_revision
 assert.deepEqual(transferred([transfer({}),transfer({work_unit_id:"other",files:["other.md"]})]),["docs/需求.md"],"another task does not replace the current task handoff");
 assert.deepEqual(transferred([transfer({})],""),[]);
 assert.equal(filePath(" src/<img onerror=alert(1)>.js "),"src/<img onerror=alert(1)>.js","path text must remain literal for textContent output");
-assert.ok(appTemplate.includes("node.textContent=node.title=value;"),"file paths must use literal textContent and a full-path tooltip");
-assert.ok(appTemplate.includes("if (node.textContent!==value)"),"same-file refresh must preserve horizontal reading position");
+assert.ok(appTemplate.includes("node.textContent=display;")&&appTemplate.includes("node.title=value;"),"file rows keep literal display and full-path tooltip separate");
+assert.ok(appTemplate.includes("if (node.textContent!==display)"),"same-file refresh must preserve horizontal reading position");
 assert.ok(appTemplate.includes("height:22px;")&&appTemplate.includes("height:11px;")&&appTemplate.includes("transform:translateY(-5.5px);"),"compact file window must show two half rows around one full current row");
 assert.match(appTemplate, /file-activity \{[^}]*box-sizing:content-box;[^}]*height:22px;[^}]*border:2px solid var\(--line\); border-radius:6px;[^}]*font-size:11px; line-height:11px;/, "the border must sit outside the half-height file window without shrinking its eleven-pixel text");
 assert.ok(appTemplate.includes("animation:sc-file-switch 220ms ease-out 1;"),"file changes must use one finite short CSS animation");

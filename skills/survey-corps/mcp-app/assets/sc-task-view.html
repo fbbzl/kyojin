@@ -63,7 +63,7 @@
     .sc-task-view__summary-content p, .sc-task-view__summary-content ul { margin:4px 0 0; }
     .sc-task-view__summary-content ul { padding-left:18px; }
     .sc-task-view [hidden] { display:none !important; }
-    .sc-task-view__connector { position:relative; flex:1 0 36px; width:12px; min-height:36px; margin:0 auto; color:var(--muted); transform-origin:top; }
+    .sc-task-view__connector { position:relative; flex:0 0 36px; width:12px; min-height:36px; margin:0 auto; color:var(--muted); transform-origin:top; }
     .sc-task-view__connector::before { content:""; position:absolute; top:0; left:50%; width:2px; height:calc(100% - 9px); transform:translateX(-50%); background:currentColor; box-shadow:0 0 4px color-mix(in srgb,currentColor 35%,transparent); }
     .sc-task-view__connector::after { content:""; position:absolute; left:50%; bottom:3px; width:0; height:0; transform:translateX(-50%); border-left:4px solid transparent; border-right:4px solid transparent; border-top:7px solid currentColor; }
     .sc-task-view__connector.has-files { display:flex; flex-direction:column; justify-content:center; flex-basis:auto; width:100%; height:auto; padding:12px 0 18px; }
@@ -74,7 +74,7 @@
     .sc-task-view__connector.is-handoff-reverse::before { animation-direction:reverse; }
     .sc-task-view__connector.is-handoff-reverse::after { top:0; bottom:auto; border-top:0; border-bottom:7px solid currentColor; }
     .sc-task-view__workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,3fr); gap:12px; align-items:start; padding-top:20px; padding-left:8px; }
-    .sc-task-view__role-lane { position:relative; display:flex; align-self:stretch; min-width:0; }
+    .sc-task-view__role-lane { position:relative; display:flex; align-self:start; min-width:0; }
     .sc-task-view__lane-frame { position:absolute; left:-8px; top:-8px; width:calc(100% + 16px); height:calc(100% + 16px); pointer-events:none; }
     .sc-task-view__lane-frame rect { x:1px; y:1px; width:calc(100% - 2px); height:calc(100% - 2px); rx:12px; fill:none; stroke:color-mix(in srgb,var(--line) 70%,transparent); stroke-width:2px; stroke-dasharray:6px 6px; }
     .sc-task-view.is-running .sc-task-view__lane-frame rect { animation:sc-lane-flow 1.2s linear infinite; }
@@ -373,11 +373,24 @@
         const invalid=relative.includes(":")||typeof value==="string"&&[...value].some(char=>char.charCodeAt(0)<32);
         return path&&!path.startsWith(String.fromCharCode(92))&&!local.startsWith("//")&&!local.endsWith("/")&&!invalid&&!relative.split("/").includes("..")?path:"";
       }
+      function displayFilePath(value,projectRoot) {
+        const path=filePath(value),local=path.replaceAll(String.fromCharCode(92),"/");
+        const base=optionalText(projectRoot).replaceAll(String.fromCharCode(92),"/"),windows=/^[a-z]:[/]/i.test(base);
+        if (!(windows||base.startsWith("/")&&!base.startsWith("//"))||!filePath(projectRoot.replace(/[\\/]+$/,"")+"/_")) return path;
+        const prefix=base.replace(/[/]+$/,"")+"/";
+        const inside=windows?local.toLowerCase().startsWith(prefix.toLowerCase()):local.startsWith(prefix);
+        return inside?local.slice(prefix.length):path;
+      }
+      function setFileSlot(node,value,projectRoot) {
+        const display=displayFilePath(value,projectRoot);
+        if (node.textContent!==display) { node.textContent=display; node.scrollLeft=0; }
+        node.title=value;
+      }
       function observeFileActivity(previous,input,activeRole) {
         const raw=asObject(asObject(asObject(input.role_details)[activeRole]).file_activity),current=filePath(raw.current);
         if (!activeRole||stoppedStates.has(normalizedStatus(input.state))||finishedStatuses.has(normalizedStatus(input.state))||!current) return null;
         const changed=previous?.viewId===input.view_id&&previous.role===activeRole&&previous.current!==current;
-        return {viewId:input.view_id,role:activeRole,current,previous:filePath(raw.previous),next:filePath(raw.next),changed,fromCurrent:changed?previous.current:""};
+        return {viewId:input.view_id,role:activeRole,current,previous:filePath(raw.previous),next:filePath(raw.next),projectRoot:asObject(input.work_unit).project_root,changed,fromCurrent:changed?previous.current:""};
       }
       function renderFileActivity(root,role,changed=false) {
         root.__scFileMotionCleanup?.();
@@ -390,15 +403,15 @@
           strip.inert=!visible;
           for (const field of ["previous","current","next"]) {
             const node=strip.querySelector(`[data-sc-file-${field}]`),value=visible?activity[field]:"";
-            if (node.textContent!==value) { node.textContent=node.title=value; node.scrollLeft=0; }
+            setFileSlot(node,value,activity?.projectRoot);
           }
           if (visible&&changed&&!prefersReducedMotion()&&strip.checkVisibility({visibilityProperty:true})) {
             const oldTrack=strip.querySelector("[data-sc-file-track]"),track=oldTrack.cloneNode(true);
             track.classList.remove("is-file-switching");
             oldTrack.replaceWith(track);
             const previous=track.querySelector("[data-sc-file-previous]");
-            previous.textContent=previous.title=activity.fromCurrent;
-            animateOnce(track,"is-file-switching",cleanups,()=>{ previous.textContent=previous.title=activity.previous; });
+            setFileSlot(previous,activity.fromCurrent,activity.projectRoot);
+            animateOnce(track,"is-file-switching",cleanups,()=>setFileSlot(previous,activity.previous,activity.projectRoot));
           }
         }
         root.__scFileMotionCleanup=()=>cleanups.forEach(cleanup=>cleanup());
