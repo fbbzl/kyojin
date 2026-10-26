@@ -83,6 +83,8 @@ const finished = {
     }
   }
 };
+// SC-HANDOFF-FILES: delivered file labels must retain the finished iframe exit invariant.
+finished.handoffs = [{ work_unit_id: finished.work_unit.work_unit_id, handoff_id: "pointer:files", from: "dev", to: "cr", handoff_result: "accepted", files: ["D:/workspace/kyojin/skills/survey-corps/mcp-app/assets/sc-task-view.html", "D:/workspace/kyojin/skills/survey-corps/mcp-app/test-ui-behavior.js"] }];
 const evidence = fs.mkdtempSync(path.join(os.tmpdir(), "sc-pointer-exit-qa-"));
 const report = { baseline: process.env.SC_POINTER_BASELINE || "working-tree", errors: [], console: [], cases: [] };
 
@@ -107,6 +109,7 @@ async function fixture(browser, zoom, width = 680, reduced = false) {
 
 async function pointerExit(browser, zoom, width = 680, reduced = false) {
   const { page, frame } = await fixture(browser, zoom, width, reduced);
+  assert.equal(await frame.locator('.sc-task-view__connector-file').count(), 2, "the exit fixture actually includes delivered file labels");
   for (const role of ["dev", "cr", "qa"]) {
     await frame.locator('[data-sc-role="' + role + '"] > summary').hover();
     await page.waitForTimeout(60);
@@ -140,10 +143,10 @@ async function pointerExit(browser, zoom, width = 680, reduced = false) {
 
 async function readingAndScroll(browser) {
   const { page, frame } = await fixture(browser, 1);
-  const file = "skills/survey-corps/mcp-app/" + "long-directory/".repeat(30) + "Abc_gjpqy_中文.js";
+  const file = "D:/workspace/kyojin/skills/survey-corps/mcp-app/" + "long-directory/".repeat(30) + "Abc_gjpqy_中文.js";
   const payload = structuredClone(finished);
   payload.view_id = "pointer-exit:running"; payload.state = "dev_in_progress";
-  payload.role_details.dev = { status: "running", summary: "真实长内容 ".repeat(1200), evidence: ["evidence"], file_activity: { previous: "src/A.js", current: file, next: "test/C.js" } };
+  payload.role_details.dev = { status: "running", summary: "真实长内容 ".repeat(1200), evidence: ["evidence"], file_activity: { previous: "D:/workspace/kyojin/src/A.js", current: file, next: "D:/workspace/kyojin/test/C.js" } };
   payload.role_details.cr.status = "pending"; payload.role_details.qa.status = "pending";
   await frame.locator("body").evaluate((_, payload) => renderSurveyCorpsTaskView(document.getElementById("root"), payload), payload);
   await page.locator("iframe").evaluate(node => node.style.height = "480px");

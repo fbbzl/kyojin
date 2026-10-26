@@ -66,6 +66,9 @@
     .sc-task-view__connector { position:relative; flex:1 0 36px; width:12px; min-height:36px; margin:0 auto; color:var(--muted); transform-origin:top; }
     .sc-task-view__connector::before { content:""; position:absolute; top:0; left:50%; width:2px; height:calc(100% - 9px); transform:translateX(-50%); background:currentColor; box-shadow:0 0 4px color-mix(in srgb,currentColor 35%,transparent); }
     .sc-task-view__connector::after { content:""; position:absolute; left:50%; bottom:3px; width:0; height:0; transform:translateX(-50%); border-left:4px solid transparent; border-right:4px solid transparent; border-top:7px solid currentColor; }
+    .sc-task-view__connector.has-files { display:flex; flex-direction:column; justify-content:center; flex-basis:auto; width:100%; height:auto; padding:12px 0 18px; }
+    .sc-task-view__connector-files { position:relative; z-index:1; display:grid; gap:4px; min-width:0; width:100%; padding:4px 0; background:var(--bg); color:var(--muted); font-size:11px; line-height:1.4; text-align:center; }
+    .sc-task-view__connector-file { min-width:0; padding:1px 4px; overflow:hidden; border:2px solid var(--line); border-radius:4px; background:var(--panel); text-overflow:ellipsis; white-space:nowrap; }
     .sc-task-view__connector.is-handoff-flow { color:var(--active); }
     .sc-task-view__connector.is-handoff-flow::before { background-color:currentColor; background-image:linear-gradient(transparent 30%,var(--focus) 48%,transparent 66%); background-size:100% 300%; animation:sc-handoff-flow 650ms ease-in-out 1 both; }
     .sc-task-view__connector.is-handoff-reverse::before { animation-direction:reverse; }
@@ -365,8 +368,10 @@
         return copy;
       }
       function filePath(value) {
-        const path=optionalText(value);
-        return path&&!/^[/\\]|[:\x00-\x1f]|(?:^|[\\/])[.][.](?:[\\/]|$)/.test(path)?path:"";
+        const path=optionalText(value),local=path.replaceAll(String.fromCharCode(92),"/");
+        const relative=/^[a-z]:[/]$/i.test(local.slice(0,3))?local.slice(3):local;
+        const invalid=relative.includes(":")||typeof value==="string"&&[...value].some(char=>char.charCodeAt(0)<32);
+        return path&&!path.startsWith(String.fromCharCode(92))&&!local.startsWith("//")&&!local.endsWith("/")&&!invalid&&!relative.split("/").includes("..")?path:"";
       }
       function observeFileActivity(previous,input,activeRole) {
         const raw=asObject(asObject(asObject(input.role_details)[activeRole]).file_activity),current=filePath(raw.current);
@@ -553,7 +558,32 @@
         node.append(body);
         return node;
       }
-      function renderRoles(root,details,activeRole,openRole,selectedRoles,preserveFocus) {
+      function handoffFiles(input,from,to) {
+        const unit=optionalText(asObject(input.work_unit).work_unit_id);
+        if (!unit||!Array.isArray(input.handoffs)) return [];
+        const latest=input.handoffs.findLast(value=>{
+          const item=asObject(value);
+          return item.work_unit_id===unit&&(item.from===from&&item.to===to||item.from===to&&item.to===from);
+        });
+        if (latest?.from!==from||latest.to!==to||latest.handoff_result!=="accepted"||!Array.isArray(latest.files)) return [];
+        return [...new Set(latest.files.map(filePath).filter(Boolean))];
+      }
+      function renderHandoffFiles(connector,files) {
+        if (!files.length) { connector.setAttribute("aria-hidden","true"); return; }
+        connector.classList.add("has-files");
+        connector.setAttribute("role","group");
+        connector.setAttribute("aria-label",roleLabels[connector.dataset.scConnectorFrom]+" → "+roleLabels[connector.dataset.scConnectorTo]+" 交接文件");
+        const labels=document.createElement("span");
+        labels.className="sc-task-view__connector-files";
+        files.forEach(path=>{
+          const label=textElement("span",path.replaceAll(String.fromCharCode(92),"/").split("/").at(-1));
+          label.className="sc-task-view__connector-file";
+          label.title=path;
+          labels.append(label);
+        });
+        connector.append(labels);
+      }
+      function renderRoles(root,details,activeRole,openRole,selectedRoles,preserveFocus,input) {
         const box=root.querySelector("[data-sc-roles]"),fragment=document.createDocumentFragment();
         const focused=preserveFocus&&box.contains(document.activeElement)?document.activeElement:null;
         const focusedRole=focused?.closest("[data-sc-role]")?.dataset.scRole;
@@ -561,7 +591,7 @@
         if (!preserveFocus||!selectedRoles.includes(root.__scFocusedRole)||box.contains(document.activeElement)) root.__scFocusedRole=null;
         box.setAttribute("aria-label",`${selectedRoles.map(role=>roleLabels[role]).join("、")} 顺序任务`);
         selectedRoles.forEach((role,index)=>{
-          if (index) { const connector=document.createElement("span"); connector.className="sc-task-view__connector"; connector.dataset.scConnectorFrom=selectedRoles[index-1]; connector.dataset.scConnectorTo=role; connector.setAttribute("aria-hidden","true"); fragment.append(connector); }
+          if (index) { const connector=document.createElement("span"); connector.className="sc-task-view__connector"; connector.dataset.scConnectorFrom=selectedRoles[index-1]; connector.dataset.scConnectorTo=role; renderHandoffFiles(connector,handoffFiles(input,selectedRoles[index-1],role)); fragment.append(connector); }
           fragment.append(roleNode(role,asObject(details[role]),activeRole,openRole));
         });
         box.replaceChildren(fragment);
@@ -652,7 +682,7 @@
         view.classList.toggle("is-finished",root.__scSummaryInPreview);
         root.querySelector("[data-sc-preview-summary]").replaceChildren(...(root.__scSummaryInPreview?[taskSummaryNode(root)]:[]));
         bindRolePreview(root);
-        renderRoles(root,details,activeRole,openRole,selectedRoles,sameView);
+        renderRoles(root,details,activeRole,openRole,selectedRoles,sameView,input);
         const fileBody=activeRole&&root.querySelector(`[data-sc-role="${activeRole}"] > [data-sc-detail-body]`);
         if (fileBody) {
           const inline=root.querySelector("[data-sc-role-preview] > [data-sc-file-activity]").cloneNode(true);
