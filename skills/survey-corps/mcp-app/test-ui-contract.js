@@ -236,12 +236,12 @@ assert.doesNotMatch(appTemplate, /SC \/ WORK UNIT/, "the work unit eyebrow must 
 assert.match(appTemplate, /\.sc-task-view__topbar \{[^}]*grid-template-columns:minmax\(0,1fr\) auto;[^}]*align-items:start/, "the top row must reserve a wrapping Git column and an independent right status column");
 assert.match(appTemplate, /\.sc-task-view__status \{[^}]*grid-column:2; justify-self:end/, "the status must remain on the right even without Git metadata");
 assert.match(appTemplate, /\.sc-task-view__status \{[^}]*font-size:33[.]8px; line-height:31[.]2px;/, "the global status must use 33.8px type without increasing its fixed 31.2px line height");
-assert.match(appTemplate, /\.sc-task-view__status \{[^}]*padding:4px 10px; border:2px solid transparent;/, "unframed status must reserve the original border and padding space");
+assert.match(appTemplate, /\.sc-task-view__status \{[^}]*padding:6px 12px;/, "ordinary status must retain the original layout space using padding alone");
 assert.doesNotMatch(appTemplate, /\.sc-task-view__status::after/, "the global status must not render a rectangular outline");
 assert.match(appTemplate, /details\[data-sc-role\] > summary::before \{[^}]*position:absolute;[^}]*left:0; border-left:2px solid var\(--active\); pointer-events:none/, "every clickable role summary must have a static blue left edge without changing its card border or layout");
 assert.match(appTemplate, /bindRoleRipple\(root\);\s*renderRoles\(root,/, "snapshot rerender must clear transient click feedback before replacing role cards");
-assert.match(appTemplate, /data-sc-field="state"[^>]*><span class="sc-task-view__status-label" data-sc-state-label aria-live="polite">/, "only the current global status text must be announced as a live update");
-assert.match(appTemplate, /data-sc-state-label aria-live="polite">[\s\S]*?<\/span>[\s\S]*?header-controls/, "debug controls must remain outside the Git and status row");
+assert.match(appTemplate, /<span class="sc-task-view__status" data-sc-field="state" aria-live="polite">未知<\/span>/, "only the current global status text must be announced as a live update");
+assert.match(appTemplate, /data-sc-field="state" aria-live="polite">[^<]*<\/span>[\s\S]*?<\/div>[\s\S]*?header-controls/, "debug controls must remain outside the Git and status row");
 assert.match(appTemplate, /<details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>[\s\S]*?项目 MCP[\s\S]*?data-sc-project-mcp-list/, "project MCP names must render as a default-collapsed left header section");
 assert.match(appTemplate, /function renderProjectMcps\(root,work\)[\s\S]*?work\.project_mcps[\s\S]*?section\.hidden=!mcps\.length[\s\S]*?list\.replaceChildren\(\.\.\.listItems\(mcps\)\)/, "project MCPs must be supplied by the snapshot, hidden when absent, and rendered as text only");
 assert.match(appTemplate, /function textElement\(tag,text\)[\s\S]*?node\.textContent=text[\s\S]*?const listItems=values=>values\.map\(text=>textElement\("li",text\)\)/, "shared text and list helpers must preserve literal output");

@@ -20,12 +20,7 @@
     .sc-task-view__header-controls { grid-column:2; display:flex; align-items:center; justify-content:flex-end; }
     .sc-task-view__header-controls:has(> button[hidden]) { display:none; }
     .sc-task-view__muted { color:var(--muted); }
-    .sc-task-view__status { position:relative; grid-column:2; justify-self:end; max-width:100%; padding:4px 10px; border:2px solid transparent; border-radius:6px; color:var(--muted); font-size:33.8px; line-height:31.2px; font-weight:700; text-align:center; white-space:nowrap; }
-    .sc-task-view__status::before { content:""; position:absolute; top:-5px; left:0; width:100%; height:10px; pointer-events:none; background:radial-gradient(circle,var(--bg) 0 2px,var(--line) 2.5px 4px,transparent 4.5px) 25% center/10px 10px no-repeat,radial-gradient(circle,var(--bg) 0 2px,var(--line) 2.5px 4px,transparent 4.5px) 50% center/10px 10px no-repeat,radial-gradient(circle,var(--bg) 0 2px,var(--line) 2.5px 4px,transparent 4.5px) 75% center/10px 10px no-repeat; }
-    .sc-task-view__status-label { position:relative; z-index:1; }
-    .sc-task-view__status-outgoing { position:absolute; z-index:2; inset:4px 10px; display:grid; place-items:center; background:var(--bg); pointer-events:none; white-space:nowrap; }
-    .sc-task-view__status-outgoing::before { content:attr(data-status-text); display:block; white-space:inherit; }
-    .sc-task-view__status-outgoing.is-tearing { animation:sc-status-tear 620ms cubic-bezier(.45,0,.78,.4) 1 both; filter:drop-shadow(0 1px 0 var(--line)) drop-shadow(0 2px 1px color-mix(in srgb,var(--line) 65%,transparent)); }
+    .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:6px 12px; color:var(--muted); font-size:33.8px; line-height:31.2px; font-weight:700; text-align:center; white-space:nowrap; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
     .sc-task-view__root { padding:14px; border-width:2px; }
@@ -170,7 +165,6 @@
     @keyframes sc-preview-reveal { from { opacity:0; } to { opacity:1; } }
     @keyframes sc-preview-flow { 0% { left:0; transform:translateX(0); opacity:0; } 15%,85% { opacity:.92; } 100% { left:100%; transform:translateX(-100%); opacity:0; } }
     @keyframes sc-status-shimmer { from { background-position:100% 0; } to { background-position:0% 0; } }
-    @keyframes sc-status-tear { 0%,20% { opacity:1; transform:translate3d(0,0,0); clip-path:polygon(0 0,100% 0,100% 100%,0 100%); } 36% { opacity:1; transform:translate3d(0,2px,0); clip-path:polygon(0 0,100% 0,100% 72%,86% 67%,72% 75%,57% 68%,42% 76%,27% 68%,13% 74%,0 69%); } 100% { opacity:0; transform:translate3d(2px,27px,0) skewX(-3deg); clip-path:polygon(0 0,100% 0,100% 72%,86% 67%,72% 75%,57% 68%,42% 76%,27% 68%,13% 74%,0 69%); } }
     @keyframes sc-fire-flicker { 0%,100% { transform:scale(.96,1.04) rotate(-2deg); } 25%,65% { transform:scale(1.04,.96) rotate(2deg); } 45%,85% { transform:scale(.94,1.08) rotate(-1deg); } }
     @keyframes sc-flame-tongue { 0%,100% { opacity:.5; transform:scale(.75,.85) skewX(-8deg); } 20%,60% { opacity:.9; transform:translateY(-2px) scale(.9,1.1) skewX(9deg); } 40%,80% { opacity:.65; transform:translateY(-1px) scale(1,.9) skewX(-5deg); } }
     @keyframes sc-fire-sparks { 0%,55%,100% { opacity:0; transform:translate(0,0) scale(.6); } 12%,68% { opacity:1; } 45%,95% { opacity:0; transform:translate(2px,-9px) scale(.3); } }
@@ -194,7 +188,7 @@
   <header class="sc-task-view__header">
     <div class="sc-task-view__topbar">
       <p class="sc-task-view__git" data-sc-git hidden aria-label="Git 信息"></p>
-      <span class="sc-task-view__status" data-sc-field="state"><span class="sc-task-view__status-label" data-sc-state-label aria-live="polite">未知</span></span>
+      <span class="sc-task-view__status" data-sc-field="state" aria-live="polite">未知</span>
     </div>
     <details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>
       <summary><span>项目 MCP</span><span class="sc-task-view__project-mcp-count" data-sc-project-mcp-count></span></summary>
@@ -661,40 +655,6 @@
         root.__scRoleRippleBound=true;
         root.__scRoleRippleCleanup=()=>{ root.removeEventListener("click",onClick); root.__scRoleRippleMotionCleanup?.(); root.__scRoleRippleBound=false; };
       }
-      function updateGlobalStatus(root,status,state) {
-        const label=status.querySelector("[data-sc-state-label]");
-        if (!label) return;
-        const next=stateText(state),previous=label.textContent,textChanged=previous!==next,stateChanged=root.__scStatusInitialized&&!Object.is(root.__scStatusValue,state),reduced=prefersReducedMotion();
-        if (reduced) { root.__scStatusMotionCleanup?.(); root.__scStatusMotionCleanup=undefined; }
-        if (stateChanged) {
-          root.__scStatusMotionCleanup?.();
-          root.__scStatusMotionCleanup=undefined;
-          if (!reduced) {
-            const previousTone=status.className.split(/\s+/).find(name=>name.startsWith("sc-task-view__state--"));
-            const outgoing=document.createElement("span");
-            outgoing.className=`sc-task-view__status-outgoing${previousTone?` ${previousTone}`:""}`;
-            outgoing.dataset.statusText=previous;
-            outgoing.setAttribute("aria-hidden","true");
-            status.append(outgoing);
-            const cleanup=()=>{
-              outgoing.removeEventListener("animationend",finish);
-              outgoing.removeEventListener("animationcancel",finish);
-              outgoing.remove();
-              if (root.__scStatusMotionCleanup===cleanup) root.__scStatusMotionCleanup=undefined;
-            };
-            const finish=event=>{ if (event&&event.target!==outgoing) return; cleanup(); };
-            root.__scStatusMotionCleanup=cleanup;
-            outgoing.addEventListener("animationend",finish);
-            outgoing.addEventListener("animationcancel",finish);
-            void outgoing.offsetWidth;
-            outgoing.classList.add("is-tearing");
-          }
-        }
-        if (textChanged) label.textContent=next;
-        status.className=`sc-task-view__status ${stateClass(state)}`;
-        root.__scStatusValue=state;
-        root.__scStatusInitialized=true;
-      }
       function bindDetailReveal(root) {
         root.__scDetailRevealCleanup?.();
         const selector="details[data-sc-role]",openStates=new WeakMap(),pending=new Map();
@@ -758,8 +718,7 @@
         const values={target:work.target,task_type:work.task_type,role_selection_reason:work.role_selection_reason};
         Object.entries(values).forEach(([name,value])=>root.querySelectorAll(`[data-sc-field="${name}"]`).forEach(node=>{ node.textContent=safeText(value); node.classList.toggle("sc-task-view__placeholder",missing(value)); }));
         const status=root.querySelector('[data-sc-field="state"]');
-        if (!sameView) { root.__scStatusMotionCleanup?.(); root.__scStatusInitialized=false; }
-        if (status) updateGlobalStatus(root,status,state);
+        if (status) { status.textContent=stateText(state); status.className=`sc-task-view__status ${stateClass(state)}`; }
         renderGitInfo(root,work);
         renderProjectMcps(root,work);
         renderRootMetadata(root,work,selectedRoles);

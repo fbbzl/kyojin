@@ -20,21 +20,12 @@ assert.match(appTemplate, /@keyframes sc-running-pulse \{[^}]*box-shadow:0 0 0 1
 assert.match(appTemplate, /50% \{[^}]*box-shadow:0 0 0 5px[^}]*0 0 26px/s, "the active role pulse must reach a pronounced card glow");
 assert.match(appTemplate, /@keyframes sc-running-pulse \{ 0%,100% \{ background-color:color-mix\(in srgb,var\(--role-accent\) 3%,var\(--panel-active\)\)/, "the low card-fill frame uses a restrained three-percent character accent");
 assert.match(appTemplate, /50% \{ background-color:color-mix\(in srgb,var\(--role-accent\) 8%,var\(--panel-active\)\)/, "the high card-fill frame remains substantially weaker than the role border");
-assert.match(appTemplate, /\.sc-task-view__status::before \{[^}]*radial-gradient\([^;]*\) 25% center\/10px 10px no-repeat,[^;]*50% center\/10px 10px no-repeat,[^;]*75% center\/10px 10px no-repeat/, "the status frame adds three centered decorative binder holes without changing its box");
-assert.match(appTemplate, /\.sc-task-view__status \{[^}]*padding:4px 10px; border:2px solid transparent;[^}]*line-height:31[.]2px/, "the unframed status must retain its 43.2px layout height");
-assert.doesNotMatch(appTemplate, /\.sc-task-view__status::after/, "the status must have no replacement rectangular frame");
-assert.match(appTemplate, /\.sc-task-view__status-outgoing \{[^}]*background:var\(--bg\)/, "the outgoing text masks the new wording until it tears away");
-assert.match(appTemplate, /if \(!sameView\) \{ root\.__scStatusMotionCleanup\?\.\(\); root\.__scStatusInitialized=false; \}/, "a different task must start with a static status");
+assert.match(appTemplate, /\.sc-task-view__status \{[^}]*padding:6px 12px;[^}]*line-height:31[.]2px/, "the unframed status must retain its 43.2px layout height");
+assert.doesNotMatch(appTemplate, /sc-status-tear|status-outgoing|__scStatus|data-sc-state-label|[.]sc-task-view__status::(?:before|after)/, "the global status must retain no calendar decoration, animation or transition lifecycle");
 assert.match(appTemplate, /\.sc-task-view__role-ripple-clip \{[^}]*position:absolute;[^}]*overflow:hidden; border-radius:inherit; pointer-events:none/, "the ripple must clip inside an independent non-intercepting rounded layer");
 assert.match(appTemplate, /\.sc-task-view__role-ripple \{[^}]*border-radius:50%; background:var\(--focus\);[^}]*animation:sc-role-ripple 500ms ease-out 1 both/, "click feedback must be one finite pale blue filled circle");
 assert.match(appTemplate, /@keyframes sc-role-ripple \{ from \{ opacity:[.]24;[^}]*scale\(0\); \} to \{ opacity:0;[^}]*scale\(1\); \} \}/, "the circle expands from its origin and fades completely");
 assert.doesNotMatch(appTemplate, /details\[data-sc-role\] > summary \{[^}]*overflow:hidden/, "ripple clipping must not cut off the summary ownership line");
-assert.match(appTemplate, /\.sc-task-view__status-outgoing\.is-tearing \{ animation:sc-status-tear [^;]* 1 both; filter:drop-shadow\(/, "only a changed existing status tears once with a contrasted paper edge");
-assert.match(appTemplate, /\.sc-task-view__status-outgoing\.is-tearing \{[^}]*filter:drop-shadow\(0 1px 0 var\(--line\)\) drop-shadow\(0 2px 1px color-mix\(in srgb,var\(--line\) 65%,transparent\)\)/, "a contrasted cut edge follows the clipped outgoing page");
-assert.match(appTemplate, /@keyframes sc-status-tear \{[\s\S]*?translate3d\(2px,27px,0\) skewX\(-3deg\)[\s\S]*?\}/, "the old status tears downward without a page flip");
-assert.match(appTemplate, /function updateGlobalStatus\(root,status,state\)[\s\S]*?stateChanged=root\.__scStatusInitialized&&!Object\.is\(root\.__scStatusValue,state\)/, "status motion compares underlying state values independently of their displayed wording");
-assert.match(appTemplate, /data-sc-state-label aria-live="polite"/, "only the current status wording is live");
-assert.match(appTemplate, /outgoing\.setAttribute\("aria-hidden","true"\)/, "the outgoing old wording stays outside the live announcement");
 assert.doesNotMatch(appTemplate, /sc-thinking-border|details\[data-sc-role\]\.is-active::before/, "role cards must not render a rotating geometric border effect");
 assert.doesNotMatch(appTemplate, /details\[data-sc-role\]::before[^}]*animation:/, "idle roles must not animate");
 assert.match(appTemplate, /details\.sc-task-view__node\.is-manual-replay \{[^}]*animation:sc-manual-role/, "debug replay must be scoped to a role card");
@@ -61,7 +52,7 @@ assert.match(appTemplate, /if \(event&&event\.target!==node\) return;/, "nested 
 
 const script = appTemplate.match(/<script>([\s\S]*?)<\/script>/)[1];
 let reduced = false;
-function outgoingNode() {
+function motionNode() {
   const listeners = new Map(), attributes = new Map();
   let classes = new Set();
   const node = {
@@ -83,8 +74,8 @@ function outgoingNode() {
   };
   return node;
 }
-const context = { window: {}, document: { createElement: outgoingNode }, matchMedia: () => ({ matches: reduced }) };
-vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.testDetailReveal=bindDetailReveal;window.testStatus=updateGlobalStatus;window.testRoleRipple=bindRoleRipple;})();"), context);
+const context = { window: {}, document: { createElement: motionNode }, matchMedia: () => ({ matches: reduced }) };
+vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.testDetailReveal=bindDetailReveal;window.testRoleRipple=bindRoleRipple;})();"), context);
 function eventNode() {
   const listeners = new Map(), classes = new Set();
   return {
@@ -129,72 +120,8 @@ reduced = false;
 root.emit("toggle", role);
 assert.equal(reveal(role), false, "leaving reduced motion must not backfill an opening");
 
-function statusNode(text = "未知") {
-  const label = { textContent: text, querySelector: () => null };
-  const outgoing = [];
-  const node = {
-    className: "sc-task-view__status sc-task-view__state--unknown",
-    querySelector: selector => selector === "[data-sc-state-label]" ? label : null,
-    append(item) { outgoing.push(item); },
-    get outgoing() { return outgoing; },
-    get activeOutgoing() { return outgoing.filter(item => !item.removed); },
-  };
-  return node;
-}
-const statusRoot = { __scStatusInitialized: false, __scStatusMotionCleanup: undefined };
-const status = statusNode();
-context.window.testStatus(statusRoot, status, "planned");
-assert.equal(status.querySelector("[data-sc-state-label]").textContent, "计划", "initial status text renders without a tear");
-assert.equal(status.outgoing.length, 0, "initial status render stays static");
-context.window.testStatus(statusRoot, status, "planned");
-assert.equal(status.outgoing.length, 0, "same status refresh stays static");
-context.window.testStatus(statusRoot, status, "dev_in_progress");
-assert.equal(status.querySelector("[data-sc-state-label]").textContent, "开发中", "changed status publishes the new wording immediately");
-assert.equal(status.outgoing.length, 1, "changed status creates exactly one outgoing old wording");
-assert.equal(status.outgoing[0].dataset.statusText, "计划");
-assert.equal(status.outgoing[0].getAttribute("aria-hidden"), "true");
-assert.ok(status.outgoing[0].classList.contains("is-tearing"), "changed wording gets a finite tear class");
-context.window.testStatus(statusRoot, status, "ready_for_cr");
-assert.equal(status.activeOutgoing.length, 1, "rapid status changes replace prior motion before adding the next tear");
-assert.equal(status.outgoing[0].removed, true, "the previous outgoing wording is cleaned up");
-assert.equal(status.outgoing[1].dataset.statusText, "开发中");
-context.window.testStatus(statusRoot, status, "ready_for_cr");
-assert.equal(status.activeOutgoing.length, 1, "same wording refresh lets an in-flight tear finish");
-assert.equal(status.outgoing[1].removed, undefined, "same wording refresh does not clear the outgoing page");
-context.window.testStatus(statusRoot, status, "dev_in_progress");
-assert.equal(status.activeOutgoing.length, 1, "a new wording change replaces the prior tear");
-assert.equal(status.outgoing[1].removed, true, "a new wording change cleans up the previous tear");
-status.outgoing[2].emit("animationcancel");
-assert.equal(status.activeOutgoing.length, 0, "animation cancellation removes the transient wording");
-context.window.testStatus(statusRoot, status, "completed");
-assert.equal(status.activeOutgoing.length, 1, "a changed state starts a tear");
-assert.equal(status.querySelector("[data-sc-state-label]").textContent, "已完成");
-context.window.testStatus(statusRoot, status, "done");
-assert.equal(status.activeOutgoing.length, 1, "different underlying states tear even when their Chinese wording matches");
-assert.equal(status.outgoing.at(-1).dataset.statusText, "已完成", "same-wording state changes preserve the prior wording on the outgoing page");
-assert.equal(status.outgoing.at(-2).removed, true, "the previous tear is cleaned up before replacing it");
-const doneOutgoingCount = status.outgoing.length;
-const doneOutgoing = status.outgoing.at(-1);
-context.window.testStatus(statusRoot, status, "done");
-assert.equal(status.activeOutgoing.length, 1, "refreshing the same underlying state does not replay a tear");
-assert.equal(status.outgoing.length, doneOutgoingCount, "same-state refresh does not replace the outgoing page");
-assert.equal(status.activeOutgoing[0], doneOutgoing, "same-state refresh lets the current tear finish");
-const beforeViewSwitch = status.outgoing.length;
-statusRoot.__scStatusMotionCleanup?.();
-statusRoot.__scStatusInitialized = false;
-context.window.testStatus(statusRoot, status, "planned");
-assert.equal(status.outgoing.length, beforeViewSwitch, "a new view establishes its initial state without a tear");
-assert.equal(status.activeOutgoing.length, 0, "switching views clears any outgoing page");
-assert.equal(status.querySelector("[data-sc-state-label]").textContent, "计划", "the new view still publishes its initial status wording");
-reduced = true;
-context.window.testStatus(statusRoot, status, "ready_for_qa");
-assert.equal(status.activeOutgoing.length, 0, "reduced motion suppresses a new tear");
-reduced = false;
-context.window.testStatus(statusRoot, status, "ready_for_qa");
-assert.equal(status.activeOutgoing.length, 0, "leaving reduced motion does not replay the suppressed tear");
-
 function rippleElement() {
-  const node = outgoingNode();
+  const node = motionNode();
   node.style = {};
   node.children = [];
   node.append = child => node.children.push(child);
