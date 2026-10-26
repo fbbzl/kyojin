@@ -78,15 +78,21 @@
     .sc-task-view__roles { position:relative; display:flex; flex:1; flex-direction:column; align-items:stretch; }
     .sc-task-view__role-preview { display:grid; grid-template-rows:auto minmax(0,1fr); align-self:stretch; justify-self:end; width:calc(90% + 15px); min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
     .sc-task-view__preview-content { display:grid; min-width:0; overflow-wrap:anywhere; }
-    .sc-task-view__file-activity { align-self:start; box-sizing:content-box; min-width:0; height:22px; margin-bottom:10px; border:2px solid var(--line); border-radius:6px; overflow:hidden; font-size:11px; line-height:11px; }
+    .sc-task-view__file-activity { align-self:start; box-sizing:content-box; min-width:0; height:22px; margin-bottom:10px; border:2px solid var(--line); border-radius:6px; overflow:hidden; font-size:11px; line-height:11px; perspective:160px; background:linear-gradient(to bottom,#0005,transparent 30%,#ffffff0a 50%,transparent 70%,#0005); box-shadow:inset 0 3px 5px #0003,inset 0 -3px 5px #0003; }
     .sc-task-view__file-activity[aria-hidden="true"] { visibility:hidden; }
-    .sc-task-view__file-track { min-width:0; transform:translateY(-5.5px); }
+    .sc-task-view__file-track { position:relative; min-width:0; height:22px; transform-style:preserve-3d; transform:translateZ(-11px); }
     .sc-task-view__file-track.is-file-switching { animation:sc-file-switch 220ms ease-out 1; }
-    .sc-task-view__file-slot { height:11px; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; color:var(--muted); }
-    .sc-task-view__file-slot:nth-child(2) { color:var(--text); }
+    .sc-task-view__file-slot { position:absolute; top:5.5px; width:100%; height:11px; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; color:var(--muted); backface-visibility:hidden; opacity:.45; pointer-events:none; }
+    .sc-task-view__file-slot:first-child { transform:rotateX(60deg) translateZ(11px); }
+    .sc-task-view__file-slot:nth-child(2) { color:var(--text); transform:translateZ(11px); opacity:1; pointer-events:auto; }
+    .sc-task-view__file-slot:last-child { transform:rotateX(-60deg) translateZ(11px); }
+    .sc-task-view__file-track.is-file-switching > :first-child { animation:sc-file-recede 220ms ease-out 1; }
+    .sc-task-view__file-track.is-file-switching > :nth-child(2) { animation:sc-file-arrive 220ms ease-out 1; }
     .sc-task-view [data-sc-role] .sc-task-view__file-activity { display:none; }
     @media (max-width:560px) { .sc-task-view [data-sc-role] .sc-task-view__file-activity { display:block; margin-bottom:0; } }
-    @keyframes sc-file-switch { from { transform:translateY(5.5px); } to { transform:translateY(-5.5px); } }
+    @keyframes sc-file-switch { from { transform:translateZ(-11px) rotateX(-60deg); } to { transform:translateZ(-11px) rotateX(0); } }
+    @keyframes sc-file-recede { from { opacity:1; } to { opacity:.45; } }
+    @keyframes sc-file-arrive { from { opacity:.45; } to { opacity:1; } }
     .sc-task-view__preview-content .sc-task-view__detail { display:grid; align-content:center; gap:24px; padding:20px 12px; border-top:0; }
     .sc-task-view__preview-body { display:grid; grid-area:1/1; align-self:stretch; min-width:0; }
     .sc-task-view__preview-size { display:grid; grid-area:1/1; align-self:start; min-width:0; visibility:hidden; pointer-events:none; user-select:none; }

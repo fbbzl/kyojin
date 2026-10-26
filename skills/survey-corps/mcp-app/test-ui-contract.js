@@ -37,7 +37,13 @@ for (const path of [undefined,null,{},42,"","  ","../secret","src/../secret","C:
 assert.equal(filePath(" src/<img onerror=alert(1)>.js "),"src/<img onerror=alert(1)>.js","path text must remain literal for textContent output");
 assert.ok(appTemplate.includes("node.textContent=node.title=value;"),"file paths must use literal textContent and a full-path tooltip");
 assert.ok(appTemplate.includes("if (node.textContent!==value)"),"same-file refresh must preserve horizontal reading position");
-assert.ok(appTemplate.includes("height:22px;")&&appTemplate.includes("height:11px;")&&appTemplate.includes("transform:translateY(-5.5px);"),"compact file window must show two half rows around one full current row");
+assert.match(appTemplate, /file-activity \{[^}]*perspective:160px;[^}]*background:linear-gradient[^}]*box-shadow:inset/,"the compact file window must shade a cylindrical surface locally");
+assert.match(appTemplate, /file-track \{[^}]*height:22px; transform-style:preserve-3d; transform:translateZ\(-11px\);/,"the three file faces must rotate around a shared eleven-pixel radius");
+assert.match(appTemplate, /file-slot \{[^}]*top:5\.5px;[^}]*height:11px;[^}]*backface-visibility:hidden; opacity:\.45;/,"file faces retain full eleven-pixel rows with dimmed receding surfaces");
+assert.match(appTemplate, /file-slot \{[^}]*pointer-events:none; \}/,"receding file faces must not intercept pointer interaction");
+assert.match(appTemplate, /file-slot:nth-child\(2\) \{[^}]*pointer-events:auto; \}/,"only the front current file retains horizontal reading interaction");
+for (const [face,transform] of [["first-child","rotateX(60deg) translateZ(11px)"],["nth-child(2)","translateZ(11px)"],["last-child","rotateX(-60deg) translateZ(11px)"]]) assert.ok(appTemplate.includes(".sc-task-view__file-slot:"+face+" {")&&appTemplate.includes("transform:"+transform+";"),"reported file faces must lie on the cylinder with the current file at the front");
+assert.match(appTemplate, /@keyframes sc-file-switch \{ from \{ transform:translateZ\(-11px\) rotateX\(-60deg\); \} to \{ transform:translateZ\(-11px\) rotateX\(0\); \} \}/,"file switches must rotate around the horizontal axis rather than slide a flat track");
 assert.match(appTemplate, /file-activity \{[^}]*box-sizing:content-box;[^}]*height:22px;[^}]*border:2px solid var\(--line\); border-radius:6px;[^}]*font-size:11px; line-height:11px;/, "the border must sit outside the half-height file window without shrinking its eleven-pixel text");
 assert.ok(appTemplate.includes("animation:sc-file-switch 220ms ease-out 1;"),"file changes must use one finite short CSS animation");
 const assertSkillMatch = (pattern, message) => { if (skill) assert.match(skill, pattern, message); };
