@@ -19,12 +19,10 @@
     .sc-task-view__project-mcp-list li { overflow-wrap:anywhere; }
     .sc-task-view__header-controls { grid-column:2; display:flex; align-items:center; justify-content:flex-end; }
     .sc-task-view__header-controls:has(> button[hidden]) { display:none; }
-    .sc-task-view__muted { color:var(--muted); }
     .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:6px 12px; color:var(--muted); font-size:33.8px; line-height:31.2px; font-weight:700; text-align:center; white-space:nowrap; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
-    .sc-task-view__root { padding:14px; border-width:2px; }
-    .sc-task-view__root { text-align:center; }
+    .sc-task-view__root { padding:14px; border-width:2px; text-align:center; }
     .sc-task-view__target { margin-top:4px !important; overflow-wrap:anywhere; font-size:16px; font-weight:700; }
     .sc-task-view__metadata { display:grid; grid-template-columns:6em minmax(0,1fr); align-items:baseline; column-gap:12px; row-gap:6px; width:min(100%,560px); margin:12px auto 0; text-align:left; }
     .sc-task-view__metadata dt { color:var(--muted); text-align:right; }
@@ -96,8 +94,7 @@
     .sc-task-view__preview-body { display:grid; grid-area:1/1; align-self:stretch; min-width:0; }
     .sc-task-view__preview-size { display:grid; grid-area:1/1; align-self:start; min-width:0; visibility:hidden; pointer-events:none; user-select:none; }
     .sc-task-view__preview-size > * { grid-area:1/1; align-self:start; min-width:0; }
-    .sc-task-view__preview-summary { display:none; }
-    .sc-task-view__preview-summary { grid-area:1/1; align-self:start; min-width:0; }
+    .sc-task-view__preview-summary { display:none; grid-area:1/1; align-self:start; min-width:0; }
     .sc-task-view__role-preview.is-showing-summary .sc-task-view__preview-summary { display:block; }
     /* Completed previews share one size model; scaled borders must not need pixel compensation. */
     .sc-task-view.is-finished .sc-task-view__role-preview { grid-template-rows:minmax(0,1fr); }
@@ -234,8 +231,7 @@
       const asList=value=>Array.isArray(value)?value:missing(value)?[]:[value];
       const safeText=value=>missing(value)?"":typeof value==="object"?JSON.stringify(value):String(value);
       const stateText=value=>typeof value==="string"&&Object.hasOwn(taskStates,value)?taskStates[value][0]:"未知状态";
-      const toneClass=(states,value)=>`sc-task-view__state--${typeof value==="string"&&Object.hasOwn(states,value)?states[value][1]:"unknown"}`;
-      const stateClass=value=>toneClass(taskStates,value);
+      const stateClass=value=>`sc-task-view__state--${typeof value==="string"&&Object.hasOwn(taskStates,value)?taskStates[value][1]:"unknown"}`;
       const normalizedStatus=value=>safeText(value).trim().toLowerCase().replace(/[ -]+/g,"_");
       const roleStates={pending:{label:"待开始",tone:"pending"},running:{label:"进行中",tone:"active"},passed:{label:"通过",tone:"passed"},blocked:{label:"阻断",tone:"danger"},needs_user_confirm:{label:"待用户确认",tone:"waiting"}};
       const roleStatus=value=>typeof value==="string"&&Object.hasOwn(roleStates,value)?roleStates[value]:{label:missing(value)?"状态未提供":"未知状态",tone:"unknown"};
@@ -354,8 +350,8 @@
         frame.toggleAttribute("hidden",!selectedRoles.length);
         const view=frame.closest(".sc-task-view"),taskState=normalizedStatus(state);
         view.classList.toggle("is-running",!!activeRole&&!finishedStatuses.has(taskState));
-        view.classList.toggle("has-waiting-motion",taskState==="needs_user_confirm"||!stoppedStates.has(taskState)&&!finishedStatuses.has(taskState));
-        view.classList.toggle("has-blocked-motion",!["paused","waiting","cancelled","canceled"].includes(taskState)&&!finishedStatuses.has(taskState));
+        view.classList.toggle("has-waiting-motion",taskState==="needs_user_confirm"||!stoppedStates.has(taskState));
+        view.classList.toggle("has-blocked-motion",!["paused","waiting"].includes(taskState)&&!finishedStatuses.has(taskState));
       }
       function renderList(container,value) { const values=asList(value).map(safeText).filter(text=>text.trim()); container.replaceChildren(); if (!values.length) return; const list=document.createElement("ul"); list.append(...listItems(values)); container.append(list); }
       function detailField(body,label,value) {
@@ -416,7 +412,7 @@
       }
       function observeFileActivity(previous,input,activeRole) {
         const raw=asObject(asObject(asObject(input.role_details)[activeRole]).file_activity),current=filePath(raw.current);
-        if (!activeRole||stoppedStates.has(normalizedStatus(input.state))||finishedStatuses.has(normalizedStatus(input.state))||!current) return null;
+        if (!activeRole||stoppedStates.has(normalizedStatus(input.state))||!current) return null;
         const changed=previous?.viewId===input.view_id&&previous.role===activeRole&&previous.current!==current;
         return {viewId:input.view_id,role:activeRole,current,previous:filePath(raw.previous),next:filePath(raw.next),projectRoot:asObject(input.work_unit).project_root,changed,fromCurrent:changed?previous.current:""};
       }
