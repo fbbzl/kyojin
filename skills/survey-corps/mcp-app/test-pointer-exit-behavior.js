@@ -83,7 +83,7 @@ const finished = {
     }
   }
 };
-// SC-HANDOFF-FILES: delivered file labels must retain the finished iframe exit invariant.
+// SC-HANDOFF-FILES: retained delivery history must not show labels or disrupt finished iframe exit.
 finished.handoffs = [{ work_unit_id: finished.work_unit.work_unit_id, handoff_id: "pointer:files", from: "dev", to: "cr", handoff_result: "accepted", files: ["D:/workspace/kyojin/skills/survey-corps/mcp-app/assets/sc-task-view.html", "D:/workspace/kyojin/skills/survey-corps/mcp-app/test-ui-behavior.js"] }];
 const evidence = fs.mkdtempSync(path.join(os.tmpdir(), "sc-pointer-exit-qa-"));
 const report = { baseline: process.env.SC_POINTER_BASELINE || "working-tree", errors: [], console: [], cases: [] };
@@ -109,7 +109,7 @@ async function fixture(browser, zoom, width = 680, reduced = false) {
 
 async function pointerExit(browser, zoom, width = 680, reduced = false) {
   const { page, frame } = await fixture(browser, zoom, width, reduced);
-  assert.equal(await frame.locator('.sc-task-view__connector-file').count(), 2, "the exit fixture actually includes delivered file labels");
+  assert.equal(await frame.locator('.sc-task-view__connector-file').count(), 0, "finished tasks hide delivered file labels even when history is retained");
   for (const role of ["dev", "cr", "qa"]) {
     await frame.locator('[data-sc-role="' + role + '"] > summary').hover();
     await page.waitForTimeout(60);
