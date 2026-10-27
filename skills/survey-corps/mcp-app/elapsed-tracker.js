@@ -13,7 +13,7 @@ const selectedRoles = value => [...new Set((Array.isArray(value) ? value : [valu
 function filePath(value) {
   const path=(typeof value === "string" ? value.trim() : ""),local=path.replaceAll(String.fromCharCode(92),"/");
   const relative=/^[a-z]:[/]$/i.test(local.slice(0,3))?local.slice(3):local;
-  const invalid=relative.includes(":")||typeof value==="string"&&[...value].some(char=>char.charCodeAt(0)<32);
+  const invalid=relative.includes(":")||typeof value==="string"&&/\p{Cc}/u.test(value);
   return path&&!path.startsWith(String.fromCharCode(92))&&!local.startsWith("//")&&!local.endsWith("/")&&!invalid&&!relative.split("/").includes("..")?path:"";
 }
 function acceptedRepair(snapshot, from, to) {
@@ -27,12 +27,17 @@ function acceptedRepair(snapshot, from, to) {
     typeof handoff.decision === "string" && handoff.decision.trim() !== "" && typeof handoff.next_action === "string" && handoff.next_action.trim() !== "";
 }
 function workflowError(snapshot, selected = selectedRoles(record(snapshot.work_unit).roles)) {
+  if (STOPPED.has(status(snapshot.state))) return null;
   const details = record(snapshot.role_details), active = selected.filter(role => record(details[role]).status === "running");
   if (active.length > 1) return "Serial workflow permits only one active role: " + active.join(", ");
   if (!active.length) return null;
   const repair = active[0] === "qa" && record(details.cr).status === "blocked" && record(details.cr).blocker_type === "test_assets" && acceptedRepair(snapshot, "cr", "qa");
   if (active[0] === "qa" && (!selected.includes("cr") || (record(details.cr).status !== "passed" && !repair))) return "QA can run only when selected CR has passed or accepted test-asset repair is scoped";
   const qaRepair = active[0] === "dev" && selected.includes("qa") && record(details.qa).status === "blocked" && acceptedRepair(snapshot, "qa", "dev");
+  const handoff = Array.isArray(snapshot.handoffs) ? record(snapshot.handoffs.at(-1)) : {}, work = record(snapshot.work_unit);
+  const qaReturn = handoff.from === "qa" && handoff.to === "dev" && ["qa_failed", "qa_conditional"].includes(handoff.state) && handoff.work_unit_id === work.work_unit_id && handoff.reference_version === work.reference_version;
+  const qaRework = active[0] === "dev" && (["qa_failed", "qa_conditional"].includes(status(snapshot.state)) || (status(snapshot.state) === "needs_revalidation" && (record(details.qa).status === "blocked" || qaReturn)));
+  if (qaRework && (!qaRepair || !selected.includes("cr") || !["pending", "blocked"].includes(record(details.cr).status))) return "QA rework requires a scoped accepted handoff and invalidated CR approval";
   for (const role of selected.slice(0, selected.indexOf(active[0]))) {
     const prior = record(details[role]).status;
     // Missing historical status remains readable; explicit unfinished predecessors cannot be skipped.

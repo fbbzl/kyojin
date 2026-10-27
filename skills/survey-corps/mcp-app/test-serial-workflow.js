@@ -4,8 +4,8 @@ const { startServer } = require("./test-stdio-helper");
 const base = { view_id: "serial-regression", state: "dev_in_progress", work_unit: { roles: ["dev", "cr", "qa"] }, role_details: { dev: { status: "running" }, cr: { status: "pending" }, qa: { status: "pending" } } };
 const next = { ...base, state: "ready_for_cr", role_details: { dev: { status: "passed" }, cr: { status: "running" }, qa: { status: "pending" } } };
 const conflict = { ...base, role_details: { dev: { status: "running" }, cr: { status: "running" }, qa: { status: "pending" } } };
-const qa = { ...base, state: "needs_user_confirm", role_details: { dev: { status: "passed" }, cr: { status: "passed" }, qa: { status: "running" } } };
-const snapshots = [{ snapshot: base }, { snapshot: next }, { snapshot: qa }, { snapshot: conflict, error: /only one active role/ }, {}];
+const qa = { ...base, state: "ready_for_qa", role_details: { dev: { status: "passed" }, cr: { status: "passed" }, qa: { status: "running" } } };
+const snapshots = [{ snapshot: base }, { snapshot: next }, { snapshot: qa }, { snapshot: { ...qa, state: "needs_user_confirm" } }, { snapshot: conflict, error: /only one active role/ }, {}];
 for (const status of ["pending", "running", "blocked", "needs_user_confirm", undefined]) {
   snapshots.push({ snapshot: { ...qa, role_details: { dev: { status: "passed" }, cr: status === undefined ? {} : { status }, qa: { status: "running" } } }, error: status === "running" ? /only one active role/ : /QA can run only when selected CR has passed/ }, {});
 }
@@ -30,9 +30,14 @@ snapshots.push({snapshot:optimization},{snapshot:devRepair},{snapshot:repair},{s
 // QA-rework regression: invalidated CR approval must not prevent a bound QA -> DEV repair.
 const qaRepair=structuredClone(devRepair);qaRepair.state="qa_failed";qaRepair.role_details.cr.status="pending";qaRepair.role_details.qa.status="blocked";Object.assign(qaRepair.handoffs[0],{from:"qa",state:"qa_failed"});
 snapshots.push({snapshot:{...qa,state:"paused"}});
-for(const source of [repair,qaRepair])for(const path of ["https://example.test/test.js","../test.js","src/../test.js","//server/share/test.js","src/test"+String.fromCharCode(10)+".js"]){const value=structuredClone(source);value.handoffs[0].files=[path];snapshots.push({snapshot:value,error:/QA can run only|preceding role/},{});}
-for(const mutate of [v=>{v.handoffs=[];},v=>{v.handoffs.push({...v.handoffs[0],handoff_result:"pending"});},v=>{v.handoffs[0].reference_version="old";},v=>{v.state="needs_user_confirm";},v=>{v.state="needs_revalidation";v.resume_state="ready_for_qa";}]){const value=structuredClone(qaRepair);mutate(value);snapshots.push({snapshot:value,error:/preceding role cr/},{});}
+for(const source of [repair,qaRepair])for(const path of ["https://example.test/test.js","../test.js","src/../test.js","//server/share/test.js",...[10,127,128,159].map(code=>"src/test"+String.fromCharCode(code)+".js")]){const value=structuredClone(source);value.handoffs[0].files=[path];snapshots.push({snapshot:value,error:/QA can run only|preceding role|QA rework/},{});}
+for(const roles of [["cr","dev","qa"],["dev","cr","qa"],["req","dev","cr","qa"]])for(const state of ["qa_failed","qa_conditional","needs_revalidation"]){
+  const source=structuredClone(qaRepair);source.work_unit.roles=roles;source.role_details.req={status:"passed"};source.state=state;source.resume_state="dev_in_progress";source.handoffs[0].state=state==="needs_revalidation"?"qa_failed":state;
+  for(const mutate of [v=>{v.handoffs=[];},v=>{v.handoffs.push({...v.handoffs[0],handoff_result:"pending"});},v=>{v.handoffs[0].reference_version="old";},v=>{v.handoffs[0].files=[];},v=>{v.role_details.qa.status="pending";},v=>{v.role_details.cr.status="passed";},v=>{v.state="needs_revalidation";v.resume_state="ready_for_qa";}]){const value=structuredClone(source);mutate(value);snapshots.push({snapshot:value,error:/preceding role cr|QA rework/},{});}
+  snapshots.push({snapshot:source},{snapshot:{...source,state:"paused"}});
+}
 for(const state of ["qa_failed","qa_conditional","needs_revalidation"])for(const status of ["pending","blocked"]){const value=structuredClone(qaRepair);value.state=state;value.resume_state="dev_in_progress";value.handoffs[0].state=state==="needs_revalidation"?"qa_failed":state;value.role_details.cr.status=status;snapshots.push({snapshot:value});}
+for(const history of [{to:"sc",state:"qa_passed",reference_version:"v1"},{to:"dev",state:"qa_failed",reference_version:"v1"},{to:"dev",state:"qa_failed",work_unit_id:"other",reference_version:"v2"}])snapshots.push({snapshot:{...base,state:"needs_revalidation",resume_state:"dev_in_progress",work_unit:{roles:["dev","cr","qa"],work_unit_id:"w1",reference_version:"v2"},handoffs:[{...qaRepair.handoffs[0],work_unit_id:"w1",...history}]}});
 snapshots.push({snapshot:review},{snapshot:retest});
 let step = 0;
 let latest;

@@ -2,7 +2,7 @@
 name: bug-fix
 description: "Use only when QA hands a registered, reproducible Bug to dev for correction and expects implementation evidence back. Do not invoke directly for user-reported or dev-discovered defects before QA registration."
 metadata:
-  version: 1.2.4
+  version: 1.2.5
 ---
 
 # bug-fix
@@ -12,7 +12,7 @@ metadata:
 ## 适用边界
 
 - 唯一入口是 `qa -> dev` 的 Bug 反馈，输入必须包含 Bug ID、`failure_reference_version`、`environment`、`input_boundary`、复现条件、预期/实际行为和证据；缺项时回交 `qa` 补齐，不自行登记 Bug。
-- 用户直接报告或 `dev` 自行发现的异常，在 `qa` 完成复现与登记前不调用本 Skill；`dev` 只保留原始证据并交给 `qa`。
+- 用户直接报告或 `dev` 自行发现的未登记异常，不调用本 Skill；按常规 `dev` 流程调查修正，再经 `cr -> qa` 验证，由 `qa` 登记与管理 Bug。
 - 修复目标是恢复已有契约或已确认需求的预期行为，而非借机扩展功能、重定义业务规则或清理无关代码。
 - 无法稳定复现时，先收集日志、Trace、输入、环境差异和最小反例；证据仍不足时，输出假设、观测方案与未关闭风险，不将猜测写成修复结论。
 - 涉及公共契约、权限/信任边界、持久化修复、数据回填、不可逆操作、跨服务一致性或重大架构调整时，先升级 `survey-corps` 确认方案协议。

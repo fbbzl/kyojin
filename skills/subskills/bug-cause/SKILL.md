@@ -2,7 +2,7 @@
 name: bug-cause
 description: "Use when dev needs an evidence-based root-cause analysis for a QA-registered, reproducible Bug before or alongside implementation repair. Do not use to register, close, or retest Bugs."
 metadata:
-  version: 1.0.1
+  version: 1.0.2
 ---
 
 # bug-cause
@@ -12,7 +12,7 @@ metadata:
 ## 适用边界
 
 - 输入至少包含 Bug ID、代码版本、环境、复现步骤、预期/实际行为、影响范围和现有证据；缺项时回交 `qa` 补齐，不自行登记 Bug。
-- 用户直接报告或 `dev` 自行发现的异常，先交给 `qa` 复现和登记；不能仅凭日志或直觉写成已确认根因。
+- 用户直接报告或 `dev` 自行发现的未登记异常，不调用本 Skill；按常规 `dev` 流程调查修正，再经 `cr -> qa` 验证，由 `qa` 登记与管理 Bug。
 - 根因分析只恢复已有契约或已确认需求的预期行为，不借机扩展功能、重定义规则或清理无关代码。
 - 涉及公共契约、权限/信任边界、持久化与数据一致性、跨服务协议、性能目标或不可逆操作时，补充 `cr` 审查或升级 `survey-corps` 进行方案裁决。
 

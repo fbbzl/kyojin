@@ -2,7 +2,7 @@
 name: review-with-goal
 description: "Use when CR needs to review one explicit correctness, contract, security, data, performance, or maintainability goal before formal testing."
 metadata:
-  version: 1.4.4
+  version: 1.4.5
 ---
 
 # review-with-goal
@@ -37,12 +37,12 @@ Goal 是剧本内工作单元，不调用平台 Goal 工具，也不另建状态
 
 1. 审查代码、契约、数据、安全、性能或兼容性证据，产出可验证的审查项。
 2. 已证明违反当前验收、公共契约、安全边界或数据不变量的风险为阻断项；其他发现按实际影响分级。
-3. 按 `cr` 本体 Skill 的资产归属将问题交给 `dev` 或 `qa`，均附证据、影响、验收条件和范围；需要运行时复现或 Bug 管理时交给 `qa`。
+3. 按 `cr` 本体 Skill 的资产归属将问题交给 `dev` 或 `qa`，均附证据、影响、验收条件和范围；CR 未通过时的实现侧取证交 `dev`；QA 复现与 Bug 管理须待 CR 通过，独立测试资产限定返修遵循父协议。
 4. 处理后由 `cr` 按原 Goal 复审；通过后移交测试重点给 `qa`。
 5. 退出时输出复审结论、非阻断项和残余风险，不输出 QA 或发布结论。
 
 ## 禁止动作
 
 - 不修改实现、测试或发布配置，不生成或执行测试。
-- 不登记、分派或关闭 Bug；运行行为由 `qa` 复现和定级。
+- 不登记、分派或关闭 Bug；运行行为由 `qa` 在 CR 通过后复现和定级。
 - 不接受未消除的阻断项，不作发布预检、风险接受或最终 Go/No-Go 决定。

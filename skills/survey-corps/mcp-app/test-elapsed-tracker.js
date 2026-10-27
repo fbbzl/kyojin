@@ -48,6 +48,7 @@ Object.assign(repair.work_unit, { work_unit_id: "repair", reference_version: "v1
 repair.role_details.cr.blocker_type = "test_assets";
 repair.handoffs = [{ work_unit_id: "repair", reference_version: "v1", from: "cr", to: "qa", state: "cr_blocked", handoff_result: "accepted", files: ["test.js"], decision: "Repair test asset only", next_action: "Return to CR before testing" }];
 assert.equal(workflowError(repair), null);
+checkRepairStop(repair);
 tracker.update(repair); time += 25;
 assert.equal(roleElapsed(tracker.update(repair), "qa"), 25, "scoped repair counts as QA work");
 for (const change of [value => { value.handoffs = []; }, value => { value.handoffs[0].reference_version = "old"; }, value => { value.handoffs[0].files = []; }, value => { value.role_details.cr.blocker_type = "bug"; }]) {
@@ -59,15 +60,46 @@ for (const file of ["https://example.test/a.js", "../outside.js", "test/" + Stri
   const invalid = structuredClone(repair); invalid.handoffs[0].files = [file];
   assert.ok(workflowError(invalid), "repair scopes require displayable local paths");
 }
-for (const state of ["qa_failed", "qa_conditional", "needs_revalidation"]) {
+for (const roles of [["cr", "dev", "qa"], ["dev", "cr", "qa"], ["req", "dev", "cr", "qa"]]) for (const state of ["qa_failed", "qa_conditional", "needs_revalidation"]) {
   const returned = structuredClone(repair); returned.view_id = "returned:" + state; returned.state = state; returned.resume_state = "dev_in_progress";
-  returned.role_details = { cr: { status: "pending" }, dev: { status: "running" }, qa: { status: "blocked" } };
+  returned.work_unit.roles = roles;
+  returned.role_details = { req: { status: "passed" }, cr: { status: "pending" }, dev: { status: "running" }, qa: { status: "blocked" } };
   Object.assign(returned.handoffs[0], { from: "qa", to: "dev", state: state === "needs_revalidation" ? "qa_failed" : state });
   assert.equal(workflowError(returned), null, "QA return must not reuse invalidated CR approval");
-  tracker.update(returned); time += 25;
-  assert.equal(roleElapsed(tracker.update(returned), "dev"), 25);
-  for (const change of [v => { v.handoffs = []; }, v => { v.handoffs[0].reference_version = "old"; }, v => { v.role_details.qa.status = "pending"; }, v => { v.role_details.cr.status = "needs_user_confirm"; }]) {
+  checkRepairStop(returned);
+  let now = 0; const returnedClock = createElapsedTracker({ now: () => now });
+  returnedClock.update(returned); now = 25;
+  assert.equal(roleElapsed(returnedClock.update(returned), "dev"), 25);
+  for (const change of [v => { v.handoffs = []; }, v => { v.handoffs[0].reference_version = "old"; }, v => { v.handoffs[0].handoff_result = "pending"; }, v => { v.handoffs[0].files = []; }, v => { v.role_details.qa.status = "pending"; }, v => { v.role_details.cr.status = "needs_user_confirm"; }, v => { v.role_details.cr.status = "passed"; }, v => { v.state = "needs_revalidation"; v.resume_state = "ready_for_qa"; }]) {
     const invalid = structuredClone(returned); change(invalid); assert.ok(workflowError(invalid));
+  }
+}
+const changedRequirement = { view_id: "changed-requirement", state: "needs_revalidation", resume_state: "dev_in_progress", work_unit: { roles: ["dev", "cr", "qa"], work_unit_id: "w1", reference_version: "v2" }, role_details: { dev: { status: "running" }, cr: { status: "pending" }, qa: { status: "pending" } } };
+for (const history of [{ to: "sc", state: "qa_passed", reference_version: "v1" }, { to: "dev", state: "qa_failed", reference_version: "v1" }, { to: "dev", state: "qa_failed", work_unit_id: "other", reference_version: "v2" }]) {
+  const source = { ...changedRequirement, handoffs: [{ ...repair.handoffs[0], from: "qa", work_unit_id: "w1", ...history }] };
+  assert.equal(workflowError(source), null, "historical QA handoffs must not block a new requirement");
+  let now = 0; const clock = createElapsedTracker({ now: () => now });
+  clock.update(source); now = 100; assert.equal(roleElapsed(clock.update(source), "dev"), 100);
+}
+for (const code of [31, 32, 126, 127, 128, 159, 160]) {
+  const value = structuredClone(repair); value.handoffs[0].files = ["src/a" + String.fromCharCode(code) + "b.js"];
+  assert.equal(workflowError(value) === null, ![31, 127, 128, 159].includes(code), "control character boundary: " + code);
+}
+
+function checkRepairStop(source) {
+  for (const state of ["paused", "needs_user_confirm", "waiting", "blocked", "completed"]) {
+    let now = 0;
+    const clock = createElapsedTracker({ now: () => now });
+    clock.update(source); now = 100;
+    const stopped = { ...source, state };
+    assert.equal(workflowError(stopped), null, "global stop must precede repair gates");
+    const frozen = clock.update(stopped); now = 500;
+    assert.deepEqual(clock.update(stopped), frozen, "stop freezes task and all role timers");
+    assert.equal(elapsed(frozen), 100);
+    assert.equal(elapsed(clock.update(source)), 100, "resume excludes stopped time");
+    now = 550; assert.equal(elapsed(clock.update(source)), 150, "valid repair resumes timing");
+    const invalid = structuredClone(source); invalid.handoffs = [];
+    assert.ok(workflowError(invalid), "resume still requires a valid handoff");
   }
 }
 
@@ -148,6 +180,11 @@ time += 25;
 assert.equal(elapsed(tracker.update(unknown)), 0, "unknown status must not invent an activity interval");
 for (const state of ["cr_blocked", "qa_failed", "qa_conditional"]) {
   const revision = sample("revision:" + state, state, { dev: "running" });
+  if (state !== "cr_blocked") {
+    Object.assign(revision.work_unit, { roles: ["dev", "cr", "qa"], work_unit_id: "repair", reference_version: "v1" });
+    Object.assign(revision.role_details, { cr: { status: "pending" }, qa: { status: "blocked" } });
+    revision.handoffs = [{ ...repair.handoffs[0], from: "qa", to: "dev", state }];
+  }
   tracker.update(revision);
   time += 100;
   result = tracker.update(revision);

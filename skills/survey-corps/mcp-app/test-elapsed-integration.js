@@ -177,7 +177,12 @@ async function main() {
 
   for (const state of ["cr_blocked", "qa_failed", "qa_conditional"]) {
     const repairId = `qa-elapsed-repair-${state}`;
-    await show(task(repairId, state, { dev: "running", qa: "pending" }));
+    const source = task(repairId, state, { dev: "running", cr: "pending", qa: "blocked" });
+    if (state !== "cr_blocked") {
+      Object.assign(source.work_unit, { work_unit_id: repairId, reference_version: "v1" });
+      source.handoffs = [{ from: "qa", to: "dev", state, handoff_result: "accepted", work_unit_id: repairId, reference_version: "v1", files: ["src/app.js"], decision: "Repair verified defect", next_action: "Return to CR before testing" }];
+    }
+    await show(source);
     await delay(60);
     const repairing = await show();
     assert.ok(elapsed(repairing) >= 20, `${state} must count explicitly active repair work`);

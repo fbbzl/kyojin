@@ -338,6 +338,10 @@
         const repair=active[0]==="qa"&&asObject(details.cr).status==="blocked"&&asObject(details.cr).blocker_type==="test_assets"&&acceptedRepair(input,"cr","qa");
         if (active[0]==="qa"&&(!selectedRoles.includes("cr")||(asObject(details.cr).status!=="passed"&&!repair))) return null;
         const qaRepair=active[0]==="dev"&&selectedRoles.includes("qa")&&asObject(details.qa).status==="blocked"&&acceptedRepair(input,"qa","dev");
+        const handoff=Array.isArray(input.handoffs)?asObject(input.handoffs.at(-1)):{},work=asObject(input.work_unit);
+        const qaReturn=handoff.from==="qa"&&handoff.to==="dev"&&["qa_failed","qa_conditional"].includes(handoff.state)&&handoff.work_unit_id===work.work_unit_id&&handoff.reference_version===work.reference_version;
+        const qaRework=active[0]==="dev"&&(["qa_failed","qa_conditional"].includes(normalizedStatus(state))||(normalizedStatus(state)==="needs_revalidation"&&(asObject(details.qa).status==="blocked"||qaReturn)));
+        if (qaRework&&(!qaRepair||!selectedRoles.includes("cr")||!["pending","blocked"].includes(asObject(details.cr).status))) return null;
         for (const role of selectedRoles.slice(0,selectedRoles.indexOf(active[0]))) {
           const prior=asObject(details[role]).status;
           const retry=role==="cr"&&((qaRepair&&["pending","blocked"].includes(prior))||(prior==="blocked"&&(repair||(active[0]==="dev"&&acceptedRepair(input,role,active[0])))));
@@ -394,7 +398,7 @@
       function filePath(value) {
         const path=optionalText(value),local=path.replaceAll(String.fromCharCode(92),"/");
         const relative=/^[a-z]:[/]$/i.test(local.slice(0,3))?local.slice(3):local;
-        const invalid=relative.includes(":")||typeof value==="string"&&[...value].some(char=>char.charCodeAt(0)<32);
+        const invalid=relative.includes(":")||typeof value==="string"&&/\p{Cc}/u.test(value);
         return path&&!path.startsWith(String.fromCharCode(92))&&!local.startsWith("//")&&!local.endsWith("/")&&!invalid&&!relative.split("/").includes("..")?path:"";
       }
       function displayFilePath(value,projectRoot) {
