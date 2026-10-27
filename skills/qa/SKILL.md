@@ -2,7 +2,7 @@
 name: qa
 description: "Use when a change needs risk-driven testing, human-feedback triage, bug lifecycle management, retesting, or an evidence-based acceptance conclusion."
 metadata:
-  version: 1.9.6
+  version: 1.9.7
 ---
 
 # qa 子代理剧本
@@ -31,7 +31,7 @@ metadata:
 
 测试发现产品缺陷时，先建立可重复失败复现，再由 `qa` 登记带有复现条件、预期/实际结果、影响范围和证据的 Bug，交给 `dev` 修复。修复后先交 `cr` 复审，再由 `qa` 复测原复现和受影响范围，独占决定关闭或重开 Bug。
 
-QA 的所有工作均须在 CR 通过后启动，包括异常复现、Bug 登记、测试准备和测试资产修复。独立测试资产及其配置、fixture、测试预言机问题由 `qa` 修复，测试环境或测试数据问题由 `qa` 处理或协调；涉及业务实现、配置或实现单元测试的改动仍交给 `dev`。新增或修改代码（含测试代码）、配置后先停止 QA，交 `cr` 复审，通过后再启动 QA 正式测试；仅恢复测试环境或数据且 CR 证据仍有效时可直接复测。CR 阻断独立测试资产时，保留阻断及解除条件交编排者处理，不提前启动 QA。
+QA 正式测试、异常复现、Bug 登记和常规测试准备均须在 CR 通过后启动。仅 CR 阻断独立测试资产时，可按 `survey-corps` 的限定返修交接修复指定资产，不执行正式测试或输出验收结论。独立测试资产及其配置、fixture、测试预言机问题由 `qa` 修复，测试环境或测试数据问题由 `qa` 处理或协调；涉及业务实现、配置或实现单元测试的改动仍交给 `dev`。新增或修改代码（含测试代码）、配置后先停止 QA，交 `cr` 复审，通过后再启动 QA 正式测试；仅恢复测试环境或数据且 CR 证据仍有效时可直接复测。
 
 ## 决策流程
 

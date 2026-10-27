@@ -224,10 +224,11 @@
   <script>
     "use strict";
     (() => {
-      const commonStates={completed:["已完成","completed"],complete:["已完成","completed"],done:["已完成","completed"],success:["已完成","completed"],successful:["已完成","completed"],succeeded:["已完成","completed"],failed:["失败","danger"],paused:["已暂停","waiting"],waiting:["等待中","waiting"],cancelled:["已取消","pending"],canceled:["已取消","pending"],needs_user_confirm:["等待用户确认","waiting"],needs_revision:["需要修订","revision"],blocked:["已阻断","danger"]};
+      const commonStates={passed:["已完成","completed"],qa_success:["测试通过","passed"],skipped:["已跳过","pending"],completed:["已完成","completed"],complete:["已完成","completed"],done:["已完成","completed"],success:["已完成","completed"],successful:["已完成","completed"],succeeded:["已完成","completed"],failed:["失败","danger"],paused:["已暂停","waiting"],waiting:["等待中","waiting"],cancelled:["已取消","pending"],canceled:["已取消","pending"],needs_user_confirm:["等待用户确认","waiting"],needs_revision:["需要修订","revision"],blocked:["已阻断","danger"]};
       const taskStates={...commonStates,confirmed:["已确认","completed"],planned:["计划","pending"],dev_in_progress:["开发中","active"],ready_for_cr:["审查阶段","waiting"],cr_blocked:["审查阻断","danger"],ready_for_qa:["测试阶段","waiting"],qa_failed:["测试失败","danger"],qa_conditional:["测试条件通过","revision"],qa_passed:["测试通过","passed"],workflow_ready:["任务完成","passed"],needs_revalidation:["需要重新验证","revision"]};
       const roles=["req","dev","cr","qa"],roleLabels={req:"REQ",dev:"DEV",cr:"CR",qa:"QA"};
-      const stoppedStates=new Set(["needs_user_confirm","paused","waiting","blocked","qa_passed","workflow_ready","completed","complete","done","success","successful","succeeded","failed","cancelled","canceled"]);
+      const finishedStatuses=new Set(["completed","complete","done","success","successful","succeeded","passed","qa_passed","qa_success","workflow_ready","failed","cancelled","canceled","skipped"]);
+      const stoppedStates=new Set(["needs_user_confirm","paused","waiting","blocked",...finishedStatuses]);
       const asObject=value=>value&&typeof value==="object"&&!Array.isArray(value)?value:{};
       const missing=value=>value===undefined||value===null||value==="";
       const asList=value=>Array.isArray(value)?value:missing(value)?[]:[value];
@@ -259,7 +260,6 @@
         node.textContent=valid?format(value):"";
         node.classList.toggle("sc-task-view__placeholder",!valid);
       }
-      const finishedStatuses=new Set(["completed","complete","done","success","successful","succeeded","passed","qa_passed","qa_success","workflow_ready","failed","cancelled","canceled","skipped"]);
       function renderTaskMetrics(root,work,state) {
         const metrics=asObject(work.metrics);
         setMetric(root.querySelector('[data-sc-metric="task-elapsed"]'),metrics.elapsed_ms,formatElapsed);
@@ -321,11 +321,25 @@
         summary.prepend(title);
         return summary;
       }
-      function resolveActiveRole(details,state,selectedRoles) {
+      function acceptedRepair(snapshot, from, to) {
+        const work = asObject(snapshot.work_unit), handoff = Array.isArray(snapshot.handoffs) ? asObject(snapshot.handoffs.at(-1)) : {};
+        return normalizedStatus(snapshot.state) === "cr_blocked" && handoff.state === "cr_blocked" &&
+          typeof work.work_unit_id === "string" && work.work_unit_id.trim() !== "" && handoff.work_unit_id === work.work_unit_id &&
+          typeof work.reference_version === "string" && work.reference_version.trim() !== "" && handoff.reference_version === work.reference_version &&
+          handoff.from === from && handoff.to === to && handoff.handoff_result === "accepted" &&
+          Array.isArray(handoff.files) && handoff.files.length > 0 && handoff.files.every(file => typeof file === "string" && file.trim() !== "") &&
+          typeof handoff.decision === "string" && handoff.decision.trim() !== "" && typeof handoff.next_action === "string" && handoff.next_action.trim() !== "";
+      }
+      function resolveActiveRole(details,state,selectedRoles,input={}) {
         if (stoppedStates.has(normalizedStatus(state))) return null;
         const active=selectedRoles.filter(role=>asObject(details[role]).status==="running");
         if (active.length!==1) return null;
-        if (active[0]==="qa"&&(!selectedRoles.includes("cr")||asObject(details.cr).status!=="passed")) return null;
+        const repair=active[0]==="qa"&&asObject(details.cr).status==="blocked"&&asObject(details.cr).blocker_type==="test_assets"&&acceptedRepair(input,"cr","qa");
+        if (active[0]==="qa"&&(!selectedRoles.includes("cr")||(asObject(details.cr).status!=="passed"&&!repair))) return null;
+        for (const role of selectedRoles.slice(0,selectedRoles.indexOf(active[0]))) {
+          const prior=asObject(details[role]).status;
+          if (prior!==undefined&&prior!==null&&prior!==""&&prior!=="passed"&&!(prior==="blocked"&&role==="cr"&&(repair||(active[0]==="dev"&&acceptedRepair(input,role,active[0]))))) return null;
+        }
         return active[0];
       }
       function renderWorkflowMotion(root,selectedRoles,activeRole,state) {
@@ -677,7 +691,7 @@
         root.__scDetailRevealCleanup=()=>{ root.removeEventListener("toggle",onToggle,true); [...pending.values()].forEach(cleanups=>cleanups.forEach(cleanup=>cleanup())); };
       }
       function animateOnce(node,className,cleanups,onFinish) { if (!node) return; node.classList.remove(className); void node.offsetWidth; node.classList.add(className); const finish=event=>{ if (event&&event.target!==node) return; node.classList.remove(className); node.removeEventListener("animationend",finish); node.removeEventListener("animationcancel",finish); onFinish?.(); }; node.addEventListener("animationend",finish); node.addEventListener("animationcancel",finish); cleanups.push(finish); }
-      function observeHandoff(previous,input,selectedRoles,activeRole=resolveActiveRole(asObject(input.role_details),input.state,selectedRoles)) {
+      function observeHandoff(previous,input,selectedRoles,activeRole=resolveActiveRole(asObject(input.role_details),input.state,selectedRoles,input)) {
         const viewId=optionalText(input.view_id),sameView=!!viewId&&previous?.viewId===viewId;
         const seen=new Set(sameView?previous.seen:[]),records=Array.isArray(input.handoffs)?input.handoffs.map(value=>{
           const item=asObject(value);
@@ -713,7 +727,7 @@
         const input=asObject(snapshot),work=asObject(input.work_unit),details=asObject(input.role_details),state=input.state;
         const fileReading=captureFileReading(root);
         const selectedRoles=[...new Set(asList(work.roles).filter(value=>typeof value==="string").map(value=>value.trim().toLowerCase()).filter(value=>roles.includes(value)))];
-        const activeRole=resolveActiveRole(details,state,selectedRoles),userOpenRole=root.querySelector("details[data-sc-role][open]")?.dataset.scRole;
+        const activeRole=resolveActiveRole(details,state,selectedRoles,input),userOpenRole=root.querySelector("details[data-sc-role][open]")?.dataset.scRole;
         const sameView=root.__scViewId===input.view_id,openRole=sameView&&root.__scResolvedActiveRole===activeRole&&(userOpenRole===undefined||selectedRoles.includes(userOpenRole))?userOpenRole:activeRole;
         const values={target:work.target,task_type:work.task_type,role_selection_reason:work.role_selection_reason};
         Object.entries(values).forEach(([name,value])=>root.querySelectorAll(`[data-sc-field="${name}"]`).forEach(node=>{ node.textContent=safeText(value); node.classList.toggle("sc-task-view__placeholder",missing(value)); }));

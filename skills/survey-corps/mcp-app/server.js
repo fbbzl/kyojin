@@ -4,7 +4,7 @@
 // Minimal, dependency-free MCP stdio server for the SC task view.
 const fs = require("node:fs");
 const path = require("node:path");
-const { createElapsedTracker } = require("./elapsed-tracker");
+const { createElapsedTracker, workflowError } = require("./elapsed-tracker");
 
 const APP_URI = "ui://survey-corps/task-view";
 const APP_MIME = "text/html;profile=mcp-app";
@@ -59,21 +59,32 @@ function appHtml() {
 }
 function isObject(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
 function resource(text) { return { uri: APP_URI, mimeType: APP_MIME, text }; }
-function validateSnapshot(snapshot) {
-  if (!isObject(snapshot)) return "show_sc_task_view snapshot must be an object";
-  if (typeof snapshot.view_id !== "string" || snapshot.view_id.trim() === "") return "snapshot.view_id must be a non-empty string";
-  if (Object.hasOwn(snapshot, "state") && typeof snapshot.state !== "string") return "snapshot.state must be a string";
-  if (Buffer.byteLength(JSON.stringify(snapshot), "utf8") > MAX_SNAPSHOT_BYTES) return "snapshot exceeds 200 KiB";
-  const roles = snapshot.work_unit?.roles;
-  const selected = [...new Set((Array.isArray(roles) ? roles : [roles]).filter(role => typeof role === "string").map(role => role.trim().toLowerCase()).filter(role => ["req", "dev", "cr", "qa"].includes(role)))];
-  for (const role of ["req", "dev", "cr", "qa"]) {
-    const detail = snapshot.role_details?.[role];
-    if (isObject(detail) && Object.hasOwn(detail, "status") && !ROLE_STATUSES.includes(detail.status)) return `role_details.${role}.status must be one of: ${ROLE_STATUSES.join(", ")}`;
-  }
-  const activeRoles = selected.filter(role => snapshot.role_details?.[role]?.status === "running");
-  if (activeRoles.length > 1) return "Serial workflow permits only one active role: " + activeRoles.join(", ");
-  if (activeRoles[0] === "qa" && (!selected.includes("cr") || snapshot.role_details?.cr?.status !== "passed")) return "QA can run only when selected CR has passed";
+function validateValue(value, schema, field) {
+  if (schema.type === "object") {
+    if (!isObject(value)) return field + " must be an object";
+    for (const key of schema.required || []) if (!Object.hasOwn(value, key)) return field + "." + key + " is required";
+    for (const key of Object.keys(value)) {
+      const child = schema.properties?.[key];
+      if (!Object.hasOwn(schema.properties || {}, key)) {
+        if (schema.additionalProperties === false) return field + "." + key + " is not allowed";
+      } else {
+        const error = validateValue(value[key], child, field + "." + key);
+        if (error) return error;
+      }
+    }
+  } else if (schema.type === "string") {
+    if (schema.enum && !schema.enum.includes(value)) return field + " must be one of: " + schema.enum.join(", ");
+    if (typeof value !== "string") return field + " must be a string";
+    if (schema.minLength && value.length < schema.minLength) return field + " must be a non-empty string";
+  } else if (schema.type === "integer" && (!Number.isSafeInteger(value) || value < schema.minimum || value > schema.maximum)) return field + " must be a non-negative safe integer";
   return null;
+}
+function validateSnapshot(snapshot) {
+  const error = validateValue(snapshot, SNAPSHOT_SCHEMA, "snapshot");
+  if (error) return error;
+  if (snapshot.view_id.trim() === "") return "snapshot.view_id must be a non-empty string";
+  if (Buffer.byteLength(JSON.stringify(snapshot), "utf8") > MAX_SNAPSHOT_BYTES) return "snapshot exceeds 200 KiB";
+  return workflowError(snapshot);
 }
 function handle(id, method, params) {
   if (method === "initialize") { const protocolVersion=params?.protocolVersion; if (!SUPPORTED_PROTOCOL_VERSIONS.has(protocolVersion)) return failure(id, -32602, "Unsupported protocol version"); return send({ jsonrpc: "2.0", id, result: { protocolVersion, capabilities: { tools: {}, resources: {} }, serverInfo: { name: "survey-corps-task-view", version: "0.1.4" } } }); }

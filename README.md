@@ -24,7 +24,7 @@ kyojin 是团队共用的工程标准和 AI 协作 Skill 集合。`std/` 定义�
 | 工程规范 | 同一团队的语言、框架和专项约束分散 | [std/](std/) |
 | 角色 Skills | AI 执行任务时职责、交付物和完成依据不清 | [skills/](skills/) |
 | Survey Corps | 多角色任务需要编排、交接和风险升级 | [协作协议](skills/survey-corps/SKILL.md) |
-| 协作任务视图 | 查看当前参与角色、状态、证据和下一步 | [MCP App](skills/survey-corps/mcp-app/README.md) |
+| 协作任务视图 | 查看当前参与角色、状态、证据和风险 | [MCP App](skills/survey-corps/mcp-app/README.md) |
 
 ## 快速开始
 
@@ -89,7 +89,7 @@ REQ 明确需求 → DEV 实现 → CR 审查 → QA 测试
 
 REQ、DEV、CR、QA 分别负责需求、实现、静态审查和独立测试。SC 流程中的参与角色必须由真实独立子代理执行；涉及代码改动时，链路必须包含 CR 和 QA。单角色任务不必启动完整 SC 流程。
 
-任务视图随明确的编排动作更新，显示实际参与角色及其状态、摘要、证据、风险、下一步和执行耗时。视图通过 MCP App 在宿主内呈现，不使用后台轮询；它不替代权威交接记录或验收结论。视图工具不可用时，SC 流程会阻断，需恢复插件能力后继续。
+任务视图随明确的编排动作更新，显示实际参与角色及其状态、摘要、证据、风险和执行耗时。视图通过 MCP App 在宿主内呈现，不使用后台轮询；它不替代权威交接记录或验收结论。视图工具不可用时，SC 流程会阻断，需恢复插件能力后继续。
 
 协议与运行边界分别见 [Survey Corps Skill](skills/survey-corps/SKILL.md) 和 [MCP App 说明](skills/survey-corps/mcp-app/README.md)。
 

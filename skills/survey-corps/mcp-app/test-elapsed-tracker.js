@@ -1,6 +1,6 @@
 "use strict";
 const assert = require("node:assert/strict");
-const { createElapsedTracker } = require("./elapsed-tracker");
+const { createElapsedTracker, workflowError } = require("./elapsed-tracker");
 
 let time = 0;
 const tracker = createElapsedTracker({ now: () => time });
@@ -29,6 +29,31 @@ assert.equal(roleElapsed(result, "req"), 1250);
 assert.equal(roleElapsed(result, "dev"), 500);
 time = 9000;
 assert.equal(elapsed(tracker.update(result)), 1750, "completion freezes stale active status");
+
+for (const state of ["passed", "qa_success", "skipped"]) {
+  let now = 0;
+  const clock = createElapsedTracker({ now: () => now });
+  const running = sample("end:" + state, "planned", { dev: "running" });
+  clock.update(running); now = 100;
+  const finished = clock.update({ ...running, state }); now = 500;
+  assert.equal(elapsed(clock.update(finished)), 100, state + " must freeze task elapsed");
+  assert.equal(roleElapsed(clock.update(finished), "dev"), 100);
+}
+const outOfOrder = sample("order", "dev_in_progress", { cr: "pending", dev: "running", qa: "pending" });
+assert.match(workflowError(outOfOrder), /preceding role cr/);
+tracker.update(outOfOrder); time += 50;
+assert.equal(elapsed(tracker.update(outOfOrder)), 0, "out-of-order snapshots must not accrue time");
+const repair = sample("repair", "cr_blocked", { cr: "blocked", dev: "passed", qa: "running" });
+Object.assign(repair.work_unit, { work_unit_id: "repair", reference_version: "v1" });
+repair.role_details.cr.blocker_type = "test_assets";
+repair.handoffs = [{ work_unit_id: "repair", reference_version: "v1", from: "cr", to: "qa", state: "cr_blocked", handoff_result: "accepted", files: ["test.js"], decision: "Repair test asset only", next_action: "Return to CR before testing" }];
+assert.equal(workflowError(repair), null);
+tracker.update(repair); time += 25;
+assert.equal(roleElapsed(tracker.update(repair), "qa"), 25, "scoped repair counts as QA work");
+for (const change of [value => { value.handoffs = []; }, value => { value.handoffs[0].reference_version = "old"; }, value => { value.handoffs[0].files = []; }, value => { value.role_details.cr.blocker_type = "bug"; }]) {
+  const invalid = structuredClone(repair); change(invalid);
+  assert.ok(workflowError(invalid), "incomplete or stale repair handoffs must not authorize QA");
+}
 
 const seeded = sample("seeded", "planned", { dev: "running" }, { elapsed_ms: 2000, total_tokens: 99 });
 seeded.role_details.dev.metrics = { elapsed_ms: 1500 };

@@ -2,7 +2,7 @@
 name: cr
 description: "Use when code or design changes need evidence-based review of correctness, contracts, security, data, performance, or maintainability before formal testing."
 metadata:
-  version: 1.11.2
+  version: 1.11.3
 ---
 
 # cr 子代理剧本
@@ -73,7 +73,7 @@ metadata:
 
 ## 门禁与权限
 
-- 存在未关闭的阻断项，或影响范围/关键证据未完成，不能启动 QA 的任何工作或输出审查通过。独立测试资产的阻断项交编排者保留原因和解除条件，不以 QA 提前返修绕过门禁。
+- 存在未关闭的阻断项，或影响范围/关键证据未完成，不能启动 QA 正式测试或输出审查通过。仅独立测试资产阻断可按 `survey-corps` 的限定返修交接启动 QA 修复；阻断保留，修复后由 CR 复审，通过后才正式测试。
 - 公共契约或跨模块变更必须记录影响链取证方式、已验证范围和未覆盖范围。
 - 不得修改实现、测试或发布配置；审查项按职责归属移交给 `dev` 或 `qa`，均须附证据、影响和验收条件。
 - 阻断和高风险问题必须包含可核验证据、影响和退出条件，不能把无证据的推断直接当审查结论。

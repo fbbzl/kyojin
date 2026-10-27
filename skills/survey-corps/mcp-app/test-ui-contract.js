@@ -264,8 +264,14 @@ assert.match(appTemplate, /userOpenRole=root\.querySelector\("details\[data-sc-r
 assert.match(appTemplate, /sameView&&root\.__scResolvedActiveRole===activeRole&&\(userOpenRole===undefined\|\|selectedRoles\.includes\(userOpenRole\)\)\?userOpenRole:activeRole/, "only the same task and active role may preserve a still-valid manual selection");
 assert.match(appTemplate, /root\.__scResolvedActiveRole=activeRole/, "rerender must remember the resolved active role for the next snapshot");
 assert.doesNotMatch(appTemplate, /const stateRole=/, "task state must never supply a fallback active role");
-assert.match(appTemplate, /active\[0\]===\"qa\"&&\(!selectedRoles\.includes\(\"cr\"\)\|\|asObject\(details\.cr\)\.status!==\"passed\"\)/, "QA activity must require a selected, explicitly passed CR");
-assertSkillMatch(/CR 未通过时 QA 保持 `pending`，不得提前进行测试准备、异常复现或测试资产修复/, "QA preparation must obey the same CR gate as formal testing");
+// SC validation regressions: terminal activity, ordered progress and scoped test-asset repair.
+const repairInput={state:"cr_blocked",work_unit:{roles:["cr","dev","qa"],work_unit_id:"repair",reference_version:"v1"},role_details:{cr:{status:"blocked",blocker_type:"test_assets"},dev:{status:"passed"},qa:{status:"running"}},handoffs:[{from:"cr",to:"qa",state:"cr_blocked",handoff_result:"accepted",work_unit_id:"repair",reference_version:"v1",files:["test.js"],decision:"Repair asset only",next_action:"CR review before testing"}]};
+const activity=input=>resolveActiveRole(input.role_details,input.state,input.work_unit.roles,input);
+assert.equal(activity(repairInput),"qa","a bound test-asset repair may run without formal-test permission");
+for(const mutate of [v=>{v.handoffs=[];},v=>{v.handoffs[0].reference_version="old";},v=>{v.role_details.cr.blocker_type="bug";}]){const value=structuredClone(repairInput);mutate(value);assert.equal(activity(value),null,"incomplete repair authority must not animate QA");}
+assert.equal(activity({state:"dev_in_progress",work_unit:{roles:["cr","dev"]},role_details:{cr:{status:"pending"},dev:{status:"running"}}}),null,"an explicit pending predecessor cannot be skipped");
+for(const [state,label] of [["passed","已完成"],["qa_success","测试通过"],["skipped","已跳过"]]){assert.equal(stateText(state),label);assert.equal(resolveActiveRole(validDetails,state,selectedRoles),null,"terminal state must suppress stale running activity");}
+assertSkillMatch(/CR 未通过时 QA 保持 .pending.*独立测试资产限定返修可启动/,"only scoped asset repair may precede CR approval");
 for (const [state, label, tone] of [["paused", "已暂停", "waiting"], ["waiting", "等待中", "waiting"], ["failed", "失败", "danger"], ["cancelled", "已取消", "pending"], ["canceled", "已取消", "pending"], ["complete", "已完成", "completed"], ["done", "已完成", "completed"], ["successful", "已完成", "completed"]]) {
   assert.equal(stateText(state), label, `${state} must display its supported global state label`);
   assert.equal(stateClass(state), `sc-task-view__state--${tone}`, `${state} must use its supported global state tone`);

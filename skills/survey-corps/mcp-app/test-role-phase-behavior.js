@@ -79,6 +79,10 @@ function chromeBehavior() {
     result.qaGate.push({name:'missing-cr-detail',...observe(),qa:status('qa'),unchanged:beforeMissingCr===JSON.stringify(missingCr)});
     const scalar=structuredClone(initial);scalar.work_unit.roles=' DEV ';render(scalar);
     result.scalarDev=observe();
+    result.terminals=[];
+    for(const [state,label] of [['passed','已完成'],['qa_success','测试通过'],['skipped','已跳过']]){const value=structuredClone(initial);value.state=state;render(value);result.terminals.push({state,label:root.querySelector('[data-sc-field=state]').textContent,...observe(),shimmer:root.querySelectorAll('.is-status-running').length});}
+    const skipped=structuredClone(initial);skipped.work_unit.roles=['cr','dev','qa'];skipped.role_details={cr:{status:'pending'},dev:{status:'running'},qa:{status:'pending'}};render(skipped);result.skippedPredecessor=observe();
+    const repair={view_id:'repair',state:'cr_blocked',work_unit:{roles:['cr','qa'],work_unit_id:'repair',reference_version:'v1'},role_details:{cr:{status:'blocked',blocker_type:'test_assets'},qa:{status:'running'}},handoffs:[{from:'cr',to:'qa',state:'cr_blocked',handoff_result:'accepted',work_unit_id:'repair',reference_version:'v1',files:['test.js'],decision:'Repair asset only',next_action:'CR review before testing'}]};render(repair);result.repair=observe();repair.handoffs[0].reference_version='old';render(repair);result.staleRepair=observe();
     document.body.dataset.testResult=JSON.stringify(result);
   </script></body></html>`;
   fs.writeFileSync(page, harness, "utf8");
@@ -98,6 +102,9 @@ function chromeBehavior() {
   assert.deepEqual(result.conflict, { active: [], open: [], current: [], unchanged: true });
   for(const item of result.qaGate) assert.deepEqual(item, {name:item.name,active:[],open:[],current:[],qa:'进行中',unchanged:true}, `${item.name}: invalid QA snapshots must stay inert and preserve their raw status`);
   assert.deepEqual(result.scalarDev, {active:['dev'],open:['dev'],current:['dev']}, "scalar and array role selection must normalize consistently");
+  for(const item of result.terminals)assert.deepEqual(item,{state:item.state,label:{passed:'已完成',qa_success:'测试通过',skipped:'已跳过'}[item.state],active:[],open:[],current:[],shimmer:0},'terminal DOM must suppress stale running activity');
+  for(const item of [result.skippedPredecessor,result.staleRepair])assert.deepEqual(item,{active:[],open:[],current:[]});
+  assert.deepEqual(result.repair,{active:['qa'],open:['qa'],current:['qa']},'scoped repair remains visible as QA work');
   console.log(`Serial workflow Chrome behavior passed; browser evidence: ${page}`);
 }
 

@@ -2,7 +2,7 @@
 const { performance } = require("node:perf_hooks");
 
 const ROLES = new Set(["req", "dev", "cr", "qa"]);
-const STOPPED = new Set(["needs_user_confirm", "paused", "waiting", "blocked", "qa_passed", "workflow_ready", "completed", "complete", "done", "success", "successful", "succeeded", "failed", "cancelled", "canceled"]);
+const STOPPED = new Set(["needs_user_confirm", "paused", "waiting", "blocked", "passed", "qa_success", "skipped", "qa_passed", "workflow_ready", "completed", "complete", "done", "success", "successful", "succeeded", "failed", "cancelled", "canceled"]);
 const object = value => value !== null && typeof value === "object" && !Array.isArray(value);
 const record = value => object(value) ? value : {};
 const status = value => typeof value === "string" ? value.trim().toLowerCase().replace(/[ -]+/g, "_") : "";
@@ -10,13 +10,31 @@ const initialElapsed = metrics => Number.isSafeInteger(record(metrics).elapsed_m
 const stopwatch = metrics => ({ elapsed: initialElapsed(metrics), active: false });
 const selectedRoles = value => [...new Set((Array.isArray(value) ? value : [value]).filter(value => typeof value === "string").map(value => value.trim().toLowerCase()).filter(value => ROLES.has(value)))];
 
+function acceptedRepair(snapshot, from, to) {
+  const work = record(snapshot.work_unit), handoff = Array.isArray(snapshot.handoffs) ? record(snapshot.handoffs.at(-1)) : {};
+  return status(snapshot.state) === "cr_blocked" && handoff.state === "cr_blocked" &&
+    typeof work.work_unit_id === "string" && work.work_unit_id.trim() !== "" && handoff.work_unit_id === work.work_unit_id &&
+    typeof work.reference_version === "string" && work.reference_version.trim() !== "" && handoff.reference_version === work.reference_version &&
+    handoff.from === from && handoff.to === to && handoff.handoff_result === "accepted" &&
+    Array.isArray(handoff.files) && handoff.files.length > 0 && handoff.files.every(file => typeof file === "string" && file.trim() !== "") &&
+    typeof handoff.decision === "string" && handoff.decision.trim() !== "" && typeof handoff.next_action === "string" && handoff.next_action.trim() !== "";
+}
+function workflowError(snapshot, selected = selectedRoles(record(snapshot.work_unit).roles)) {
+  const details = record(snapshot.role_details), active = selected.filter(role => record(details[role]).status === "running");
+  if (active.length > 1) return "Serial workflow permits only one active role: " + active.join(", ");
+  if (!active.length) return null;
+  const repair = active[0] === "qa" && record(details.cr).status === "blocked" && record(details.cr).blocker_type === "test_assets" && acceptedRepair(snapshot, "cr", "qa");
+  if (active[0] === "qa" && (!selected.includes("cr") || (record(details.cr).status !== "passed" && !repair))) return "QA can run only when selected CR has passed or accepted test-asset repair is scoped";
+  for (const role of selected.slice(0, selected.indexOf(active[0]))) {
+    const prior = record(details[role]).status;
+    // Missing historical status remains readable; explicit unfinished predecessors cannot be skipped.
+    if (prior !== undefined && prior !== null && prior !== "" && prior !== "passed" && !(prior === "blocked" && role === "cr" && (repair || (active[0] === "dev" && acceptedRepair(snapshot, role, active[0]))))) return "Serial workflow requires preceding role " + role + " to pass or hand off a scoped repair";
+  }
+  return null;
+}
 function activeRole(snapshot, selected) {
-  if (STOPPED.has(status(snapshot.state))) return null;
-  const details = record(snapshot.role_details);
-  const active = selected.filter(role => record(details[role]).status === "running");
-  if (active.length !== 1) return null;
-  if (active[0] === "qa" && (!selected.includes("cr") || record(details.cr).status !== "passed")) return null;
-  return active[0];
+  if (STOPPED.has(status(snapshot.state)) || workflowError(snapshot, selected)) return null;
+  return selected.find(role => record(record(snapshot.role_details)[role]).status === "running") || null;
 }
 function advance(timer, delta) {
   if (timer.active) timer.elapsed = Math.min(Number.MAX_SAFE_INTEGER, timer.elapsed + delta);
@@ -70,4 +88,4 @@ function createElapsedTracker({ now = () => performance.now(), maxViews = 128 } 
   return { update };
 }
 
-module.exports = { createElapsedTracker };
+module.exports = { createElapsedTracker, workflowError };
