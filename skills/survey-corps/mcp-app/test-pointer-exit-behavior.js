@@ -31,9 +31,9 @@ const finished = {
       "repository": "kyojin",
       "branch": "codex/sc-git-animated-emoji"
     },
-    "summary": "文件栏内容高度减半至22px，新增2px圆角边框；进行中显示真实上报的完整路径，总结时不再保留文件栏和顶部空位。",
+    "summary": "文件栏内容高度26px、外高30px，保留2px圆角边框；进行中显示真实上报的完整路径，总结时不再保留文件栏和顶部空位。",
     "verified_scope": [
-      "320/960下文件条内容22px、外高26px、四边2px；当前完整路径行无截字",
+      "320/960下文件条内容26px、外高30px、四边2px；当前完整路径行无截字",
       "总结移除文件框与顶部占位；悬停及返回无高度抖动",
       "六项正式验证通过，同最终基线CR及QA通过，阻断0",
       "本机技能目录与插件缓存共6个副本hash一致；两处服务和UI contract烟测通过"
@@ -55,7 +55,7 @@ const finished = {
       },
       "evidence": [
         "320/960长详情总结→悬停→返回外框尺寸一致",
-        "总结标题距框16px；文件框内容22px、总26px，完整路径可读"
+        "总结标题距框16px；文件框内容26px、总30px，完整路径可读"
       ]
     },
     "cr": {
@@ -77,7 +77,7 @@ const finished = {
       "summary": "320/960布局与实际字形检查通过，未关闭阻断0",
       "evidence": [
         "behavior、UI contract、motion、gap、compact、height六项正式命令exit0",
-        "当前完整行中英文字形无截字，内容22px/框总高26px/四边2px",
+        "当前完整行中英文字形无截字，内容26px/框总高30px/四边2px",
         "总结无文件栏及顶部占位；hover切换严格等高；页面和console错误0"
       ]
     }

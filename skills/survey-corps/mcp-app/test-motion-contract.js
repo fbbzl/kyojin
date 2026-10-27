@@ -133,8 +133,15 @@ const rippleRoot = {
   addEventListener: (type, listener) => { if (type === "click") clickListeners.add(listener); },
   removeEventListener: (type, listener) => clickListeners.delete(listener),
   contains: node => summaries.includes(node),
+  querySelectorAll: () => roleCards,
 };
-const summaries = [0, 1].map(() => ({
+const roleCards = ["dev", "cr"].map(role => {
+  const node = motionNode(); node.dataset.scRole = role;
+  node.classList.toggle = (name, selected) => selected ? node.classList.add(name) : node.classList.remove(name);
+  return node;
+});
+const summaries = roleCards.map(parentElement => ({
+  parentElement,
   children: [],
   getBoundingClientRect: () => ({ left: 100, top: 200, width: 120, height: 80 }),
   append(node) { this.children.push(node); },
@@ -149,6 +156,7 @@ context.window.testRoleRipple(rippleRoot);
 context.window.testRoleRipple(rippleRoot);
 assert.equal(clickListeners.size, 1, "rerender must not duplicate delegated click listeners");
 clickSummary(summaries[0]);
+assert.deepEqual(roleCards.map(node => node.classList.contains("is-click-selected")), [true, false], "click selects only its role card");
 let clip = activeRipples()[0], wave = clip.children[0];
 assert.equal(clip.getAttribute("aria-hidden"), "true", "visual feedback must be absent from the accessible tree");
 assert.equal(wave.style.left, "25px", "pointer origin uses the actual local click x coordinate");
@@ -156,6 +164,7 @@ assert.equal(wave.style.top, "17px", "pointer origin uses the actual local click
 assert.equal(wave.style.width, `${2 * Math.hypot(95, 63)}px`, "diameter reaches the furthest summary corner");
 assert.equal(wave.style.height, wave.style.width, "the wave is circular");
 clickSummary(summaries[1], 0, 0, 0);
+assert.deepEqual(roleCards.map(node => node.classList.contains("is-click-selected")), [false, true], "click transfers the unique role selection");
 assert.equal(clip.removed, true, "rapid cross-card clicks remove the previous wave");
 assert.equal(activeRipples().length, 1, "only the latest wave is retained");
 clip = activeRipples()[0]; wave = clip.children[0];
@@ -173,7 +182,8 @@ assert.equal(clickListeners.size, 1, "snapshot cleanup keeps exactly one delegat
 clickSummary(null);
 assert.equal(activeRipples().length, 0, "clicks outside role summaries stay unchanged");
 reduced = true;
-clickSummary(summaries[0]);
+clickSummary(summaries[1]);
+assert.deepEqual(roleCards.map(node => node.classList.contains("is-click-selected")), [false, true], "reduced motion retains static click selection");
 assert.equal(activeRipples().length, 0, "reduced motion must not create a wave layer");
 rippleRoot.__scRoleRippleCleanup();
 assert.equal(clickListeners.size, 0, "lifecycle cleanup removes the delegated listener");

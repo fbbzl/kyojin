@@ -76,20 +76,20 @@
     .sc-task-view__role-lane:has(.sc-task-view__connector) { align-self:stretch; }
     .sc-task-view__role-lane:has(.sc-task-view__connector) .sc-task-view__connector { flex-grow:1; }
     .sc-task-view__lane-frame { position:absolute; left:-8px; top:-8px; width:calc(100% + 16px); height:calc(100% + 16px); pointer-events:none; }
-    .sc-task-view__lane-frame rect { x:1px; y:1px; width:calc(100% - 2px); height:calc(100% - 2px); rx:12px; fill:none; stroke:color-mix(in srgb,var(--line) 70%,transparent); stroke-width:2px; stroke-dasharray:6px 6px; }
+    .sc-task-view__lane-frame rect { x:1px; y:1px; width:calc(100% - 2px); height:calc(100% - 2px); rx:12px; fill:none; stroke:var(--line); stroke-width:2px; stroke-dasharray:6px 6px; }
     .sc-task-view.is-running .sc-task-view__lane-frame rect { animation:sc-lane-flow 1.2s linear infinite; }
     .sc-task-view__roles { position:relative; display:flex; flex:1; flex-direction:column; align-items:stretch; }
     .sc-task-view__role-preview { display:grid; grid-template-rows:auto minmax(0,1fr); align-self:stretch; justify-self:end; width:calc(90% + 27px); min-width:0; padding:14px; border:2px solid var(--line); border-radius:6px; background:var(--panel); }
     .sc-task-view__preview-content { display:grid; min-width:0; overflow-wrap:anywhere; }
-    .sc-task-view__file-activity { align-self:start; box-sizing:content-box; min-width:0; height:22px; margin-bottom:10px; border:2px solid var(--line); border-radius:6px; overflow:hidden; font-size:11px; line-height:11px; }
+    .sc-task-view__file-activity { align-self:start; box-sizing:content-box; min-width:0; height:26px; margin-bottom:10px; border:2px solid var(--line); border-radius:6px; overflow:hidden; font-size:11px; line-height:11px; }
     .sc-task-view__file-activity[aria-hidden="true"] { visibility:hidden; }
-    .sc-task-view__file-track { min-width:0; transform:translateY(-5.5px); }
+    .sc-task-view__file-track { min-width:0; transform:translateY(-3.5px); }
     .sc-task-view__file-track.is-file-switching { animation:sc-file-switch 220ms ease-out 1; }
-    .sc-task-view__file-slot { height:11px; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; color:var(--muted); }
+    .sc-task-view__file-slot { height:11px; padding:0 8px; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; color:var(--muted); }
     .sc-task-view__file-slot:nth-child(2) { color:var(--text); }
     .sc-task-view [data-sc-role] .sc-task-view__file-activity { display:none; }
     @media (max-width:560px) { .sc-task-view [data-sc-role] .sc-task-view__file-activity { display:block; margin-bottom:0; } }
-    @keyframes sc-file-switch { from { transform:translateY(5.5px); } to { transform:translateY(-5.5px); } }
+    @keyframes sc-file-switch { from { transform:translateY(7.5px); } to { transform:translateY(-3.5px); } }
     .sc-task-view__preview-content .sc-task-view__detail { display:grid; align-content:start; gap:24px; padding:20px 0; border-top:0; }
     .sc-task-view__preview-body { display:grid; grid-area:1/1; align-self:stretch; min-width:0; }
     .sc-task-view__preview-size { display:grid; grid-area:1/1; align-self:start; min-width:0; visibility:hidden; pointer-events:none; user-select:none; }
@@ -113,7 +113,7 @@
     .sc-task-view details[data-sc-role].is-active { border-color:var(--role-accent); background:var(--panel-active); animation:sc-running-pulse var(--motion-period) ease-in-out infinite; }
     .sc-task-view details[data-sc-role].is-active > * { position:relative; z-index:1; }
     .sc-task-view details[data-sc-role] > summary { position:relative; }
-    .sc-task-view details[data-sc-role] > summary::before { content:""; position:absolute; z-index:3; inset:-2px; border-radius:6px; box-shadow:inset 3px 0 0 var(--active); pointer-events:none; }
+    .sc-task-view details[data-sc-role].is-click-selected > summary::before { content:""; position:absolute; z-index:3; inset:-2px; border-radius:6px; box-shadow:inset 3px 0 0 var(--active); pointer-events:none; }
     /* Clip the transient fill separately so the ownership line can extend beyond its summary. */
     .sc-task-view__role-ripple-clip { position:absolute; z-index:2; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; }
     .sc-task-view__role-ripple { position:absolute; border-radius:50%; background:var(--focus); pointer-events:none; animation:sc-role-ripple 500ms ease-out 1 both; }
@@ -596,13 +596,14 @@
         return node;
       }
       function handoffFiles(input,from,to) {
-        const unit=optionalText(asObject(input.work_unit).work_unit_id);
-        if (!unit||!Array.isArray(input.handoffs)) return [];
+        const work=asObject(input.work_unit),unit=optionalText(work.work_unit_id),version=optionalText(work.reference_version);
+        if (!unit||!Array.isArray(input.handoffs)||asObject(asObject(input.role_details)[from]).status==="pending") return [];
         const latest=input.handoffs.findLast(value=>{
           const item=asObject(value);
           return item.work_unit_id===unit&&(item.from===from&&item.to===to||item.from===to&&item.to===from);
         });
         if (latest?.from!==from||latest.to!==to||latest.handoff_result!=="accepted"||!Array.isArray(latest.files)) return [];
+        if (version&&optionalText(latest.reference_version)&&latest.reference_version!==work.reference_version) return [];
         return [...new Set(latest.files.map(filePath).filter(Boolean))];
       }
       function renderHandoffFiles(connector,files) {
@@ -626,10 +627,13 @@
         const focusedRole=focused?.closest("[data-sc-role]")?.dataset.scRole;
         if (!preserveFocus||!selectedRoles.includes(root.__scHoveredRole)) root.__scHoveredRole=null;
         if (!preserveFocus||!selectedRoles.includes(root.__scFocusedRole)||box.contains(document.activeElement)) root.__scFocusedRole=null;
+        if (!preserveFocus||!selectedRoles.includes(root.__scClickedRole)) root.__scClickedRole=null;
         box.setAttribute("aria-label",`${selectedRoles.map(role=>roleLabels[role]).join("、")} 顺序任务`);
         selectedRoles.forEach((role,index)=>{
           if (index) { const connector=document.createElement("span"); connector.className="sc-task-view__connector"; connector.dataset.scConnectorFrom=selectedRoles[index-1]; connector.dataset.scConnectorTo=role; renderHandoffFiles(connector,handoffFiles(input,selectedRoles[index-1],role)); fragment.append(connector); }
-          fragment.append(roleNode(role,asObject(details[role]),activeRole,openRole));
+          const node=roleNode(role,asObject(details[role]),activeRole,openRole);
+          node.classList.toggle("is-click-selected",role===root.__scClickedRole);
+          fragment.append(node);
         });
         box.replaceChildren(fragment);
         if (!focused?.matches("summary")) return;
@@ -644,6 +648,8 @@
         const onClick=event=>{
           const summary=event.target.closest?.("details[data-sc-role] > summary");
           if (!summary||!root.contains(summary)) return;
+          root.__scClickedRole=summary.parentElement.dataset.scRole;
+          root.querySelectorAll("details[data-sc-role]").forEach(node=>node.classList.toggle("is-click-selected",node===summary.parentElement));
           root.__scRoleRippleMotionCleanup?.();
           if (prefersReducedMotion()) return;
           const bounds=summary.getBoundingClientRect();
