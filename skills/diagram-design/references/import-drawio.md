@@ -139,7 +139,7 @@ What the run decided, and why:
 | `#dae8fc` / `#d5e8d4` / `#e1d5e7` fills | White services, ink-tint stores, one accent | Source color signals role; roles map to the design system |
 | API Gateway (degree 4, the digest's top hub) | The one accent node | Highest-degree node was also the story's pivot |
 
-12 source nodes → 8 drawn, inside the standard §7 budget even at a level that allows 12.
+12 source nodes → 8 drawn, inside the standard §7 and balanced budgets.
 
 ---
 

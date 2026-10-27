@@ -179,7 +179,7 @@ How much of the source survives. This is a *count* dial — it governs how many 
 | Level | Nodes | Edges | Sublabels | What survives |
 |---|---|---|---|---|
 | `faithful` (詳細) | ≤24, zoned | ≤32 | every port, protocol, version | Every distinct component in the source. Only exact duplicates merge. |
-| `balanced` (default) | ≤12 | ≤16 | technical sublabel on ≤4 nodes | Components that carry the story; leaf clusters collapse to one node each. |
+| `balanced` (default) | ≤9 | ≤12 | technical sublabel on ≤4 nodes | Components that carry the story; leaf clusters collapse to one node each. |
 | `simplified` (簡略) | ≤7 | ≤9 | none | Capabilities and their sequence. Infrastructure disappears. |
 
 `balanced` and `simplified` sit inside the standard complexity budget (SKILL.md §7). **`faithful` deliberately exceeds it** — that's the trade, and it comes with conditions:

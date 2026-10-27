@@ -3,7 +3,7 @@ name: diagram-design
 description: Create branded architecture, architecture delta, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant, radar/spider, polar chart (polar/radial lollipop), loop/flywheel, nested, tree, org chart, layer stack, exploded axonometric, axonometric plan, Venn, pyramid/funnel, treemap and marimekko, heatmap, bar and dumbbell, waterfall, line (slopegraph, ridgeline, streamgraph, bump), Gantt and scatter charts (bubble, beeswarm), high-level, process, medallion, data flow, DP integration, DP security matrix, Sankey, fishbone, Wardley map, kanban, user journey, service blueprint, deployment, dependency graph, UML class, story map, or database schema diagrams as HTML/SVG/PNG, with .drawio, Mermaid, and .excalidraw import, plus lifecycle phase maps, block decomposition trees, and onboarding guidance.
 license: MIT
 metadata:
-  version: 2.6.120
+  version: 2.6.121
 ---
 
 # Diagram Design
@@ -361,7 +361,7 @@ Set these four import decisions **before** drawing. Full spec: [output-spec.md](
 |---|---|---|
 | **Format** | `html` · `svg` · `png` · `html+png` | `html` |
 | **Size** | `doc-inline` · `doc-wide` · `slide-16x9` · `slide-4x3` · `social-og` · `social-square` · `print-a4-landscape` · `print-a3-landscape` · `print-letter-landscape` · `fit` | `doc-inline` |
-| **Detail** | `faithful` (≤24 nodes, zoned) · `balanced` (≤12) · `simplified` (≤7) | `balanced` |
+| **Detail** | `faithful` (≤24 nodes, zoned) · `balanced` (≤9) · `simplified` (≤7) | `balanced` |
 | **Audience** | `engineer` · `mixed` · `executive` — governs wording, not count | `mixed` |
 
 The size preset sets the `viewBox` **and** the type ramp; `faithful` is the only exemption from the §7 budget — zoned above 9 nodes, split above 24. The §6 connector rules never relax.
