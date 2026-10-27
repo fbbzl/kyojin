@@ -88,7 +88,7 @@ function validateSnapshot(snapshot) {
   if (isObject(snapshot.work_unit) && (!Object.hasOwn(snapshot, "state") || typeof snapshot.state !== "string")) return "snapshot.state must be a string for a task snapshot";
   if (isObject(snapshot.work_unit) && !(typeof snapshot.work_unit.roles === "string" || Array.isArray(snapshot.work_unit.roles) && snapshot.work_unit.roles.every(role => typeof role === "string"))) return "snapshot.work_unit.roles must be a string or an array of strings";
   if (Buffer.byteLength(JSON.stringify(snapshot), "utf8") > MAX_SNAPSHOT_BYTES) return "snapshot exceeds 200 KiB";
-  return workflowStateMachine.validate(snapshot);
+  return null;
 }
 function handle(id, method, params) {
   if (method === "initialize") { const protocolVersion=params?.protocolVersion; if (!SUPPORTED_PROTOCOL_VERSIONS.has(protocolVersion)) return failure(id, -32602, "Unsupported protocol version"); return send({ jsonrpc: "2.0", id, result: { protocolVersion, capabilities: { tools: {}, resources: {} }, serverInfo: { name: "survey-corps-task-view", version: "0.1.4" } } }); }
@@ -113,14 +113,20 @@ function handle(id, method, params) {
       frameExceeded = Buffer.byteLength(`${JSON.stringify(viewResponse(id, candidate, message))}\n`, "utf8") > MAX_FRAME_BYTES;
       return !frameExceeded;
     };
-    try { snapshot = elapsedTracker.update(hasSnapshot ? args.snapshot : latestSnapshot || EMPTY_SNAPSHOT, acceptSnapshot); }
+    try {
+      const applySnapshot = () => elapsedTracker.update(hasSnapshot ? args.snapshot : latestSnapshot || EMPTY_SNAPSHOT, acceptSnapshot);
+      if (hasSnapshot) {
+        const result = workflowStateMachine.dispatch({ type: "SNAPSHOT_RECEIVED", snapshot: args.snapshot }, applySnapshot);
+        if (result.error) return failure(id, -32602, result.error);
+        snapshot = result.value;
+      } else snapshot = applySnapshot();
+    }
     catch (error) {
       if (error instanceof RangeError) return failure(id, -32000, error.message);
       throw error;
     }
     if (!snapshot) return failure(id, frameExceeded ? -32603 : -32602, frameExceeded ? "Response exceeds 256 KiB" : "snapshot exceeds 200 KiB after adding elapsed time");
     if (hasSnapshot) {
-      workflowStateMachine.accept(snapshot);
       latestSnapshot = snapshot;
     }
     return send(viewResponse(id, snapshot, message));

@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 const { setTimeout: delay } = require("node:timers/promises");
-const { createWorkflowStateMachine } = require("./workflow-state-machine");
+const { createWorkflowStateMachine, transition } = require("./workflow-state-machine");
 const { startServer } = require("./test-stdio-helper");
 
 const roles = ["dev", "cr", "qa"];
@@ -11,20 +11,21 @@ const make = (view_id, state, statuses, extra = {}) => ({
   role_details: Object.fromEntries(Object.entries(statuses).map(([role, status]) => [role, { status }])),
   ...Object.fromEntries(Object.entries(extra).filter(([key]) => key !== "work_unit")),
 });
+const event = snapshot => ({ type: "SNAPSHOT_RECEIVED", snapshot });
+const rejectionError = (machine, snapshot) => machine.dispatch(event(snapshot), () => true).error;
 const accepted = (machine, snapshot) => {
-  assert.equal(machine.validate(snapshot), null, snapshot.state + " should be consistent");
-  machine.accept(snapshot);
+  assert.equal(rejectionError(machine, snapshot), null, snapshot.state + " should be consistent");
 };
 
 const normal = createWorkflowStateMachine();
 const planned = make("normal", "planned", { dev: "pending", cr: "pending", qa: "pending" });
 accepted(normal, planned);
 const invalid = make("normal", "ready_for_qa", { dev: "pending", cr: "pending", qa: "running" });
-assert.match(normal.validate(invalid), /CR.*passed/);
+assert.match(rejectionError(normal, invalid), /CR.*passed/);
 const dev = make("normal", "dev_in_progress", { dev: "running", cr: "pending", qa: "pending" });
 accepted(normal, dev);
 const invalidDev = make("normal", "dev_in_progress", { dev: "pending", cr: "pending", qa: "pending" });
-assert.match(normal.validate(invalidDev), /dev_in_progress requires DEV/);
+assert.match(rejectionError(normal, invalidDev), /dev_in_progress requires DEV/);
 const review = make("normal", "ready_for_cr", { dev: "passed", cr: "running", qa: "pending" });
 accepted(normal, review);
 const qa = make("normal", "ready_for_qa", { dev: "passed", cr: "passed", qa: "running" });
@@ -35,14 +36,14 @@ const resumed = make("normal", "ready_for_qa", { dev: "passed", cr: "passed", qa
 accepted(normal, resumed);
 accepted(normal, stopped);
 const wrongResume = make("normal", "dev_in_progress", { dev: "running", cr: "pending", qa: "pending" });
-assert.match(normal.validate(wrongResume), /resume its previous phase/);
+assert.match(rejectionError(normal, wrongResume), /resume its previous phase/);
 
 const optimized = createWorkflowStateMachine();
 accepted(optimized, make("optimized", "planned", { cr: "pending", dev: "pending", qa: "pending" }, { work_unit: { roles: ["cr", "dev", "qa"] } }));
 accepted(optimized, make("optimized", "ready_for_cr", { cr: "running", dev: "pending", qa: "pending" }, { work_unit: { roles: ["cr", "dev", "qa"] } }));
 accepted(optimized, make("optimized", "dev_in_progress", { cr: "passed", dev: "running", qa: "pending" }, { work_unit: { roles: ["cr", "dev", "qa"] } }));
 accepted(optimized, make("optimized", "ready_for_cr", { cr: "pending", dev: "passed", qa: "pending" }, { work_unit: { roles: ["cr", "dev", "qa"] } }));
-assert.match(optimized.validate(make("optimized", "ready_for_qa", { cr: "passed", dev: "passed", qa: "running" }, { work_unit: { roles: ["dev", "cr", "qa"] } })), /cannot change its selected role order/);
+assert.match(rejectionError(optimized, make("optimized", "ready_for_qa", { cr: "passed", dev: "passed", qa: "running" }, { work_unit: { roles: ["dev", "cr", "qa"] } })), /cannot change its selected role order/);
 
 const crRepair = createWorkflowStateMachine();
 const crRepairRoles = ["cr", "dev", "qa"];
@@ -88,39 +89,99 @@ accepted(repair, repairView("qa_passed", { dev: "passed", cr: "passed", qa: "pas
 accepted(repair, repairView("workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }));
 
 const baseline = createWorkflowStateMachine();
-assert.match(baseline.validate(make("bad", "planned", { dev: "running", cr: "running" })), /only one active role/);
-assert.match(baseline.validate(make("unknown", "future_state", { dev: "pending" })), /Unknown workflow state/);
-assert.equal(baseline.validate({ view_id: "pure", state: "paused" }), null, "pure views do not enter the task state machine");
-assert.ok(baseline.validate(make("bad-plan", "planned", { dev: "pending", qa: "passed" })));
-assert.ok(baseline.validate(make("bad-pass", "qa_passed", { dev: "passed" }, { work_unit: { roles: ["dev"] } })));
-assert.ok(baseline.validate(make("stale-stop", "paused", { dev: "running" }, { resume_state: "dev_in_progress" })));
-assert.ok(baseline.validate(make("unbound-stop", "paused", { dev: "pending" })));
-assert.ok(baseline.validate(make("bad-held-plan", "paused", { dev: "pending", qa: "passed" }, { resume_state: "planned" })));
+assert.match(rejectionError(baseline, make("bad", "planned", { dev: "running", cr: "running" })), /only one active role/);
+assert.match(rejectionError(baseline, make("unknown", "future_state", { dev: "pending" })), /Unknown workflow state/);
+assert.equal(rejectionError(baseline, { view_id: "pure", state: "paused" }), null, "pure views do not enter the task state machine");
+assert.ok(rejectionError(baseline, make("bad-plan", "planned", { dev: "pending", qa: "passed" })));
+assert.ok(rejectionError(baseline, make("bad-pass", "qa_passed", { dev: "passed" }, { work_unit: { roles: ["dev"] } })));
+assert.ok(rejectionError(baseline, make("stale-stop", "paused", { dev: "running" }, { resume_state: "dev_in_progress" })));
+assert.ok(rejectionError(baseline, make("unbound-stop", "paused", { dev: "pending" })));
+assert.ok(rejectionError(baseline, make("bad-held-plan", "paused", { dev: "pending", qa: "passed" }, { resume_state: "planned" })));
 const initialHold = make("initial-hold", "paused", { dev: "pending", cr: "pending", qa: "pending" }, { resume_state: "dev_in_progress" });
 accepted(baseline, initialHold);
 accepted(baseline, make("initial-hold", "dev_in_progress", { dev: "running", cr: "pending", qa: "pending" }));
 const noBypass = createWorkflowStateMachine();
 accepted(noBypass, crRepairSnapshot("cr_blocked", { cr: "blocked", dev: "pending", qa: "pending" }));
-assert.ok(noBypass.validate(crRepairSnapshot("ready_for_cr", { cr: "running", dev: "pending", qa: "pending" })), "CR cannot bypass unperformed repair");
+assert.ok(rejectionError(noBypass, crRepairSnapshot("ready_for_cr", { cr: "running", dev: "pending", qa: "pending" })), "CR cannot bypass unperformed repair");
 accepted(noBypass, crRepairSnapshot("cr_blocked", { cr: "blocked", dev: "running", qa: "pending" }));
 accepted(noBypass, crRepairSnapshot("ready_for_cr", { cr: "running", dev: "passed", qa: "pending" }));
 accepted(noBypass, crRepairSnapshot("cr_blocked", { cr: "blocked", dev: "passed", qa: "pending" }));
-assert.ok(noBypass.validate(crRepairSnapshot("ready_for_cr", { cr: "running", dev: "passed", qa: "pending" })), "a second CR block cannot reuse the first repair");
+assert.ok(rejectionError(noBypass, crRepairSnapshot("ready_for_cr", { cr: "running", dev: "passed", qa: "pending" })), "a second CR block cannot reuse the first repair");
 accepted(noBypass, crRepairSnapshot("cr_blocked", { cr: "blocked", dev: "running", qa: "pending" }));
 accepted(noBypass, crRepairSnapshot("ready_for_cr", { cr: "running", dev: "passed", qa: "pending" }));
 
 const revalidate = createWorkflowStateMachine();
 accepted(revalidate, make("revalidate", "workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }, { work_unit: { reference_version: "v1" } }));
-assert.ok(revalidate.validate(make("revalidate", "ready_for_qa", { dev: "passed", cr: "passed", qa: "running" }, { work_unit: { reference_version: "v2" } })));
+assert.ok(rejectionError(revalidate, make("revalidate", "ready_for_qa", { dev: "passed", cr: "passed", qa: "running" }, { work_unit: { reference_version: "v2" } })));
 const invalidated = make("revalidate", "needs_revalidation", { dev: "running", cr: "pending", qa: "pending" }, { work_unit: { reference_version: "v2" }, resume_state: "dev_in_progress" });
 accepted(revalidate, invalidated);
 accepted(revalidate, { ...invalidated, state: "paused", role_details: { dev: { status: "pending" }, cr: { status: "pending" }, qa: { status: "pending" } } });
-assert.ok(revalidate.validate({ ...invalidated, resume_state: "ready_for_qa", role_details: { dev: { status: "passed" }, cr: { status: "passed" }, qa: { status: "running" } } }), "hold must preserve the earliest invalidated phase");
+assert.ok(rejectionError(revalidate, { ...invalidated, resume_state: "ready_for_qa", role_details: { dev: { status: "passed" }, cr: { status: "passed" }, qa: { status: "running" } } }), "hold must preserve the earliest invalidated phase");
 accepted(revalidate, invalidated);
 accepted(revalidate, make("revalidate", "ready_for_cr", { dev: "passed", cr: "running", qa: "pending" }, { work_unit: { reference_version: "v2" } }));
 accepted(revalidate, make("revalidate", "ready_for_qa", { dev: "passed", cr: "passed", qa: "running" }, { work_unit: { reference_version: "v2" } }));
 accepted(revalidate, make("revalidate", "qa_passed", { dev: "passed", cr: "passed", qa: "passed" }, { work_unit: { reference_version: "v2" } }));
 accepted(revalidate, make("revalidate", "workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }, { work_unit: { reference_version: "v2" } }));
+
+function freeze(value) {
+  if (value && typeof value === "object") {
+    Object.values(value).forEach(freeze);
+    Object.freeze(value);
+  }
+  return value;
+}
+const pureEvent = freeze(event(make("pure-transition", "planned", { dev: "pending", cr: "pending", qa: "pending" })));
+const firstTransition = freeze(transition(null, pureEvent));
+const pureUpdate = freeze(event(make("pure-transition", "dev_in_progress", { dev: "running", cr: "pending", qa: "pending" })));
+const unchanged = structuredClone([firstTransition, pureUpdate]);
+assert.deepEqual(transition(firstTransition.next, pureUpdate), transition(firstTransition.next, pureUpdate), "transition is deterministic");
+assert.deepEqual([firstTransition, pureUpdate], unchanged, "transition does not change its inputs");
+
+const guarded = createWorkflowStateMachine();
+assert.deepEqual(Object.keys(guarded), ["dispatch"], "dispatch is the only state update entry");
+let applyCalls = 0;
+const apply = () => { applyCalls += 1; return true; };
+assert.match(guarded.dispatch({ type: "UNKNOWN", snapshot: planned }, apply).error, /Unknown workflow event/);
+assert.match(guarded.dispatch(event(null), apply).error, /snapshot must be an object/);
+assert.match(guarded.dispatch(event({ view_id: " " }), apply).error, /non-empty string/);
+assert.match(guarded.dispatch(event(invalid), apply).error, /CR.*passed/);
+assert.equal(applyCalls, 0, "rejected events and snapshots must not apply side effects");
+
+for (const callback of [() => false, () => null, () => undefined, () => { throw new Error("apply failed"); }, () => Promise.resolve(true)]) {
+  const machine = createWorkflowStateMachine();
+  accepted(machine, dev);
+  try {
+    const result = machine.dispatch(event(review), callback);
+    assert.ok(result.value === false || result.value == null);
+  } catch (error) {
+    assert.match(error.message, /apply failed|return synchronously/);
+  }
+  assert.match(rejectionError(machine, qa), /Illegal workflow transition/, "failed application cannot advance the workflow");
+  accepted(machine, review);
+  accepted(machine, qa);
+}
+const reentrant = createWorkflowStateMachine();
+accepted(reentrant, dev);
+assert.throws(() => reentrant.dispatch(event(review), () => reentrant.dispatch(event(qa), apply)), /cannot reenter/);
+assert.match(rejectionError(reentrant, qa), /Illegal workflow transition/, "reentrant failure cannot commit the outer candidate");
+accepted(reentrant, review);
+
+const isolated = createWorkflowStateMachine();
+const mutable = structuredClone(planned);
+assert.equal(isolated.dispatch(event(mutable), () => {
+  mutable.view_id = "changed";
+  mutable.work_unit.roles.splice(0, 3, "qa");
+  mutable.role_details.dev.status = "passed";
+  return true;
+}).error, null);
+accepted(isolated, dev);
+const bounded = createWorkflowStateMachine({ maxViews: 1 });
+accepted(bounded, planned);
+assert.throws(() => bounded.dispatch(event(make("second", "planned", { dev: "pending" })), apply), /workflow state capacity reached/);
+assert.equal(applyCalls, 0, "capacity rejection must occur before applying side effects");
+accepted(bounded, dev);
+accepted(bounded, { view_id: "untracked-pure" });
+accepted(bounded, review);
 
 async function serverIntegration() {
   let nextId = 0;

@@ -75,6 +75,7 @@ marketplace 将该插件标为 `AVAILABLE`、`ON_INSTALL` 和 `Productivity`；�
 ## 安全与边界
 
 - 请求帧上限为 256 KiB，输入及加入耗时后的快照上限为 200 KiB（均按 UTF-8 字节计算，快照预算为响应封装预留空间）。超限会拒绝且不改变缓存和计时记录。快照仅接受 JSON object，`view_id` 必须是非空字符串；含 `work_unit` 的任务快照必须带有已知字符串 `state` 和 `roles`；纯视图快照仍可不带 `state`。所有快照值由原模板以 `textContent` 输出。
+- 内部通过纯 `transition(previous, SNAPSHOT_RECEIVED)` 校验一致性与阶段跳转；唯一更新入口 `dispatch(event, applySnapshot)` 在容量检查和同步计时、预算处理成功后提交，回调失败或抛错不提交状态，异步回调与重入会明确拒绝。外部快照协议不变。
 - 角色卡只展示 `work_unit.roles` 中的有效参与角色；未选择角色时不生成角色卡。角色名称标记不在视图中展示。
 - server 本身不联网、不写入磁盘，快照仅在当前 server 进程内缓存最近一份，另保存最多 128 个任务的计时记录，无轮询或后台服务；marketplace 元数据不是运行时隔离保证。
 - 工具展示不改变 SC 权威状态、交接或完成门禁。

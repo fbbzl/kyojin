@@ -163,34 +163,58 @@ function roleTransitionError(previous, next) {
   return null;
 }
 
+function candidate(snapshot, previous) {
+  if (object(snapshot.work_unit)) return stateOf(snapshot, previous);
+  // Legacy pure controls stop a task without changing its authoritative role history.
+  const phase = phaseOf(snapshot.state);
+  if (previous && OVERLAY.has(phase)) return { ...previous, phase, state: snapshot.state,
+    active: undefined, source: OVERLAY.has(previous.phase) ? previous.source : { phase: previous.phase, resume: previous.resume } };
+  return null;
+}
+
+function transition(previous, event) {
+  if (!object(event) || event.type !== "SNAPSHOT_RECEIVED") return { error: "Unknown workflow event" };
+  const snapshot = event.snapshot;
+  if (!object(snapshot)) return { error: "snapshot must be an object" };
+  if (typeof snapshot.view_id !== "string" || !snapshot.view_id.trim()) return { error: "snapshot.view_id must be a non-empty string" };
+  const next = candidate(snapshot, previous);
+  if (!object(snapshot.work_unit)) {
+    const error = previous && !next ? "An observed task requires a full work_unit snapshot, except for a pure hold" : next ? phaseTransitionError(previous, next) : null;
+    return { error, next: error ? null : next };
+  }
+  if (!Object.hasOwn(snapshot.work_unit, "roles")) return { error: "snapshot.work_unit.roles is required" };
+  if (previous && previous.workUnitId !== next.workUnitId) return { error: "A view_id cannot change work_unit_id" };
+  if (previous && JSON.stringify(previous.roles) !== JSON.stringify(next.roles)) return { error: "A view_id cannot change its selected role order" };
+  if (previous?.referenceVersion && previous.referenceVersion !== next.referenceVersion && !(next.phase === "revalidation" || next.phase === "review" && next.statuses.cr !== "passed")) return { error: "A changed reference_version requires revalidation or a new CR review" };
+  const error = workflowError(snapshot) || consistencyError(snapshot, next, previous) ||
+    (previous ? phaseTransitionError(previous, next) || roleTransitionError(previous, next) : null);
+  return { error, next: error ? null : next };
+}
+
 function createWorkflowStateMachine({ maxViews = 128 } = {}) {
   if (!Number.isSafeInteger(maxViews) || maxViews < 1) throw new TypeError("maxViews must be a positive safe integer");
   const views = new Map();
-  function candidate(snapshot) {
-    const previous = views.get(snapshot.view_id);
-    if (object(snapshot.work_unit)) return stateOf(snapshot, previous);
-    // Legacy pure controls stop a task without changing its authoritative role history.
-    const phase = phaseOf(snapshot.state);
-    if (previous && OVERLAY.has(phase)) return { ...previous, phase, state: snapshot.state,
-      active: undefined, source: OVERLAY.has(previous.phase) ? previous.source : { phase: previous.phase, resume: previous.resume } };
-    return null;
+  let dispatching = false;
+  function dispatch(event, applySnapshot) {
+    if (dispatching) throw new Error("Workflow dispatch cannot reenter");
+    if (typeof applySnapshot !== "function") throw new TypeError("applySnapshot must be a synchronous function");
+    dispatching = true;
+    try {
+      const viewId = record(record(event).snapshot).view_id;
+      const result = transition(views.get(viewId), event);
+      if (result.error) return { error: result.error };
+      if (result.next && !views.has(viewId) && views.size >= maxViews) throw new RangeError(`SC workflow state capacity reached (${maxViews} views); restart the server or reuse an existing view_id`);
+      // Keep the validated candidate private even if the callback mutates its input snapshot.
+      const next = result.next && structuredClone(result.next);
+      const value = applySnapshot();
+      if (value != null && typeof value.then === "function") throw new TypeError("applySnapshot must return synchronously");
+      if (value !== false && value != null && next) views.set(viewId, next);
+      return { error: null, value };
+    } finally {
+      dispatching = false;
+    }
   }
-  function validate(snapshot) {
-    const previous = views.get(snapshot.view_id), next = candidate(snapshot);
-    if (!object(snapshot.work_unit)) return previous && !next ? "An observed task requires a full work_unit snapshot, except for a pure hold" : next ? phaseTransitionError(previous, next) : null;
-    if (!Object.hasOwn(snapshot.work_unit, "roles")) return "snapshot.work_unit.roles is required";
-    if (previous && previous.workUnitId !== next.workUnitId) return "A view_id cannot change work_unit_id";
-    if (previous && JSON.stringify(previous.roles) !== JSON.stringify(next.roles)) return "A view_id cannot change its selected role order";
-    if (previous?.referenceVersion && previous.referenceVersion !== next.referenceVersion && !(next.phase === "revalidation" || next.phase === "review" && next.statuses.cr !== "passed")) return "A changed reference_version requires revalidation or a new CR review";
-    const error = workflowError(snapshot) || consistencyError(snapshot, next, previous);
-    if (error) return error;
-    return previous ? phaseTransitionError(previous, next) || roleTransitionError(previous, next) : null;
-  }
-  function accept(snapshot) {
-    const next = candidate(snapshot);
-    if (next && (views.has(snapshot.view_id) || views.size < maxViews)) views.set(snapshot.view_id, next);
-  }
-  return { validate, accept };
+  return { dispatch };
 }
 
-module.exports = { createWorkflowStateMachine };
+module.exports = { createWorkflowStateMachine, transition };
