@@ -113,7 +113,7 @@
     .sc-task-view details[data-sc-role].is-active { border-color:var(--role-accent); background:var(--panel-active); animation:sc-running-pulse var(--motion-period) ease-in-out infinite; }
     .sc-task-view details[data-sc-role].is-active > * { position:relative; z-index:1; }
     .sc-task-view details[data-sc-role] > summary { position:relative; }
-    .sc-task-view details[data-sc-role] > summary::before { content:""; position:absolute; z-index:3; top:5px; bottom:5px; left:0; border-left:2px solid var(--active); pointer-events:none; }
+    .sc-task-view details[data-sc-role] > summary::before { content:""; position:absolute; z-index:3; top:-2px; bottom:-2px; left:-2px; width:8px; border:2px solid var(--active); border-right:0; border-radius:6px 0 0 6px; pointer-events:none; }
     /* Clip the transient fill separately so the ownership line can extend beyond its summary. */
     .sc-task-view__role-ripple-clip { position:absolute; z-index:2; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; }
     .sc-task-view__role-ripple { position:absolute; border-radius:50%; background:var(--focus); pointer-events:none; animation:sc-role-ripple 500ms ease-out 1 both; }
