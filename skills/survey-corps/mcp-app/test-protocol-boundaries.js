@@ -35,14 +35,14 @@ for(const role of ["req","dev","cr","qa"]){
   for(const file_activity of [{},{current:42},{current:""},{current:"x",previous:7},{current:"x",next:null}])invalidShapes.push({role_details:{[role]:{file_activity}}});
 }
 for(const metrics of ["bad",null,[],{elapsed_ms:-1},{elapsed_ms:1.5},{elapsed_ms:"1"},{elapsed_ms:Number.MAX_SAFE_INTEGER+1},{total_tokens:-1},{total_tokens:"1"},{extra:1}]){
-  invalidShapes.push({work_unit:{metrics}});
+  invalidShapes.push({state:"planned",work_unit:{roles:[],metrics}});
   if(metrics&&typeof metrics==="object"&&!Array.isArray(metrics))invalidShapes.push({role_details:{dev:{metrics}}});
 }
 for(const fields of invalidShapes){
   call({view_id:"bad-shape",...fields},error);
   request("tools/call",{name:"show_sc_task_view",arguments:{}},reply=>assert.deepEqual(reply.result.structuredContent.snapshot,{view_id:"stable",state:"planned"},"invalid types must neither enter cache nor seed elapsed"));
 }
-const extension={view_id:"extensions",custom:[1],work_unit:{custom:true,metrics:{elapsed_ms:0,total_tokens:0}},role_details:{dev:{custom:true,file_activity:{current:"x",custom:1}},custom:"legacy"}};
+const extension={view_id:"extensions",state:"planned",custom:[1],work_unit:{roles:[],custom:true,metrics:{elapsed_ms:0,total_tokens:0}},role_details:{dev:{custom:true,file_activity:{current:"x",custom:1}},custom:"legacy"}};
 call(extension,reply=>{const value=reply.result.structuredContent.snapshot;assert.deepEqual(value.custom,[1]);assert.equal(value.role_details.custom,"legacy");assert.equal(value.role_details.dev.file_activity.custom,1);assert.equal(value.work_unit.metrics.elapsed_ms,0);});
 const sized = bytes => {
   const snapshot = { view_id: "boundary", summary: "中" };

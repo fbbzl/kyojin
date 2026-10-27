@@ -5,40 +5,46 @@ const base = { view_id: "serial-regression", state: "dev_in_progress", work_unit
 const next = { ...base, state: "ready_for_cr", role_details: { dev: { status: "passed" }, cr: { status: "running" }, qa: { status: "pending" } } };
 const conflict = { ...base, role_details: { dev: { status: "running" }, cr: { status: "running" }, qa: { status: "pending" } } };
 const qa = { ...base, state: "ready_for_qa", role_details: { dev: { status: "passed" }, cr: { status: "passed" }, qa: { status: "running" } } };
-const snapshots = [{ snapshot: base }, { snapshot: next }, { snapshot: qa }, { snapshot: { ...qa, state: "needs_user_confirm" } }, { snapshot: conflict, error: /only one active role/ }, {}];
+const stoppedQa = { ...qa, role_details: { ...qa.role_details, qa: { status: "pending" } } };
+let scenario = 0;
+const isolated = snapshot => ({ ...snapshot, view_id: `serial-scenario-${++scenario}` });
+const snapshots = [{ snapshot: base }, { snapshot: next }, { snapshot: qa }, { snapshot: { ...stoppedQa, state: "needs_user_confirm" } }, { snapshot: conflict, error: /only one active role/ }, {}];
 for (const status of ["pending", "running", "blocked", "needs_user_confirm", undefined]) {
   snapshots.push({ snapshot: { ...qa, role_details: { dev: { status: "passed" }, cr: status === undefined ? {} : { status }, qa: { status: "running" } } }, error: status === "running" ? /only one active role/ : /QA can run only when selected CR has passed/ }, {});
 }
 for (const roles of [["dev", "qa"], ["qa"], "qa"]) {
-  snapshots.push({ snapshot: { ...qa, work_unit: { roles } }, error: /QA can run only when selected CR has passed/ }, {});
+  snapshots.push({ snapshot: isolated({ ...qa, work_unit: { roles } }), error: /QA can run only when selected CR has passed/ }, {});
 }
 snapshots.push({ snapshot: { ...qa, role_details: { dev: { status: "passed" }, qa: { status: "running" } } }, error: /QA can run only when selected CR has passed/ }, {});
 // SC order/repair boundary: rejected snapshots preserve the stopped cache and all timers.
 const repair={view_id:"scoped-repair",state:"cr_blocked",work_unit:{roles:["cr","dev","qa"],work_unit_id:"repair",reference_version:"v1"},role_details:{cr:{status:"blocked",blocker_type:"test_assets"},dev:{status:"passed"},qa:{status:"running"}},handoffs:[{from:"cr",to:"qa",state:"cr_blocked",handoff_result:"accepted",work_unit_id:"repair",reference_version:"v1",files:["test.js"],decision:"Repair test asset only",next_action:"Return to CR before formal testing"}]};
-snapshots.push({snapshot:{...qa,state:"paused"}});
+snapshots.push({snapshot:{...stoppedQa,state:"paused"}});
 const mutations=[v=>{v.handoffs=[];},v=>{v.handoffs.push({...v.handoffs[0],handoff_result:"pending"});},v=>{v.handoffs[0].work_unit_id="other";},v=>{v.handoffs[0].reference_version="old";},v=>{v.work_unit.reference_version="";},v=>{v.handoffs[0].from="dev";},v=>{v.handoffs[0].to="dev";},v=>{v.handoffs[0].state="ready_for_qa";},v=>{v.handoffs[0].files=[];},v=>{v.handoffs[0].files=[42];},v=>{v.handoffs[0].decision=" ";},v=>{delete v.handoffs[0].next_action;},v=>{v.role_details.cr.blocker_type="bug";},v=>{v.role_details.cr.status="pending";},v=>{v.work_unit.roles=["dev","qa"];},v=>{v.role_details.dev.status="pending";}];
-for(const mutate of mutations){const value=structuredClone(repair);mutate(value);snapshots.push({snapshot:value,error:/QA can run only|preceding role/},{});}
+for(const mutate of mutations){const value=isolated(structuredClone(repair));mutate(value);snapshots.push({snapshot:value,error:/QA can run only|preceding role/},{});}
 for(const role of ["req","dev"]){
-  snapshots.push({snapshot:{...base,work_unit:{roles:["cr",role]},role_details:{cr:{status:"pending"},[role]:{status:"running"}}},error:/preceding role cr/},{});
+  snapshots.push({snapshot:isolated({...base,work_unit:{roles:["cr",role]},role_details:{cr:{status:"pending"},[role]:{status:"running"}}}),error:/preceding role cr/},{});
 }
-const forbidden=structuredClone(repair);forbidden.work_unit.roles=["cr","req"];forbidden.role_details={cr:{status:"blocked"},req:{status:"running"}};forbidden.handoffs[0].to="req";snapshots.push({snapshot:forbidden,error:/preceding role cr/},{});
-const optimization={...base,work_unit:{roles:["cr","dev","qa"]},role_details:{cr:{status:"passed"},dev:{status:"running"},qa:{status:"pending"}}};
+const forbidden=isolated(structuredClone(repair));forbidden.work_unit.roles=["cr","req"];forbidden.role_details={cr:{status:"blocked"},req:{status:"running"}};forbidden.handoffs[0].to="req";snapshots.push({snapshot:forbidden,error:/preceding role cr/},{});
+const optimization=isolated({...base,work_unit:{roles:["cr","dev","qa"]},role_details:{cr:{status:"passed"},dev:{status:"running"},qa:{status:"pending"}}});
 const devRepair=structuredClone(repair);devRepair.role_details={cr:{status:"blocked"},dev:{status:"running"},qa:{status:"pending"}};devRepair.handoffs[0].to="dev";
-const review=structuredClone(repair);review.state="ready_for_cr";review.work_unit.reference_version="v2";review.role_details={cr:{status:"running"},dev:{status:"passed"},qa:{status:"pending"}};
+const repairDone=structuredClone(repair);repairDone.role_details.qa.status="passed";
+const review=structuredClone(repairDone);review.state="ready_for_cr";review.work_unit.reference_version="v2";review.role_details={cr:{status:"running"},dev:{status:"passed"},qa:{status:"passed"}};
 const retest=structuredClone(review);retest.state="ready_for_qa";retest.role_details.cr.status="passed";retest.role_details.qa.status="running";
-snapshots.push({snapshot:optimization},{snapshot:devRepair},{snapshot:repair},{snapshot:review},{snapshot:retest});
+snapshots.push({snapshot:optimization},{snapshot:devRepair},{snapshot:repair},{snapshot:repairDone},{snapshot:review},{snapshot:retest});
 // QA-rework regression: invalidated CR approval must not prevent a bound QA -> DEV repair.
 const qaRepair=structuredClone(devRepair);qaRepair.state="qa_failed";qaRepair.role_details.cr.status="pending";qaRepair.role_details.qa.status="blocked";Object.assign(qaRepair.handoffs[0],{from:"qa",state:"qa_failed"});
-snapshots.push({snapshot:{...qa,state:"paused"}});
-for(const source of [repair,qaRepair])for(const path of ["https://example.test/test.js","../test.js","src/../test.js","//server/share/test.js",...[10,127,128,159].map(code=>"src/test"+String.fromCharCode(code)+".js")]){const value=structuredClone(source);value.handoffs[0].files=[path];snapshots.push({snapshot:value,error:/QA can run only|preceding role|QA rework/},{});}
+snapshots.push({snapshot:{...stoppedQa,state:"paused"}});
+for(const source of [repair,qaRepair])for(const path of ["https://example.test/test.js","../test.js","src/../test.js","//server/share/test.js",...[10,127,128,159].map(code=>"src/test"+String.fromCharCode(code)+".js")]){const value=isolated(structuredClone(source));value.handoffs[0].files=[path];snapshots.push({snapshot:value,error:/QA can run only|preceding role|QA rework/},{});}
 for(const roles of [["cr","dev","qa"],["dev","cr","qa"],["req","dev","cr","qa"]])for(const state of ["qa_failed","qa_conditional","needs_revalidation"]){
-  const source=structuredClone(qaRepair);source.work_unit.roles=roles;source.role_details.req={status:"passed"};source.state=state;source.resume_state="dev_in_progress";source.handoffs[0].state=state==="needs_revalidation"?"qa_failed":state;
+  const source=isolated(structuredClone(qaRepair));source.work_unit.roles=roles;source.role_details.req={status:"passed"};source.state=state;source.resume_state="dev_in_progress";source.handoffs[0].state=state==="needs_revalidation"?"qa_failed":state;
   for(const mutate of [v=>{v.handoffs=[];},v=>{v.handoffs.push({...v.handoffs[0],handoff_result:"pending"});},v=>{v.handoffs[0].reference_version="old";},v=>{v.handoffs[0].files=[];},v=>{v.role_details.qa.status="pending";},v=>{v.role_details.cr.status="passed";},v=>{v.state="needs_revalidation";v.resume_state="ready_for_qa";}]){const value=structuredClone(source);mutate(value);snapshots.push({snapshot:value,error:/preceding role cr|QA rework/},{});}
-  snapshots.push({snapshot:source},{snapshot:{...source,state:"paused"}});
+  const stopped=structuredClone(source);stopped.state="paused";stopped.role_details.dev.status="pending";
+  snapshots.push({snapshot:source},{snapshot:stopped});
 }
-for(const state of ["qa_failed","qa_conditional","needs_revalidation"])for(const status of ["pending","blocked"]){const value=structuredClone(qaRepair);value.state=state;value.resume_state="dev_in_progress";value.handoffs[0].state=state==="needs_revalidation"?"qa_failed":state;value.role_details.cr.status=status;snapshots.push({snapshot:value});}
-for(const history of [{to:"sc",state:"qa_passed",reference_version:"v1"},{to:"dev",state:"qa_failed",reference_version:"v1"},{to:"dev",state:"qa_failed",work_unit_id:"other",reference_version:"v2"}])snapshots.push({snapshot:{...base,state:"needs_revalidation",resume_state:"dev_in_progress",work_unit:{roles:["dev","cr","qa"],work_unit_id:"w1",reference_version:"v2"},handoffs:[{...qaRepair.handoffs[0],work_unit_id:"w1",...history}]}});
-snapshots.push({snapshot:review},{snapshot:retest});
+for(const state of ["qa_failed","qa_conditional","needs_revalidation"])for(const status of ["pending","blocked"]){const value=isolated(structuredClone(qaRepair));value.state=state;value.resume_state="dev_in_progress";value.handoffs[0].state=state==="needs_revalidation"?"qa_failed":state;value.role_details.cr.status=status;snapshots.push({snapshot:value});}
+for(const history of [{to:"sc",state:"qa_passed",reference_version:"v1"},{to:"dev",state:"qa_failed",reference_version:"v1"},{to:"dev",state:"qa_failed",work_unit_id:"other",reference_version:"v2"}])snapshots.push({snapshot:isolated({...base,state:"needs_revalidation",resume_state:"dev_in_progress",work_unit:{roles:["dev","cr","qa"],work_unit_id:"w1",reference_version:"v2"},handoffs:[{...qaRepair.handoffs[0],work_unit_id:"w1",...history}]})});
+const finalReview=isolated({...review,role_details:{...review.role_details,qa:{status:"blocked"}}});
+snapshots.push({snapshot:finalReview},{snapshot:{...retest,view_id:finalReview.view_id}});
 let step = 0;
 let latest;
 const { server, complete } = startServer({ onReply(reply) {

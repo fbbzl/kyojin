@@ -70,23 +70,27 @@ async function main() {
   assert.equal(elapsed(concurrent), roleElapsed(concurrent, "dev"));
   assert.equal(roleElapsed(concurrent, "qa"), 0, "pending QA must not accrue time while DEV executes");
 
-  const waiting = await show(task(a, "needs_user_confirm", { dev: "running", qa: "pending" }));
+  const waiting = await show(task(a, "needs_user_confirm", { dev: "needs_user_confirm", qa: "pending" }));
   await delay(60);
-  assert.deepEqual(await show(), waiting, "global user confirmation must freeze even stale running role statuses");
+  assert.deepEqual(await show(), waiting, "global user confirmation must freeze stopped role timers");
 
-  const resumed = task(a, "dev_in_progress", { dev: "running", qa: "passed" }, { elapsed_ms: 9000000, total_tokens: 1234 });
+  const resumed = task(a, "dev_in_progress", { dev: "running", qa: "pending" }, { elapsed_ms: 9000000, total_tokens: 1234 });
   resumed.role_details.dev.metrics = { elapsed_ms: 8000000, total_tokens: 321 };
   const resumeSample = await show(resumed);
   assert.equal(elapsed(resumeSample), elapsed(waiting), "echoed or stale elapsed values must not overwrite tracked time");
   await delay(60);
-  const paused = await show(task(a, "dev_in_progress", { dev: "blocked", qa: "passed" }));
+  const paused = await show(task(a, "paused", { dev: "pending", qa: "pending" }));
   assert.ok(elapsed(paused) >= elapsed(waiting) + 20, "resuming work must add a new measured interval");
-  assert.equal(roleElapsed(paused, "qa"), roleElapsed(waiting, "qa"), "passed roles must stay frozen");
+  assert.equal(roleElapsed(paused, "qa"), roleElapsed(waiting, "qa"), "pending roles must stay frozen");
   await delay(60);
   assert.deepEqual(await show(), paused, "a paused role must not keep its task timer active");
-  const finished = await show(task(a, "workflow_ready", { dev: "running", qa: "pending" }));
+  await show(task(a, "dev_in_progress", { dev: "running", qa: "pending" }));
+  await show(task(a, "ready_for_cr", { dev: "passed", cr: "running", qa: "pending" }));
+  await show(task(a, "ready_for_qa", { dev: "passed", cr: "passed", qa: "running" }));
+  await show(task(a, "qa_passed", { dev: "passed", cr: "passed", qa: "passed" }));
+  const finished = await show(task(a, "workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }));
   await delay(60);
-  assert.deepEqual(await show(), finished, "completed task state must override stale active roles");
+  assert.deepEqual(await show(), finished, "completed tasks must keep every role timer frozen");
 
   const b = "qa-elapsed-b";
   const baseline = task(b, "planned", { dev: "pending", qa: "pending" }, { elapsed_ms: 500, total_tokens: 999 });
@@ -95,31 +99,35 @@ async function main() {
   assert.equal(elapsed(seeded), 500, "first valid elapsed input remains a compatibility baseline");
   assert.equal(roleElapsed(seeded, "dev"), 200);
   const bRunning = task(b, "dev_in_progress", { dev: "running", qa: "pending" });
-  bRunning.work_unit.roles = [" DEV ", "dev", "qa"];
+  bRunning.work_unit.roles = [" DEV ", "dev", "cr", "qa"];
   await show(bRunning);
   await delay(60);
-  assert.equal(elapsed(await show(task(a, "workflow_ready", { dev: "passed", qa: "passed" }))), elapsed(finished), "switching views must preserve the first task's timer");
-  const bStopped = await show(task(b, "paused", { dev: "running", qa: "pending" }));
+  assert.equal(elapsed(await show(task(a, "workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }))), elapsed(finished), "switching views must preserve the first task's timer");
+  const bStopped = await show(task(b, "paused", { dev: "pending", qa: "pending" }));
   assert.ok(elapsed(bStopped) >= 520, "another view must continue accumulating while it is not the latest snapshot");
   assert.equal(elapsed(bStopped) - roleElapsed(bStopped, "dev"), 300, "normalized duplicate role names must not count twice");
 
-  // P1 regression: a stale task-level DEV state must not activate DEV while only QA is running.
+  // P1 regression: reject stale task phases; missing DEV history must not activate DEV during QA.
   for (const [index, missing] of [undefined].entries()) {
     const id = "qa-elapsed-explicit-qa-" + index;
-    await show(task(id, "dev_in_progress", { dev: missing, cr: "passed", qa: "running" }));
+    const qaReady = await show(task(id, "ready_for_qa", { dev: missing, cr: "passed", qa: "pending" }));
+    const stale = await first.request({ snapshot: task(id, "dev_in_progress", { dev: missing, cr: "passed", qa: "running" }) });
+    assert.equal(stale.error?.code, -32602);
+    assert.deepEqual(await show(), qaReady, "a stale DEV phase must preserve the stopped QA snapshot");
+    await show(task(id, "ready_for_qa", { dev: missing, cr: "passed", qa: "running" }));
     await delay(60);
     const qaOnly = await show();
     assert.equal(roleElapsed(qaOnly, "dev"), 0, "missing DEV status must not inherit task-level activity");
     assert.ok(roleElapsed(qaOnly, "qa") >= 20, "explicit QA running must accrue time");
     assert.equal(elapsed(qaOnly), roleElapsed(qaOnly, "qa"));
-    const stopped = await show(task(id, "dev_in_progress", { dev: missing, cr: "passed", qa: "pending" }));
+    const stopped = await show(task(id, "needs_user_confirm", { dev: missing, cr: "passed", qa: "needs_user_confirm" }));
     await delay(60);
     assert.deepEqual(await show(), stopped, "leaving running must freeze both task and roles");
   }
 
   // Invalid input must not mutate cached snapshots or elapsed records.
   const aliasId = "qa-elapsed-invalid-status";
-  const inactive = await show(task(aliasId, "dev_in_progress", { dev: "pending", qa: "pending" }));
+  const inactive = await show(task(aliasId, "planned", { dev: "pending", qa: "pending" }));
   for (const status of ["completed", "waiting", "not_started", "preparing", "in_progress", "in-progress", "working", "active", "started", "started_working", " RUNNING ", "future_status", "", null, 42, false, {}, []]) {
     const rejected = await first.request({ snapshot: task(aliasId, "dev_in_progress", { dev: status, qa: "pending" }) });
     assert.equal(rejected.error?.code, -32602, "invalid role status must reject: " + JSON.stringify(status));
@@ -146,7 +154,7 @@ async function main() {
   for (const input of invalidQa) {
     const rejected = await first.request({ snapshot: input });
     assert.equal(rejected.error?.code, -32602, "QA must wait for selected CR with exact passed status");
-    assert.match(rejected.error.message, /selected CR has passed|only one active role|status must be one of/);
+    assert.match(rejected.error.message, /selected CR has passed|only one active role|status must be one of|selected role order/);
     await delay(20);
     assert.deepEqual(await show(), inactive, "invalid QA transitions must not mutate the cached view or task/role timers");
   }
@@ -159,7 +167,8 @@ async function main() {
   assert.ok(roleElapsed(crPassed, "cr") >= 20, "formal review must accrue its own serial interval");
   assert.equal(roleElapsed(crPassed, "dev"), roleElapsed(devPassed, "dev"));
   await delay(60);
-  const qaPassed = await show(task(aliasId, "workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }));
+  const qaPassed = await show(task(aliasId, "qa_passed", { dev: "passed", cr: "passed", qa: "passed" }));
+  await show(task(aliasId, "workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }));
   assert.equal(roleElapsed(qaPassed, "dev"), roleElapsed(devPassed, "dev"), "handoff must freeze DEV");
   assert.equal(roleElapsed(qaPassed, "cr"), roleElapsed(crPassed, "cr"), "QA handoff must freeze CR");
   assert.ok(roleElapsed(qaPassed, "qa") >= 20, "handoff must start QA");
@@ -171,23 +180,26 @@ async function main() {
   await show(excluded);
   await delay(60);
   assert.equal(elapsed(await show()), 0, "unselected running roles must not activate a task timer");
-  await show(task("qa-elapsed-unknown", "future_state", { dev: "pending" }));
+  const beforeUnknown = await show();
+  const unknown = await first.request({ snapshot: task("qa-elapsed-unknown", "future_state", { dev: "pending" }) });
+  assert.equal(unknown.error?.code, -32602);
+  assert.match(unknown.error.message, /Unknown workflow state/);
   await delay(60);
-  assert.equal(elapsed(await show()), 0, "unknown task state must not invent active work");
+  assert.deepEqual(await show(), beforeUnknown, "unknown task state must not replace the snapshot or invent active work");
 
   for (const state of ["cr_blocked", "qa_failed", "qa_conditional"]) {
     const repairId = `qa-elapsed-repair-${state}`;
-    const source = task(repairId, state, { dev: "running", cr: "pending", qa: "blocked" });
-    if (state !== "cr_blocked") {
-      Object.assign(source.work_unit, { work_unit_id: repairId, reference_version: "v1" });
-      source.handoffs = [{ from: "qa", to: "dev", state, handoff_result: "accepted", work_unit_id: repairId, reference_version: "v1", files: ["src/app.js"], decision: "Repair verified defect", next_action: "Return to CR before testing" }];
-    }
+    const source = task(repairId, state, { dev: "running", cr: state === "cr_blocked" ? "blocked" : "pending", qa: state === "cr_blocked" ? "pending" : "blocked" });
+    Object.assign(source.work_unit, { work_unit_id: repairId, reference_version: "v1" });
+    source.handoffs = [{ from: state === "cr_blocked" ? "cr" : "qa", to: "dev", state, handoff_result: "accepted", work_unit_id: repairId, reference_version: "v1", files: ["src/app.js"], decision: "Repair verified defect", next_action: "Return to CR before testing" }];
     await show(source);
     await delay(60);
     const repairing = await show();
     assert.ok(elapsed(repairing) >= 20, `${state} must count explicitly active repair work`);
     assert.equal(elapsed(repairing), roleElapsed(repairing, "dev"));
-    const repairWaiting = await show(task(repairId, state, { dev: "pending", qa: "pending" }));
+    const stoppedRepair = structuredClone(source);
+    stoppedRepair.role_details.dev.status = "pending";
+    const repairWaiting = await show(stoppedRepair);
     await delay(60);
     assert.deepEqual(await show(), repairWaiting, `${state} must remain frozen when no repair role is active`);
   }
@@ -199,11 +211,12 @@ async function main() {
   assert.deepEqual(await show(purePause), purePause, "a pure pause snapshot must retain its original shape");
   const pauseRoundTrip = performance.now() - beforePurePause;
   await delay(Math.max(100, pauseRoundTrip * 4));
-  const afterPurePause = await show(task(pureId, "planned", { dev: "pending" }));
+  const afterPurePause = await show(task(pureId, "paused", { dev: "pending" }));
   assert.ok(elapsed(afterPurePause) < pauseRoundTrip * 2 + 50, "a pure pause must stop an existing timer before the waiting interval");
-  assert.deepEqual(await show({ view_id: pureId, state: "dev_in_progress" }), { view_id: pureId, state: "dev_in_progress" });
+  const pureActive = await first.request({ snapshot: { view_id: pureId, state: "dev_in_progress" } });
+  assert.equal(pureActive.error?.code, -32602, "an observed task cannot resume through a pure snapshot");
   await delay(60);
-  assert.equal(elapsed(await show(task(pureId, "planned", { dev: "pending" }))), elapsed(afterPurePause), "pure active snapshots must not invent a role or restart a timer");
+  assert.deepEqual(await show(), afterPurePause, "rejected pure active snapshots must not invent a role or restart a timer");
 
   const beforeOversized = await show();
   const oversized = task("qa-elapsed-oversized", "dev_in_progress", { dev: "running" });
@@ -234,7 +247,7 @@ async function main() {
   assert.equal(rejected.error?.code, -32000, "a full timer session must reject new views explicitly");
   assert.match(rejected.error.message, /capacity/i);
   assert.deepEqual(await show(), last, "a rejected view must not replace the previous snapshot");
-  assert.equal(elapsed(await show(task(a, "workflow_ready", {}))), elapsed(finished), "capacity rejection must preserve existing timer records");
+  assert.equal(elapsed(await show(task(a, "workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }))), elapsed(finished), "capacity rejection must preserve existing timer records");
 
   const second = client();
   const restarted = await second.show(task(a, "planned", {}));

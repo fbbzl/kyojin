@@ -4,7 +4,8 @@
 // Minimal, dependency-free MCP stdio server for the SC task view.
 const fs = require("node:fs");
 const path = require("node:path");
-const { createElapsedTracker, workflowError } = require("./elapsed-tracker");
+const { createElapsedTracker } = require("./elapsed-tracker");
+const { createWorkflowStateMachine } = require("./workflow-state-machine");
 
 const APP_URI = "ui://survey-corps/task-view";
 const APP_MIME = "text/html;profile=mcp-app";
@@ -16,10 +17,11 @@ const METRIC_SCHEMA = { type: "object", additionalProperties: false, properties:
 const ROLE_STATUSES = ["pending", "running", "passed", "blocked", "needs_user_confirm"];
 const FILE_ACTIVITY_SCHEMA = { type: "object", required: ["current"], properties: { previous: { type: "string" }, current: { type: "string", minLength: 1 }, next: { type: "string" } } };
 const ROLE_DETAIL_SCHEMA = { type: "object", properties: { status: { type: "string", enum: ROLE_STATUSES }, metrics: METRIC_SCHEMA, file_activity: FILE_ACTIVITY_SCHEMA } };
-const SNAPSHOT_SCHEMA = { type: "object", required: ["view_id"], properties: { state: { type: "string" }, view_id: { type: "string", minLength: 1, description: "Stable logical view identifier; not displayed in the UI or used as a path or resource URI." }, work_unit: { type: "object", properties: { metrics: METRIC_SCHEMA } }, role_details: { type: "object", properties: { req: ROLE_DETAIL_SCHEMA, dev: ROLE_DETAIL_SCHEMA, cr: ROLE_DETAIL_SCHEMA, qa: ROLE_DETAIL_SCHEMA }, additionalProperties: true } } };
+const SNAPSHOT_SCHEMA = { type: "object", required: ["view_id"], properties: { state: { type: "string" }, view_id: { type: "string", minLength: 1, description: "Stable logical view identifier; not displayed in the UI or used as a path or resource URI." }, work_unit: { type: "object", required: ["roles"], properties: { roles: { anyOf: [{ type: "array", items: { type: "string" } }, { type: "string" }] }, metrics: METRIC_SCHEMA } }, role_details: { type: "object", properties: { req: ROLE_DETAIL_SCHEMA, dev: ROLE_DETAIL_SCHEMA, cr: ROLE_DETAIL_SCHEMA, qa: ROLE_DETAIL_SCHEMA }, additionalProperties: true } }, allOf: [{ if: { required: ["work_unit"] }, then: { required: ["state"] } }] };
 const EMPTY_SNAPSHOT = Object.freeze({ view_id: "sc-task-view:empty", state: "unknown" });
 let latestSnapshot = null;
 const elapsedTracker = createElapsedTracker();
+const workflowStateMachine = createWorkflowStateMachine();
 
 function send(message) {
   const line = `${JSON.stringify(message)}\n`;
@@ -83,8 +85,10 @@ function validateSnapshot(snapshot) {
   const error = validateValue(snapshot, SNAPSHOT_SCHEMA, "snapshot");
   if (error) return error;
   if (snapshot.view_id.trim() === "") return "snapshot.view_id must be a non-empty string";
+  if (isObject(snapshot.work_unit) && (!Object.hasOwn(snapshot, "state") || typeof snapshot.state !== "string")) return "snapshot.state must be a string for a task snapshot";
+  if (isObject(snapshot.work_unit) && !(typeof snapshot.work_unit.roles === "string" || Array.isArray(snapshot.work_unit.roles) && snapshot.work_unit.roles.every(role => typeof role === "string"))) return "snapshot.work_unit.roles must be a string or an array of strings";
   if (Buffer.byteLength(JSON.stringify(snapshot), "utf8") > MAX_SNAPSHOT_BYTES) return "snapshot exceeds 200 KiB";
-  return workflowError(snapshot);
+  return workflowStateMachine.validate(snapshot);
 }
 function handle(id, method, params) {
   if (method === "initialize") { const protocolVersion=params?.protocolVersion; if (!SUPPORTED_PROTOCOL_VERSIONS.has(protocolVersion)) return failure(id, -32602, "Unsupported protocol version"); return send({ jsonrpc: "2.0", id, result: { protocolVersion, capabilities: { tools: {}, resources: {} }, serverInfo: { name: "survey-corps-task-view", version: "0.1.4" } } }); }
@@ -115,7 +119,10 @@ function handle(id, method, params) {
       throw error;
     }
     if (!snapshot) return failure(id, frameExceeded ? -32603 : -32602, frameExceeded ? "Response exceeds 256 KiB" : "snapshot exceeds 200 KiB after adding elapsed time");
-    if (hasSnapshot) latestSnapshot = snapshot;
+    if (hasSnapshot) {
+      workflowStateMachine.accept(snapshot);
+      latestSnapshot = snapshot;
+    }
     return send(viewResponse(id, snapshot, message));
   }
   failure(id, -32601, `Method not found: ${method}`);

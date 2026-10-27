@@ -30,7 +30,7 @@ async function main() {
   });
   vm.runInContext(example.slice(0, example.indexOf("// 后续调用")), context);
   const update = vm.runInContext("eval(load('sc-update'))", context);
-  const initial = { view_id: "A", state: "dev_in_progress", work_unit: { git: { repository: "kyojin", branch: "main" } }, role_details: { dev: { status: "running", file_activity: { current: "D:/work/a.js" } } }, handoffs: [{ handoff_id: "history" }] };
+  const initial = { view_id: "A", state: "dev_in_progress", work_unit: { roles: ["dev"], git: { repository: "kyojin", branch: "main" } }, role_details: { dev: { status: "running", file_activity: { current: "D:/work/a.js" } } }, handoffs: [{ handoff_id: "history" }] };
   const original = copy(initial);
   await update("A", () => {}, initial);
   for (let i = 0; i < 4; i++) await update("A", () => {});
@@ -42,7 +42,7 @@ async function main() {
   assert.deepEqual(calls[1].work_unit.git, initial.work_unit.git);
   assert.deepEqual(calls[1].handoffs, initial.handoffs, "full history must survive updates");
   assert.equal(calls[1].work_unit.metrics.elapsed_ms, 1, "updates must use the server-accepted cache");
-  await update("A", value => { value.state = "needs_user_confirm"; });
+  await update("A", value => { value.state = "needs_user_confirm"; value.role_details.dev.status = "needs_user_confirm"; });
   assert.equal(calls.length, 3, "state transitions must not be skipped");
   const other = { ...copy(initial), view_id: "B" };
   await update("B", () => {}, other);

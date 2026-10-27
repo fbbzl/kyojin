@@ -95,8 +95,8 @@ async function serverContract() {
     await call({ snapshot: accepted });
     const illegalQa = ["pending", "running", "blocked", "needs_user_confirm", undefined].map(status => ({ ...structuredClone(accepted), role_details: { dev: { status: "passed" }, cr: { status }, qa: { status: "running", metrics: { elapsed_ms: 999999 } } } }));
     illegalQa.push({ ...structuredClone(accepted), role_details: { qa: { status: "running" } } });
-    illegalQa.push({ ...structuredClone(accepted), work_unit: { roles: ["dev", "qa"] }, role_details: qaReady });
-    illegalQa.push({ ...structuredClone(accepted), work_unit: { roles: " QA " }, role_details: qaReady });
+    illegalQa.push({ ...structuredClone(accepted), view_id: "qa-without-selected-cr-array", work_unit: { roles: ["dev", "qa"] }, role_details: qaReady });
+    illegalQa.push({ ...structuredClone(accepted), view_id: "qa-without-selected-cr-scalar", work_unit: { roles: " QA " }, role_details: qaReady });
     for (const input of illegalQa) {
       const reply = await call({ snapshot: input });
       assert.equal(reply.error?.code, -32602, "QA must not start before selected CR passes");

@@ -174,7 +174,7 @@ async function stdioContract() {
     const rejectedConflict = await call(conflict);
     assert.equal(rejectedConflict.error?.code, -32602);
     assert.match(rejectedConflict.error.message, /only one active role/i);
-    const stoppedQa = await expectAccepted({ ...qa, state: "needs_user_confirm" });
+    const stoppedQa = await expectAccepted({ ...qa, state: "needs_user_confirm", role_details: { ...qa.role_details, qa: { status: "needs_user_confirm" } } });
     const invalidStatuses = ["completed", "waiting", "not_started", "preparing", "in-progress", "in_progress", "working", "active", "started", "started_working", " RUNNING ", "running ", "", null, 42, false, {}, []];
     for (const status of invalidStatuses) {
       const invalid = structuredClone(qa);
@@ -184,7 +184,7 @@ async function stdioContract() {
       assert.match(rejected.error.message, /status must be one of/i);
       assert.deepEqual(await latest(), stoppedQa.role_details, "rejection must retain the latest valid roles and elapsed metrics");
     }
-    // Global stops override stale repair activity; resuming still needs the bound handoff.
+    // Global stops halt repair activity; resuming still needs the bound handoff.
     const repair = { view_id: "stop-repair", state: "cr_blocked", work_unit: { roles: ["cr", "dev", "qa"], work_unit_id: "repair", reference_version: "v1" }, role_details: { cr: { status: "blocked", blocker_type: "test_assets" }, dev: { status: "passed" }, qa: { status: "running" } }, handoffs: [{ from: "cr", to: "qa", state: "cr_blocked", handoff_result: "accepted", work_unit_id: "repair", reference_version: "v1", files: ["test.js"], decision: "Repair asset only", next_action: "CR review before testing" }] };
     for (const state of ["cr_blocked", "qa_failed", "qa_conditional", "needs_revalidation"]) for (const stop of ["paused", "needs_user_confirm"]) {
       const source = structuredClone(repair), active = state === "cr_blocked" ? "qa" : "dev";
@@ -195,7 +195,8 @@ async function stdioContract() {
         Object.assign(source.handoffs[0], { from: "qa", to: "dev", state: state === "needs_revalidation" ? "qa_failed" : state });
       }
       await expectAccepted(source); await delay(60);
-      const stopped = { ...source, state: stop }, frozen = await expectAccepted(stopped);
+      const stopped = structuredClone(source); stopped.state = stop; stopped.role_details[active].status = "pending";
+      const frozen = await expectAccepted(stopped);
       assert.ok(frozen.work_unit.metrics.elapsed_ms >= 20);
       assert.equal(frozen.work_unit.metrics.elapsed_ms, frozen.role_details[active].metrics.elapsed_ms);
       await delay(60);
@@ -208,7 +209,9 @@ async function stdioContract() {
       await delay(20);
       assert.deepEqual(await expectAccepted(), frozen, "rejected resume and invalid stopped schema must preserve frozen cache");
       const resumed = await expectAccepted(source);
-      assert.deepEqual(resumed.role_details, frozen.role_details, "valid resume excludes the stopped interval");
+      assert.equal(resumed.role_details[active].status, "running");
+      assert.deepEqual(resumed.role_details[active].metrics, frozen.role_details[active].metrics, "valid resume excludes the stopped interval");
+      for (const role of source.work_unit.roles.filter(role => role !== active)) assert.deepEqual(resumed.role_details[role], frozen.role_details[role]);
       assert.deepEqual(resumed.work_unit, frozen.work_unit);
       await delay(60);
       const progressed = await expectAccepted();
