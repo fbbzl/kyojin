@@ -55,6 +55,22 @@ for (const change of [value => { value.handoffs = []; }, value => { value.handof
   assert.ok(workflowError(invalid), "incomplete or stale repair handoffs must not authorize QA");
 }
 
+for (const file of ["https://example.test/a.js", "../outside.js", "test/" + String.fromCharCode(10) + "a.js", "//server/share.js"]) {
+  const invalid = structuredClone(repair); invalid.handoffs[0].files = [file];
+  assert.ok(workflowError(invalid), "repair scopes require displayable local paths");
+}
+for (const state of ["qa_failed", "qa_conditional", "needs_revalidation"]) {
+  const returned = structuredClone(repair); returned.view_id = "returned:" + state; returned.state = state; returned.resume_state = "dev_in_progress";
+  returned.role_details = { cr: { status: "pending" }, dev: { status: "running" }, qa: { status: "blocked" } };
+  Object.assign(returned.handoffs[0], { from: "qa", to: "dev", state: state === "needs_revalidation" ? "qa_failed" : state });
+  assert.equal(workflowError(returned), null, "QA return must not reuse invalidated CR approval");
+  tracker.update(returned); time += 25;
+  assert.equal(roleElapsed(tracker.update(returned), "dev"), 25);
+  for (const change of [v => { v.handoffs = []; }, v => { v.handoffs[0].reference_version = "old"; }, v => { v.role_details.qa.status = "pending"; }, v => { v.role_details.cr.status = "needs_user_confirm"; }]) {
+    const invalid = structuredClone(returned); change(invalid); assert.ok(workflowError(invalid));
+  }
+}
+
 const seeded = sample("seeded", "planned", { dev: "running" }, { elapsed_ms: 2000, total_tokens: 99 });
 seeded.role_details.dev.metrics = { elapsed_ms: 1500 };
 assert.equal(elapsed(tracker.update(seeded)), 2000);

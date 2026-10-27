@@ -83,6 +83,11 @@ function chromeBehavior() {
     for(const [state,label] of [['passed','已完成'],['qa_success','测试通过'],['skipped','已跳过']]){const value=structuredClone(initial);value.state=state;render(value);result.terminals.push({state,label:root.querySelector('[data-sc-field=state]').textContent,...observe(),shimmer:root.querySelectorAll('.is-status-running').length});}
     const skipped=structuredClone(initial);skipped.work_unit.roles=['cr','dev','qa'];skipped.role_details={cr:{status:'pending'},dev:{status:'running'},qa:{status:'pending'}};render(skipped);result.skippedPredecessor=observe();
     const repair={view_id:'repair',state:'cr_blocked',work_unit:{roles:['cr','qa'],work_unit_id:'repair',reference_version:'v1'},role_details:{cr:{status:'blocked',blocker_type:'test_assets'},qa:{status:'running'}},handoffs:[{from:'cr',to:'qa',state:'cr_blocked',handoff_result:'accepted',work_unit_id:'repair',reference_version:'v1',files:['test.js'],decision:'Repair asset only',next_action:'CR review before testing'}]};render(repair);result.repair=observe();repair.handoffs[0].reference_version='old';render(repair);result.staleRepair=observe();
+    const qaRepair=structuredClone(repair);qaRepair.state='qa_failed';qaRepair.work_unit.roles=['cr','dev','qa'];qaRepair.role_details={cr:{status:'pending'},dev:{status:'running'},qa:{status:'blocked'}};Object.assign(qaRepair.handoffs[0],{from:'qa',to:'dev',state:'qa_failed',reference_version:'v1'});
+    result.qaRepairs=[];for(const state of ['qa_failed','qa_conditional','needs_revalidation'])for(const status of ['pending','blocked']){const value=structuredClone(qaRepair);value.state=state;value.resume_state='dev_in_progress';value.handoffs[0].state=state==='needs_revalidation'?'qa_failed':state;value.role_details.cr.status=status;render(value);result.qaRepairs.push(observe());}
+    result.invalidRepairs=[];repair.handoffs[0].reference_version='v1';
+    for(const source of [repair,qaRepair])for(const path of ['https://example.test/test.js','../test.js','src/../test.js','//server/share/test.js','src/test'+String.fromCharCode(10)+'.js']){const value=structuredClone(source);value.handoffs[0].files=[path];render(value);result.invalidRepairs.push(observe());}
+    for(const mutate of [v=>{v.handoffs=[];},v=>{v.handoffs.push({...v.handoffs[0],handoff_result:'pending'});},v=>{v.handoffs[0].reference_version='old';},v=>{v.state='needs_user_confirm';}]){const value=structuredClone(qaRepair);mutate(value);render(value);result.invalidRepairs.push(observe());}
     document.body.dataset.testResult=JSON.stringify(result);
   </script></body></html>`;
   fs.writeFileSync(page, harness, "utf8");
@@ -105,6 +110,8 @@ function chromeBehavior() {
   for(const item of result.terminals)assert.deepEqual(item,{state:item.state,label:{passed:'已完成',qa_success:'测试通过',skipped:'已跳过'}[item.state],active:[],open:[],current:[],shimmer:0},'terminal DOM must suppress stale running activity');
   for(const item of [result.skippedPredecessor,result.staleRepair])assert.deepEqual(item,{active:[],open:[],current:[]});
   assert.deepEqual(result.repair,{active:['qa'],open:['qa'],current:['qa']},'scoped repair remains visible as QA work');
+  for(const item of result.qaRepairs)assert.deepEqual(item,{active:['dev'],open:['dev'],current:['dev']},'bound QA rework may run DEV while CR approval is invalidated');
+  for(const item of result.invalidRepairs)assert.deepEqual(item,{active:[],open:[],current:[]},'invalid path or repair authority must suppress browser activity');
   console.log(`Serial workflow Chrome behavior passed; browser evidence: ${page}`);
 }
 

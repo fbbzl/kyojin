@@ -10,13 +10,20 @@ const initialElapsed = metrics => Number.isSafeInteger(record(metrics).elapsed_m
 const stopwatch = metrics => ({ elapsed: initialElapsed(metrics), active: false });
 const selectedRoles = value => [...new Set((Array.isArray(value) ? value : [value]).filter(value => typeof value === "string").map(value => value.trim().toLowerCase()).filter(value => ROLES.has(value)))];
 
+function filePath(value) {
+  const path=(typeof value === "string" ? value.trim() : ""),local=path.replaceAll(String.fromCharCode(92),"/");
+  const relative=/^[a-z]:[/]$/i.test(local.slice(0,3))?local.slice(3):local;
+  const invalid=relative.includes(":")||typeof value==="string"&&[...value].some(char=>char.charCodeAt(0)<32);
+  return path&&!path.startsWith(String.fromCharCode(92))&&!local.startsWith("//")&&!local.endsWith("/")&&!invalid&&!relative.split("/").includes("..")?path:"";
+}
 function acceptedRepair(snapshot, from, to) {
   const work = record(snapshot.work_unit), handoff = Array.isArray(snapshot.handoffs) ? record(snapshot.handoffs.at(-1)) : {};
-  return status(snapshot.state) === "cr_blocked" && handoff.state === "cr_blocked" &&
+  const state = status(snapshot.state), repairState = from === "qa" ? ["qa_failed", "qa_conditional"].includes(handoff.state) && (state === handoff.state || (state === "needs_revalidation" && snapshot.resume_state === "dev_in_progress")) : state === "cr_blocked" && handoff.state === "cr_blocked";
+  return repairState &&
     typeof work.work_unit_id === "string" && work.work_unit_id.trim() !== "" && handoff.work_unit_id === work.work_unit_id &&
     typeof work.reference_version === "string" && work.reference_version.trim() !== "" && handoff.reference_version === work.reference_version &&
     handoff.from === from && handoff.to === to && handoff.handoff_result === "accepted" &&
-    Array.isArray(handoff.files) && handoff.files.length > 0 && handoff.files.every(file => typeof file === "string" && file.trim() !== "") &&
+    Array.isArray(handoff.files) && handoff.files.length > 0 && handoff.files.every(file => filePath(file)) &&
     typeof handoff.decision === "string" && handoff.decision.trim() !== "" && typeof handoff.next_action === "string" && handoff.next_action.trim() !== "";
 }
 function workflowError(snapshot, selected = selectedRoles(record(snapshot.work_unit).roles)) {
@@ -25,10 +32,12 @@ function workflowError(snapshot, selected = selectedRoles(record(snapshot.work_u
   if (!active.length) return null;
   const repair = active[0] === "qa" && record(details.cr).status === "blocked" && record(details.cr).blocker_type === "test_assets" && acceptedRepair(snapshot, "cr", "qa");
   if (active[0] === "qa" && (!selected.includes("cr") || (record(details.cr).status !== "passed" && !repair))) return "QA can run only when selected CR has passed or accepted test-asset repair is scoped";
+  const qaRepair = active[0] === "dev" && selected.includes("qa") && record(details.qa).status === "blocked" && acceptedRepair(snapshot, "qa", "dev");
   for (const role of selected.slice(0, selected.indexOf(active[0]))) {
     const prior = record(details[role]).status;
     // Missing historical status remains readable; explicit unfinished predecessors cannot be skipped.
-    if (prior !== undefined && prior !== null && prior !== "" && prior !== "passed" && !(prior === "blocked" && role === "cr" && (repair || (active[0] === "dev" && acceptedRepair(snapshot, role, active[0]))))) return "Serial workflow requires preceding role " + role + " to pass or hand off a scoped repair";
+    const retry = role === "cr" && ((qaRepair && ["pending", "blocked"].includes(prior)) || (prior === "blocked" && (repair || (active[0] === "dev" && acceptedRepair(snapshot, role, active[0])))));
+    if (prior !== undefined && prior !== null && prior !== "" && prior !== "passed" && !retry) return "Serial workflow requires preceding role " + role + " to pass or hand off a scoped repair";
   }
   return null;
 }

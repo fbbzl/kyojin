@@ -2,7 +2,7 @@
 name: survey-corps
 description: "Coordinate a multi-role engineering task with the smallest necessary role chain, evidence-based handoffs, and explicit escalation for high-risk changes. The shorthand `sc` starts this workflow."
 metadata:
-  version: 3.0.10
+  version: 3.0.11
 ---
 
 # 调查兵团
@@ -146,7 +146,7 @@ handoffs: []             # 权威交接记录；不在 UI 中逐条展示
 
 同一工作单元按所选场景链路串行推进，同时最多一个角色处于 `running`。角色切换时，先结束当前角色的执行并记录真实结论，在同一快照中更新前一角色，再把接收角色设为 `running`；不得保留上一轮 running。CR 未通过时 QA 保持 `pending`，仅下述独立测试资产限定返修可启动；不得提前进行常规测试准备、异常复现或正式测试。优化可由 CR 先建项；未登记异常先由 DEV 调查，交 CR 通过后才进入 QA。
 
-QA 在 CR 通过后准备或修改独立测试资产，完成后先停止 QA，再将变化后的基线交 CR 复审，通过后才启动 QA 正式测试。CR 因独立测试资产阻断时，编排者保留任务 `state=cr_blocked`、CR 的 `status=blocked` 与 `blocker_type=test_assets`；由 CR 在最新一条交接中限定修复文件、原因和解除条件，QA 接收后仅修复指定资产，不执行正式测试或输出验收结论。交接须为 `from=cr`、`to=qa`、`state=cr_blocked`、`handoff_result=accepted`，且 `work_unit_id`、`reference_version` 为与当前任务相同的非空字符串，`files` 为非空路径字符串数组，`decision`、`next_action` 为非空字符串；不以用户临时例外代替此规则。优化链的前序 CR 阻断后交 DEV 返修也复用同样字段，`to=dev`。其他显式未完成前序角色仍须先完成；不新增角色状态。修复完成先停止返修角色、更新基线并将任务置为 `ready_for_cr`，CR 重新运行并通过后才进入 QA 正式测试；旧限定交接不授权新基线。返修也遵循单角色执行，再依次复审、复测。
+QA 在 CR 通过后准备或修改独立测试资产，完成后先停止 QA，再将变化后的基线交 CR 复审，通过后才启动 QA 正式测试。CR 因独立测试资产阻断时，编排者保留任务 `state=cr_blocked`、CR 的 `status=blocked` 与 `blocker_type=test_assets`；由 CR 在最新一条交接中限定修复文件、原因和解除条件，QA 接收后仅修复指定资产，不执行正式测试或输出验收结论。交接须为 `from=cr`、`to=qa`、`state=cr_blocked`、`handoff_result=accepted`，且 `work_unit_id`、`reference_version` 为与当前任务相同的非空字符串，`files` 为非空路径字符串数组，每项须通过文件条的本地路径校验（拒绝 URL、控制字符、UNC 和 `..` 路径段），`decision`、`next_action` 为非空字符串；不以用户临时例外代替此规则。优化链的前序 CR 阻断后交 DEV 返修也复用同样字段，`to=dev`。QA 交 DEV 返修复用上述交接字段，`from=qa`、`to=dev`、交接 `state=qa_failed` 或 `qa_conditional`，所选 QA 保持 `blocked`；任务为对应状态，或 `needs_revalidation` 且 `resume_state=dev_in_progress`。此时旧 CR 结论可置为 `pending` 或保留实际 `blocked`，不保留失效的 `passed`；其他显式未完成前序角色仍须先完成，不新增角色状态。修复完成先停止返修角色、更新基线并将任务置为 `ready_for_cr`，CR 重新运行并通过后才进入 QA 正式测试；旧限定交接不授权新基线。返修也遵循单角色执行，再依次复审、复测。
 
 角色通常按 `pending -> running -> passed` 推进，`passed` 表示工作完成并满足要求；无法推进时转为 `blocked`，用 `summary` 说明原因、`next_action` 说明解除条件，解除后 `blocked -> running` 返修。需用户决定时转为 `needs_user_confirm`，未获确认不得继续；用户回复后按实际条件回到 `pending`、`running` 或 `blocked`。暂停、取消属于任务状态，不增加角色状态；未参与角色不列入角色链。任务 `state` 表示阶段或整体结果，角色 `status` 表示执行状况，`handoff_result` 表示交接接收结果，三者不能互相替代。
 

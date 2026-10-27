@@ -27,6 +27,13 @@ const devRepair=structuredClone(repair);devRepair.role_details={cr:{status:"bloc
 const review=structuredClone(repair);review.state="ready_for_cr";review.work_unit.reference_version="v2";review.role_details={cr:{status:"running"},dev:{status:"passed"},qa:{status:"pending"}};
 const retest=structuredClone(review);retest.state="ready_for_qa";retest.role_details.cr.status="passed";retest.role_details.qa.status="running";
 snapshots.push({snapshot:optimization},{snapshot:devRepair},{snapshot:repair},{snapshot:review},{snapshot:retest});
+// QA-rework regression: invalidated CR approval must not prevent a bound QA -> DEV repair.
+const qaRepair=structuredClone(devRepair);qaRepair.state="qa_failed";qaRepair.role_details.cr.status="pending";qaRepair.role_details.qa.status="blocked";Object.assign(qaRepair.handoffs[0],{from:"qa",state:"qa_failed"});
+snapshots.push({snapshot:{...qa,state:"paused"}});
+for(const source of [repair,qaRepair])for(const path of ["https://example.test/test.js","../test.js","src/../test.js","//server/share/test.js","src/test"+String.fromCharCode(10)+".js"]){const value=structuredClone(source);value.handoffs[0].files=[path];snapshots.push({snapshot:value,error:/QA can run only|preceding role/},{});}
+for(const mutate of [v=>{v.handoffs=[];},v=>{v.handoffs.push({...v.handoffs[0],handoff_result:"pending"});},v=>{v.handoffs[0].reference_version="old";},v=>{v.state="needs_user_confirm";},v=>{v.state="needs_revalidation";v.resume_state="ready_for_qa";}]){const value=structuredClone(qaRepair);mutate(value);snapshots.push({snapshot:value,error:/preceding role cr/},{});}
+for(const state of ["qa_failed","qa_conditional","needs_revalidation"])for(const status of ["pending","blocked"]){const value=structuredClone(qaRepair);value.state=state;value.resume_state="dev_in_progress";value.handoffs[0].state=state==="needs_revalidation"?"qa_failed":state;value.role_details.cr.status=status;snapshots.push({snapshot:value});}
+snapshots.push({snapshot:review},{snapshot:retest});
 let step = 0;
 let latest;
 const { server, complete } = startServer({ onReply(reply) {

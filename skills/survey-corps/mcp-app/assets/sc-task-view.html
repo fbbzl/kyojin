@@ -323,11 +323,12 @@
       }
       function acceptedRepair(snapshot, from, to) {
         const work = asObject(snapshot.work_unit), handoff = Array.isArray(snapshot.handoffs) ? asObject(snapshot.handoffs.at(-1)) : {};
-        return normalizedStatus(snapshot.state) === "cr_blocked" && handoff.state === "cr_blocked" &&
+        const state = normalizedStatus(snapshot.state), repairState = from === "qa" ? ["qa_failed", "qa_conditional"].includes(handoff.state) && (state === handoff.state || (state === "needs_revalidation" && snapshot.resume_state === "dev_in_progress")) : state === "cr_blocked" && handoff.state === "cr_blocked";
+        return repairState &&
           typeof work.work_unit_id === "string" && work.work_unit_id.trim() !== "" && handoff.work_unit_id === work.work_unit_id &&
           typeof work.reference_version === "string" && work.reference_version.trim() !== "" && handoff.reference_version === work.reference_version &&
           handoff.from === from && handoff.to === to && handoff.handoff_result === "accepted" &&
-          Array.isArray(handoff.files) && handoff.files.length > 0 && handoff.files.every(file => typeof file === "string" && file.trim() !== "") &&
+          Array.isArray(handoff.files) && handoff.files.length > 0 && handoff.files.every(file => filePath(file)) &&
           typeof handoff.decision === "string" && handoff.decision.trim() !== "" && typeof handoff.next_action === "string" && handoff.next_action.trim() !== "";
       }
       function resolveActiveRole(details,state,selectedRoles,input={}) {
@@ -336,9 +337,11 @@
         if (active.length!==1) return null;
         const repair=active[0]==="qa"&&asObject(details.cr).status==="blocked"&&asObject(details.cr).blocker_type==="test_assets"&&acceptedRepair(input,"cr","qa");
         if (active[0]==="qa"&&(!selectedRoles.includes("cr")||(asObject(details.cr).status!=="passed"&&!repair))) return null;
+        const qaRepair=active[0]==="dev"&&selectedRoles.includes("qa")&&asObject(details.qa).status==="blocked"&&acceptedRepair(input,"qa","dev");
         for (const role of selectedRoles.slice(0,selectedRoles.indexOf(active[0]))) {
           const prior=asObject(details[role]).status;
-          if (prior!==undefined&&prior!==null&&prior!==""&&prior!=="passed"&&!(prior==="blocked"&&role==="cr"&&(repair||(active[0]==="dev"&&acceptedRepair(input,role,active[0]))))) return null;
+          const retry=role==="cr"&&((qaRepair&&["pending","blocked"].includes(prior))||(prior==="blocked"&&(repair||(active[0]==="dev"&&acceptedRepair(input,role,active[0])))));
+          if (prior!==undefined&&prior!==null&&prior!==""&&prior!=="passed"&&!retry) return null;
         }
         return active[0];
       }
