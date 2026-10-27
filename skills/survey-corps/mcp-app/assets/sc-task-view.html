@@ -597,7 +597,7 @@
       }
       function handoffFiles(input,from,to) {
         const work=asObject(input.work_unit),unit=optionalText(work.work_unit_id),version=optionalText(work.reference_version);
-        if (!unit||!Array.isArray(input.handoffs)||asObject(asObject(input.role_details)[from]).status==="pending") return [];
+        if (!unit||!Array.isArray(input.handoffs)||finishedStatuses.has(normalizedStatus(input.state))||asObject(asObject(input.role_details)[from]).status==="pending") return [];
         const latest=input.handoffs.findLast(value=>{
           const item=asObject(value);
           return item.work_unit_id===unit&&(item.from===from&&item.to===to||item.from===to&&item.to===from);

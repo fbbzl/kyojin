@@ -59,6 +59,8 @@ assert.deepEqual(reviewFiles([reviewTransfer({reference_version:"v1"})],"passed"
 assert.deepEqual(reviewFiles([reviewTransfer({reference_version:"v2"}),reviewTransfer({reference_version:"v1"})],"passed","v2"),[],"a mismatched latest delivery must not fall back to an older matching record");
 assert.deepEqual(reviewFiles([reviewTransfer({reference_version:"v2"})],"passed"),["docs/需求.md"],"legacy work units without versions retain their delivery");
 assert.deepEqual(reviewFiles([reviewTransfer({})],"passed","v2"),["docs/需求.md"],"legacy deliveries without versions remain compatible");
+for(const state of ["completed","complete","done","success","successful","succeeded","passed","qa_passed","qa_success","workflow_ready","failed","cancelled","canceled","skipped"," COMPLETED "])assert.deepEqual(Array.from(handoffFiles({state,work_unit:{work_unit_id:"unit"},handoffs:[transfer({})]},"req","dev")),[],state+" must hide delivery labels after task termination");
+for(const state of ["dev_in_progress","paused","needs_user_confirm","blocked"])assert.deepEqual(Array.from(handoffFiles({state,work_unit:{work_unit_id:"unit"},handoffs:[transfer({})]},"req","dev")),["docs/需求.md"],state+" must retain an otherwise eligible delivery");
 assert.equal(filePath(" src/<img onerror=alert(1)>.js "),"src/<img onerror=alert(1)>.js","path text must remain literal for textContent output");
 assert.ok(appTemplate.includes("node.textContent=display;")&&appTemplate.includes("node.title=value;"),"file rows keep literal display and full-path tooltip separate");
 assert.ok(appTemplate.includes("if (node.textContent!==display)"),"same-file refresh must preserve horizontal reading position");
