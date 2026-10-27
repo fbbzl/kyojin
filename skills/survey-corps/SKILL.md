@@ -2,7 +2,7 @@
 name: survey-corps
 description: "Coordinate a multi-role engineering task with the smallest necessary role chain, evidence-based handoffs, and explicit escalation for high-risk changes. The shorthand `sc` starts this workflow."
 metadata:
-  version: 3.0.11
+  version: 3.0.12
 ---
 
 # 调查兵团
@@ -26,22 +26,25 @@ metadata:
 
 ### 快照更新与输出
 
-按 `view_id` 缓存成功接收的 `structuredContent.snapshot`；更新时复制缓存、只改变化字段，仍发送完整快照。成功且返回 ID 匹配才替换缓存；失败报告实际错误、保留旧值并停止交接。缓存丢失按权威记录重建；`{}` 仅恢复服务端最近快照，须核对 ID，不能代替更新。只输出真实 `result.content` 文本，不输出或顶层返回整份 result/snapshot。
+按 `view_id` 缓存成功接收的 `structuredContent.snapshot`；更新时复制缓存、只改变化字段，仍发送完整快照。同一次编排动作的字段合并更新；不跨角色启动、交接或真实文件切换合并。当前已展示同一视图且 JSON 内容未变时跳过调用，不输出确认；不为计时或装饰重复刷新。成功且返回 ID 匹配才替换缓存；失败报告实际错误、保留旧值并停止交接。缓存丢失按权威记录重建；`{}` 仅恢复服务端最近快照，须核对 ID，不能代替更新。只输出真实 `result.content` 文本，不输出或顶层返回整份 result/snapshot；不重复读取或输出 HTML、CSS、JS 及历史快照。
 
-当前 `functions.exec` 每会话只定义一次 helper；`store` 保存静态源码字符串，不保存函数。工具名以当前声明为准；首次可把完整权威快照作为第三参数，后续仅传变化。
+当前 `functions.exec` 每会话只定义一次 helper，所有更新串行等待；`store` 保存静态源码字符串，不保存函数。工具名以当前声明为准；首次、显式重新展示或服务端重启后，把完整权威快照作为第三参数强制发送，后续仅传变化。摘要保留结论、证据保留定位，不把日志或源码复制进快照，也不裁剪上报历史。
 
 ```javascript
 store("sc-update", `async (viewId, change, initial) => {
 const key = "sc-snapshot:" + viewId, saved = initial ?? load(key);
 if (!saved || saved.view_id !== viewId) throw new Error("缺少当前任务缓存；按权威记录重建完整快照。");
-const snapshot = JSON.parse(JSON.stringify(saved));
+const before = JSON.stringify(saved), snapshot = JSON.parse(before);
 change(snapshot);
+if (initial == null && load("sc-current-view") === viewId && JSON.stringify(snapshot) === before) return;
+store("sc-current-view", null);
 const result = await tools.mcp__survey_corps_task_view__show_sc_task_view({ snapshot });
 for (const item of result.content ?? []) if (item.type === "text") text(item.text);
 if (result.isError) throw new Error("视图更新失败，停止交接；实际错误见工具返回。");
 const accepted = result.structuredContent?.snapshot;
 if (accepted?.view_id !== viewId) throw new Error("快照 ID 不匹配；停止交接。");
 store(key, accepted);
+store("sc-current-view", viewId);
 }`);
 // 后续调用只需这两行；eval 的输入仅限本会话定义的静态 helper。
 const update = eval(load("sc-update"));

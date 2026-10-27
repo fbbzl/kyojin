@@ -70,7 +70,7 @@ marketplace 将该插件标为 `AVAILABLE`、`ON_INSTALL` 和 `Productivity`；�
 
 注册的具体配置键由客户端版本决定；状态更新时调用 `show_sc_task_view`，参数为 `{ "snapshot": <当前 SC 快照> }`。`snapshot.view_id` 必填，对同一工作单元固定为 `sc-task-view:<work_unit_id>`；它是逻辑标识，不是路径或资源 URI，也不在 UI 中展示。入口空参调用 `{}` 会恢复当前 server 会话最近一次收到的快照；在首次收到快照前才返回 `sc-task-view:empty` 空视图。MCP App 资源 URI 为 `ui://survey-corps/task-view`。标准 `ui.resourceUri` 负责关联 HTML resource；Codex 专用的 `openai/ui.thread` entrypoint 负责让宿主把该 App 暴露为当前任务的侧栏入口。该入口仅声明可供用户在任务内容 tab 手动打开，不保证更新工具调用后自动展开右侧面板。
 
-角色顺序由编排者写入 `work_unit.roles`，视图保留该原序；脚本缓存与短确认输出示例见 [SC 快照更新与输出](../SKILL.md#快照更新与输出)。
+角色顺序由编排者写入 `work_unit.roles`，视图保留该原序；缓存更新、同值跳过、强制重显与短确认输出见 [SC 快照更新与输出](../SKILL.md#快照更新与输出)。节省来自减少重复调用与上下文输出，不改变完整快照协议或真实文件切换上报。
 
 ## 安全与边界
 
