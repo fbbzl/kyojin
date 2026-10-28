@@ -2,7 +2,7 @@
 name: align-with-visuals
 description: "Use when req needs a visual artifact to clarify requirements more efficiently than text alone."
 metadata:
-  version: 1.4.2
+  version: 1.4.3
 ---
 
 # align-with-visuals
@@ -27,6 +27,8 @@ metadata:
 4. 在产物中区分已确认事实、假设、开放问题和未覆盖范围，并关联来源、版本和适用范围。
 5. 将产物、已验证/未验证范围和用户反馈返回 `req`；反馈不自动改变需求状态或触发外部操作。
 
+每个产物必须有在同一工作单元内稳定的 `artifact_id`、仅在内容变化时递增的 `artifact_version`、实际产出格式 `artifact_format`（`mermaid`、`ascii`、`html`、`svg`、`png` 或用户明确指定的格式名）和本轮观察时间 `observed_at`。`artifact` 只能引用实际生成的本地路径、内联 Mermaid/ASCII 内容或已存在的用户指定资源；不得猜测 URL、补造产物或把未验证的渲染结果写成已验证。用户反馈若存在，必须带稳定 `feedback_id`、观察时间和对需求结论的影响；没有反馈时返回空数组。
+
 ## 质量与授权边界
 
 - 只展示当前分歧所需内容，不保留装饰、占位模块或无来源数据。
@@ -41,14 +43,19 @@ metadata:
 visual_alignment:
   work_unit_id:
   requirement_version:
+  artifact_id:
+  artifact_version:
+  artifact_format:
   artifact:
+  observed_at:
   purpose:
   source_evidence: []
   verified_scope: []
   unverified_scope: []
   assumptions: []
   decision_items: []
-  user_feedback: []
+  feedback_ids: []
+  user_feedback: [] # each item: feedback_id, observed_at, decision_impact
   next_action:
 ```
 

@@ -2,7 +2,7 @@
 name: humanity-tech-docs
 description: "先以准确性为先审查，再进行受控的语言清理，完善现有技术文档。适用于 API 参考、README、设计说明和技术指南。"
 metadata:
-  version: 1.0.3
+  version: 1.0.4
 ---
 
 # 技术文档精修
@@ -36,6 +36,26 @@ metadata:
 
 编辑前，将事实性变更追溯到当前代码、项目规范、已验证测试或用户提供的权威材料。记录来源位置；发现冲突或不受支持的声明时报告，不自行编造解决方案。清理完成后，依据这些来源和原始 diff，重新核对变更事实，以及保留的标识符、值、示例和限定条件；同时检查代码围栏是否成对，并解析 JSON 示例。报告未解决事实和验证限制。
 
+若依赖缺失、权威来源冲突、代码围栏不成对或 JSON 示例无法解析，先停止编辑并将其记录为阻断；不得用推测、旧版本结果或未验证的替代来源继续修改。
+
 ## 交付
 
-交付时说明实际修改的文件、覆盖范围、事实性变更的来源、未解决事实和未验证范围。未修改文档时，明确说明原因和下一步，不以“已检查”替代结论。
+交付时说明实际修改的文件、覆盖范围、事实性变更的来源、未解决事实和未验证范围。使用以下字段记录可复核证据；字段值必须来自本轮实际观察，不能用空泛的“已检查”替代结论：
+
+```yaml
+documentation_delivery:
+  status: edited | unchanged | blocked
+  observed_at:
+  baseline:
+  environment:
+  files: []
+  covered_scope: []
+  factual_sources: []
+  checks: []
+  acceptance: []
+  unresolved_facts: []
+  unverified_scope: []
+  next_action:
+```
+
+`blocked` 必须说明阻断原因和解除条件；`unchanged` 必须说明未修改原因和下一步；`edited` 必须列出实际文件、来源定位和已执行检查。

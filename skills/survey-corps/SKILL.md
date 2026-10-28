@@ -2,12 +2,18 @@
 name: survey-corps
 description: "Coordinate a multi-role engineering task with the smallest necessary role chain, evidence-based handoffs, and explicit escalation for high-risk changes. The shorthand `sc` starts this workflow."
 metadata:
-  version: 3.0.12
+  version: 3.0.13
 ---
 
 # 调查兵团
 
 调查兵团用于跨角色工程协作：用最少的角色完成任务，并让结论能追溯到当前范围、版本、环境和证据。它协调 `req`、`dev`、`cr`、`qa`，不替代专业判断；代码同步、发布预检、生产发布及运行观察由用户或授权方负责。
+
+## 最小阅读与解释顺序
+
+只需单角色且用户未明确启动 `sc` 时，读取“何时启动”后直接使用对应角色 Skill；否则按“启动别名/任务视图”→“何时启动/串行角色与交接”→“Subagent-only/最小编排”→“共同约束/交接与状态”→“完成门禁”的顺序执行。规则冲突时，授权与安全阻断优先于状态与交接门禁，状态与交接门禁优先于视图展示；对当前含 `work_unit` 的工作单元，必需字段或已提供字段若未定义、相互矛盾或证据不足，均不推断，暂停交接并进入 `blocked`，直到权威记录和解除条件明确；可选字段缺失和无工作单元的旧纯视图仍按任务视图契约兼容。
+
+快照、摘要、证据、交接和任务视图不得写入密码、Token、密钥或未经授权的个人敏感信息；需要定位时使用脱敏后的路径、标识符或结果摘要。
 
 ## 启动别名
 

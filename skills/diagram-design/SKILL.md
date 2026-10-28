@@ -3,7 +3,7 @@ name: diagram-design
 description: Create branded architecture, architecture delta, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant, radar/spider, polar chart (polar/radial lollipop), loop/flywheel, nested, tree, org chart, layer stack, exploded axonometric, axonometric plan, Venn, pyramid/funnel, treemap and marimekko, heatmap, bar and dumbbell, waterfall, line (slopegraph, ridgeline, streamgraph, bump), Gantt and scatter charts (bubble, beeswarm), high-level, process, medallion, data flow, DP integration, DP security matrix, Sankey, fishbone, Wardley map, kanban, user journey, service blueprint, deployment, dependency graph, UML class, story map, or database schema diagrams as HTML/SVG/PNG, with .drawio, Mermaid, and .excalidraw import, plus lifecycle phase maps, block decomposition trees, and onboarding guidance.
 license: MIT
 metadata:
-  version: 2.6.121
+  version: 2.6.122
 ---
 
 # Diagram Design
@@ -370,13 +370,17 @@ The size preset sets the `viewBox` **and** the type ramp; `faithful` is the only
 
 ## 12. Output
 
-Always produce a single self-contained `.html` file:
+Resolve the output format in this order: the user's explicit format, the §11 format dial for imports, then the default `html`. Produce only the selected format; do not infer extra exports.
+
+For the default `html` format, produce one self-contained `.html` file:
 
 - Embedded CSS (no external except Google Fonts)
 - Inline SVG (no external images)
 - Static by default; minimal inline JavaScript only for explicit animation controls/state
 
 Renders correctly in any modern browser. Motion-enabled output must render its complete meaning without JavaScript; under `prefers-reduced-motion: reduce` it shows the complete static frame and hides/disables playback controls.
+
+When `svg`, `png`, or `html+png` is selected, load [`references/export.md`](references/export.md) and produce exactly the requested format(s); exports remain manual and are never added to an HTML request.
 
 ### Accessible SVG contract
 
