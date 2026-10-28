@@ -18,6 +18,8 @@ assert.equal(mcp.mcpServers[plugin.name].cwd, ".");
 assert.equal(plugin.mcpServers, "./.mcp.json");
 assert.equal(fs.existsSync(path.resolve(root, plugin.mcpServers)), true, "manifest MCP config does not resolve inside plugin");
 assert.equal(fs.existsSync(path.join(root, "assets", "sc-task-view.html")), true, "MCP App task-view asset is missing");
+assert.equal(fs.existsSync(path.join(root, "snapshot.schema.json")), true, "snapshot schema is missing");
+assert.equal(fs.existsSync(path.join(root, "snapshot-validator.js")), true, "standalone snapshot validator is missing");
 assert.equal(fs.existsSync(path.join(root, "..", "sc-task-view.html")), false, "legacy local HTML fallback must not exist");
 assert.equal(fs.existsSync(path.join(root, "..", "Prepare-ScTaskView.ps1")), false, "legacy fallback helper must not exist");
 assert.equal(fs.existsSync(path.join(root, "..", "Test-Prepare-ScTaskView.ps1")), false, "legacy fallback test must not exist");

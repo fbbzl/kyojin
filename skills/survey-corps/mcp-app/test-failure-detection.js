@@ -17,7 +17,7 @@ const faults = {
 for (const [fault, source] of Object.entries(faults)) {
   const fixture = path.join(temp, fault);
   fs.mkdirSync(fixture);
-  for (const name of [...tests, "test-stdio-helper.js", "elapsed-tracker.js", "workflow-state-machine.js"]) fs.copyFileSync(path.join(__dirname, name), path.join(fixture, name));
+  for (const name of [...tests, "test-stdio-helper.js", "elapsed-tracker.js", "workflow-state-machine.js", "snapshot.schema.json", "snapshot-validator.js"]) fs.copyFileSync(path.join(__dirname, name), path.join(fixture, name));
   fs.cpSync(path.join(__dirname, "assets"), path.join(fixture, "assets"), { recursive: true });
   fs.writeFileSync(path.join(fixture, "server.js"), source);
   for (const test of tests) {

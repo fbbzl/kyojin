@@ -1,0 +1,12 @@
+{
+  "name": "survey-corps-task-view",
+  "version": "0.1.4",
+  "private": true,
+  "scripts": {
+    "build:snapshot-validator": "node generate-snapshot-validator.js",
+    "check:snapshot-validator": "node generate-snapshot-validator.js --check"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0"
+  }
+}

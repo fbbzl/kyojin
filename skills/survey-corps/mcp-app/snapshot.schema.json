@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:kyojin:survey-corps:task-view:snapshot:v1",
+  "title": "Survey Corps task view snapshot",
+  "description": "MCP tool input contract for the read-only Survey Corps task view. Unknown fields remain compatible extensions.",
+  "type": "object",
+  "required": ["view_id"],
+  "properties": {
+    "view_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "[\\s\\S]*\\S[\\s\\S]*",
+      "description": "Stable logical view identifier; not displayed in the UI or used as a path or resource URI."
+    },
+    "state": {
+      "type": "string",
+      "description": "Current workflow state. The server validates phase transitions separately."
+    },
+    "resume_state": {
+      "type": "string",
+      "description": "Source phase required when entering needs_revalidation or initially resuming a held workflow."
+    },
+    "work_unit": {
+      "type": "object",
+      "required": ["roles"],
+      "properties": {
+        "work_unit_id": { "type": "string" },
+        "project_name": { "type": "string" },
+        "project_root": { "type": "string" },
+        "project_mcps": { "type": "array", "items": { "type": "string" } },
+        "git": { "$ref": "#/definitions/git" },
+        "target": { "type": "string" },
+        "task_type": { "type": "string" },
+        "roles": {
+          "description": "Selected roles in execution order. A scalar role remains supported for legacy snapshots.",
+          "anyOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "role_selection_reason": { "type": "string" },
+        "scope": { "$ref": "#/definitions/stringOrStringList" },
+        "summary": { "type": "string" },
+        "reference_version": { "type": "string" },
+        "environment": { "$ref": "#/definitions/stringOrStringList" },
+        "verified_scope": { "$ref": "#/definitions/stringList" },
+        "unverified_scope": { "$ref": "#/definitions/stringList" },
+        "acceptance": { "$ref": "#/definitions/stringList" },
+        "risks": { "$ref": "#/definitions/stringList" },
+        "evidence": { "$ref": "#/definitions/stringList" },
+        "next_action": { "type": "string" },
+        "metrics": { "$ref": "#/definitions/metrics" }
+      },
+      "additionalProperties": true
+    },
+    "role_details": {
+      "type": "object",
+      "properties": {
+        "req": { "allOf": [{ "$ref": "#/definitions/roleDetail" }], "type": "object", "properties": { "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] } } },
+        "dev": { "allOf": [{ "$ref": "#/definitions/roleDetail" }], "type": "object", "properties": { "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] } } },
+        "cr": { "allOf": [{ "$ref": "#/definitions/roleDetail" }], "type": "object", "properties": { "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] } } },
+        "qa": { "allOf": [{ "$ref": "#/definitions/roleDetail" }], "type": "object", "properties": { "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] } } }
+      },
+      "additionalProperties": true
+    },
+    "handoffs": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/handoff" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["work_unit"] },
+      "then": { "required": ["state"] }
+    }
+  ],
+  "additionalProperties": true,
+  "definitions": {
+    "stringList": { "type": "array", "items": { "type": "string" } },
+    "stringOrStringList": {
+      "anyOf": [
+        { "type": "string" },
+        { "$ref": "#/definitions/stringList" }
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "elapsed_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Session active milliseconds; the first accepted value may seed history."
+        },
+        "total_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "deprecated": true,
+          "description": "Legacy passthrough; token use is not collected or displayed."
+        }
+      },
+      "additionalProperties": false
+    },
+    "fileActivity": {
+      "type": "object",
+      "required": ["current"],
+      "properties": {
+        "previous": { "type": "string" },
+        "current": { "type": "string", "minLength": 1 },
+        "next": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "subskill": {
+      "type": "object",
+      "required": ["name", "status"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "goal": { "type": "string" },
+        "summary": { "type": "string" },
+        "question": { "type": "string" },
+        "result": { "type": "string" },
+        "options": { "$ref": "#/definitions/stringList" },
+        "evidence": { "$ref": "#/definitions/stringList" }
+      },
+      "additionalProperties": true
+    },
+    "roleDetail": {
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] },
+        "blocker_type": { "type": "string" },
+        "metrics": { "$ref": "#/definitions/metrics" },
+        "summary": { "type": "string" },
+        "evidence": { "$ref": "#/definitions/stringOrStringList" },
+        "risks": { "$ref": "#/definitions/stringOrStringList" },
+        "next_action": { "type": "string" },
+        "file_activity": { "$ref": "#/definitions/fileActivity" },
+        "subskills": { "type": "array", "items": { "$ref": "#/definitions/subskill" } }
+      },
+      "additionalProperties": true
+    },
+    "git": {
+      "type": "object",
+      "properties": {
+        "repository": { "type": "string" },
+        "branch": { "type": "string" },
+        "commit": { "type": "string" },
+        "dirty": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "handoff": {
+      "type": "object",
+      "properties": {
+        "handoff_id": { "type": "string" },
+        "work_unit_id": { "type": "string" },
+        "reference_version": { "type": "string" },
+        "from": { "type": "string", "enum": ["req", "dev", "cr", "qa"] },
+        "to": { "type": "string", "enum": ["req", "dev", "cr", "qa"] },
+        "state": { "type": "string" },
+        "handoff_result": { "type": "string" },
+        "files": { "$ref": "#/definitions/stringList" },
+        "decision": { "type": "string" },
+        "next_action": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

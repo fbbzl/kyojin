@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// Minimal, dependency-free MCP stdio server for the SC task view.
+// Minimal MCP stdio server; runtime schema validation uses generated local code.
 const fs = require("node:fs");
 const path = require("node:path");
 const { createElapsedTracker } = require("./elapsed-tracker");
@@ -13,11 +13,8 @@ const TEMPLATE_PATH = path.join(__dirname, "assets", "sc-task-view.html");
 const MAX_FRAME_BYTES = 256 * 1024;
 const MAX_SNAPSHOT_BYTES = 200 * 1024;
 const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2025-03-26", "2025-06-18", "2025-11-25"]);
-const METRIC_SCHEMA = { type: "object", additionalProperties: false, properties: { elapsed_ms: { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER, description: "Session active milliseconds; first value seeds only." }, total_tokens: { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER, deprecated: true, description: "Legacy passthrough; unused by UI." } } };
-const ROLE_STATUSES = ["pending", "running", "passed", "blocked", "needs_user_confirm"];
-const FILE_ACTIVITY_SCHEMA = { type: "object", required: ["current"], properties: { previous: { type: "string" }, current: { type: "string", minLength: 1 }, next: { type: "string" } } };
-const ROLE_DETAIL_SCHEMA = { type: "object", properties: { status: { type: "string", enum: ROLE_STATUSES }, metrics: METRIC_SCHEMA, file_activity: FILE_ACTIVITY_SCHEMA } };
-const SNAPSHOT_SCHEMA = { type: "object", required: ["view_id"], properties: { state: { type: "string" }, view_id: { type: "string", minLength: 1, description: "Stable logical view identifier; not displayed in the UI or used as a path or resource URI." }, work_unit: { type: "object", required: ["roles"], properties: { roles: { anyOf: [{ type: "array", items: { type: "string" } }, { type: "string" }] }, metrics: METRIC_SCHEMA } }, role_details: { type: "object", properties: { req: ROLE_DETAIL_SCHEMA, dev: ROLE_DETAIL_SCHEMA, cr: ROLE_DETAIL_SCHEMA, qa: ROLE_DETAIL_SCHEMA }, additionalProperties: true } }, allOf: [{ if: { required: ["work_unit"] }, then: { required: ["state"] } }] };
+const SNAPSHOT_SCHEMA = require("./snapshot.schema.json");
+const validateSnapshotSchema = require("./snapshot-validator");
 const EMPTY_SNAPSHOT = Object.freeze({ view_id: "sc-task-view:empty", state: "unknown" });
 let latestSnapshot = null;
 const elapsedTracker = createElapsedTracker();
@@ -61,32 +58,19 @@ function appHtml() {
 }
 function isObject(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
 function resource(text) { return { uri: APP_URI, mimeType: APP_MIME, text }; }
-function validateValue(value, schema, field) {
-  if (schema.type === "object") {
-    if (!isObject(value)) return field + " must be an object";
-    for (const key of schema.required || []) if (!Object.hasOwn(value, key)) return field + "." + key + " is required";
-    for (const key of Object.keys(value)) {
-      const child = schema.properties?.[key];
-      if (!Object.hasOwn(schema.properties || {}, key)) {
-        if (schema.additionalProperties === false) return field + "." + key + " is not allowed";
-      } else {
-        const error = validateValue(value[key], child, field + "." + key);
-        if (error) return error;
-      }
-    }
-  } else if (schema.type === "string") {
-    if (schema.enum && !schema.enum.includes(value)) return field + " must be one of: " + schema.enum.join(", ");
-    if (typeof value !== "string") return field + " must be a string";
-    if (schema.minLength && value.length < schema.minLength) return field + " must be a non-empty string";
-  } else if (schema.type === "integer" && (!Number.isSafeInteger(value) || value < schema.minimum || value > schema.maximum)) return field + " must be a non-negative safe integer";
-  return null;
-}
 function validateSnapshot(snapshot) {
-  const error = validateValue(snapshot, SNAPSHOT_SCHEMA, "snapshot");
-  if (error) return error;
+  if (!validateSnapshotSchema(snapshot)) {
+    const error = validateSnapshotSchema.errors[0];
+    const field = "snapshot" + error.instancePath;
+    if (/^snapshot\/role_details\/(req|dev|cr|qa)\/status$/.test(field)) return field + " must be one of: pending, running, passed, blocked, needs_user_confirm";
+    if (error.keyword === "required") {
+      const missing = field + "." + error.params.missingProperty;
+      if (error.params.missingProperty === "state") return missing + " must be a string for a task snapshot";
+      return missing + " is required";
+    }
+    return field + " " + error.message;
+  }
   if (snapshot.view_id.trim() === "") return "snapshot.view_id must be a non-empty string";
-  if (isObject(snapshot.work_unit) && (!Object.hasOwn(snapshot, "state") || typeof snapshot.state !== "string")) return "snapshot.state must be a string for a task snapshot";
-  if (isObject(snapshot.work_unit) && !(typeof snapshot.work_unit.roles === "string" || Array.isArray(snapshot.work_unit.roles) && snapshot.work_unit.roles.every(role => typeof role === "string"))) return "snapshot.work_unit.roles must be a string or an array of strings";
   if (Buffer.byteLength(JSON.stringify(snapshot), "utf8") > MAX_SNAPSHOT_BYTES) return "snapshot exceeds 200 KiB";
   return null;
 }
@@ -95,7 +79,7 @@ function handle(id, method, params) {
   if (method === "ping") return send({ jsonrpc: "2.0", id, result: {} });
   if (method === "resources/list") return send({ jsonrpc: "2.0", id, result: { resources: [{ uri: APP_URI, name: "SC Agent Tree", description: "Survey Corps task view MCP App", mimeType: APP_MIME }] } });
   if (method === "resources/read") { if (params?.uri !== APP_URI) return failure(id, -32602, "Unknown resource URI"); return send({ jsonrpc: "2.0", id, result: { contents: [resource(appHtml())] } }); }
-  if (method === "tools/list") return send({ jsonrpc: "2.0", id, result: { tools: [{ name: "show_sc_task_view", title: "Open SC task view", description: "Read-only SC view; empty call restores the latest snapshot in this session.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: { type: "object", additionalProperties: false, properties: { snapshot: { ...SNAPSHOT_SCHEMA, description: "Optional full snapshot, rendered as text. Omit to restore." } } }, outputSchema: { type: "object", additionalProperties: false, required: ["snapshot"], properties: { snapshot: { ...SNAPSHOT_SCHEMA, description: "Accepted snapshot; explicit empty view before first input." } } }, _meta: { ui: { resourceUri: APP_URI }, "openai/ui": { entrypoints: [{ type: "thread" }] } } }] } });
+  if (method === "tools/list") return send({ jsonrpc: "2.0", id, result: { tools: [{ name: "show_sc_task_view", title: "Open SC task view", description: "Accept a typed Survey Corps snapshot; empty call restores the latest snapshot in this session.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: { type: "object", additionalProperties: false, properties: { snapshot: { ...SNAPSHOT_SCHEMA, description: "Optional full snapshot, rendered as text. Omit to restore." } } }, outputSchema: { type: "object", additionalProperties: false, required: ["snapshot"], properties: { snapshot: { ...SNAPSHOT_SCHEMA, description: "Accepted snapshot; explicit empty view before first input." } } }, _meta: { ui: { resourceUri: APP_URI }, "openai/ui": { entrypoints: [{ type: "thread" }] } } }] } });
   if (method === "tools/call") {
     if (params?.name !== "show_sc_task_view") return failure(id, -32602, "unknown tool");
     const args = params.arguments;

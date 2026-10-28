@@ -1,6 +1,6 @@
 # SC Agent Tree MCP App
 
-这是项目内、零依赖的 Node stdio MCP server。它不是常驻服务：宿主在需要时启动 `server.js`，SC 状态更新通过 `show_sc_task_view` 传入当前 snapshot；Codex `thread` entrypoint 则以空参数调用同一工具。工具以 `_meta.ui.resourceUri` 绑定静态 `text/html;profile=mcp-app` resource，并以 `openai/ui` 的 `thread` entrypoint 声明 Codex 任务内入口。工具返回 `structuredContent.snapshot`，UI 通过 MCP Apps 的 `ui/notifications/tool-result` bridge 渲染该快照。
+这是项目内、运行时零第三方依赖的 Node stdio MCP server。`snapshot.schema.json` 同时定义工具输入与服务端结构校验规则；开发依赖 Ajv 用于生成独立校验器，插件运行不要求安装 Ajv。宿主按需启动 `server.js`，SC 状态更新通过 `show_sc_task_view` 传入当前 snapshot；Codex `thread` entrypoint 则以空参数调用同一工具。工具以 `_meta.ui.resourceUri` 绑定静态 `text/html;profile=mcp-app` resource，并以 `openai/ui` 的 `thread` entrypoint 声明 Codex 任务内入口。工具返回 `structuredContent.snapshot`，UI 通过 MCP Apps 的 `ui/notifications/tool-result` bridge 渲染该快照。
 
 这是 SC 任务视图的唯一渲染路径。项目不生成或打开本地 `visualizations` HTML，也不提供文本或其他替代视图。若 MCP tool 不可用或调用失败，SC 工作单元将进入 `blocked`，直到插件和 MCP Apps 能力恢复。
 
@@ -43,6 +43,9 @@
 ## 本地验证
 
 ```powershell
+pnpm --dir .\skills\survey-corps\mcp-app install --frozen-lockfile
+pnpm --dir .\skills\survey-corps\mcp-app check:snapshot-validator
+node .\skills\survey-corps\mcp-app\test-snapshot-schema.js
 node .\skills\survey-corps\mcp-app\test-server.js
 node .\skills\survey-corps\mcp-app\test-elapsed-tracker.js
 node .\skills\survey-corps\mcp-app\test-elapsed-integration.js

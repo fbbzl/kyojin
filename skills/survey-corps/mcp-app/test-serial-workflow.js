@@ -19,8 +19,8 @@ snapshots.push({ snapshot: { ...qa, role_details: { dev: { status: "passed" }, q
 // SC order/repair boundary: rejected snapshots preserve the stopped cache and all timers.
 const repair={view_id:"scoped-repair",state:"cr_blocked",work_unit:{roles:["cr","dev","qa"],work_unit_id:"repair",reference_version:"v1"},role_details:{cr:{status:"blocked",blocker_type:"test_assets"},dev:{status:"passed"},qa:{status:"running"}},handoffs:[{from:"cr",to:"qa",state:"cr_blocked",handoff_result:"accepted",work_unit_id:"repair",reference_version:"v1",files:["test.js"],decision:"Repair test asset only",next_action:"Return to CR before formal testing"}]};
 snapshots.push({snapshot:{...stoppedQa,state:"paused"}});
-const mutations=[v=>{v.handoffs=[];},v=>{v.handoffs.push({...v.handoffs[0],handoff_result:"pending"});},v=>{v.handoffs[0].work_unit_id="other";},v=>{v.handoffs[0].reference_version="old";},v=>{v.work_unit.reference_version="";},v=>{v.handoffs[0].from="dev";},v=>{v.handoffs[0].to="dev";},v=>{v.handoffs[0].state="ready_for_qa";},v=>{v.handoffs[0].files=[];},v=>{v.handoffs[0].files=[42];},v=>{v.handoffs[0].decision=" ";},v=>{delete v.handoffs[0].next_action;},v=>{v.role_details.cr.blocker_type="bug";},v=>{v.role_details.cr.status="pending";},v=>{v.work_unit.roles=["dev","qa"];},v=>{v.role_details.dev.status="pending";}];
-for(const mutate of mutations){const value=isolated(structuredClone(repair));mutate(value);snapshots.push({snapshot:value,error:/QA can run only|preceding role/},{});}
+const mutations=[{mutate:v=>{v.handoffs=[];}},{mutate:v=>{v.handoffs.push({...v.handoffs[0],handoff_result:"pending"});}},{mutate:v=>{v.handoffs[0].work_unit_id="other";}},{mutate:v=>{v.handoffs[0].reference_version="old";}},{mutate:v=>{v.work_unit.reference_version="";}},{mutate:v=>{v.handoffs[0].from="dev";}},{mutate:v=>{v.handoffs[0].to="dev";}},{mutate:v=>{v.handoffs[0].state="ready_for_qa";}},{mutate:v=>{v.handoffs[0].files=[];}},{mutate:v=>{v.handoffs[0].files=[42];},error:/files\/0 must be string/},{mutate:v=>{v.handoffs[0].decision=" ";}},{mutate:v=>{delete v.handoffs[0].next_action;}},{mutate:v=>{v.role_details.cr.blocker_type="bug";}},{mutate:v=>{v.role_details.cr.status="pending";}},{mutate:v=>{v.work_unit.roles=["dev","qa"];}},{mutate:v=>{v.role_details.dev.status="pending";}}];
+for(const mutation of mutations){const value=isolated(structuredClone(repair));mutation.mutate(value);snapshots.push({snapshot:value,error:mutation.error||/QA can run only|preceding role/},{});}
 for(const role of ["req","dev"]){
   snapshots.push({snapshot:isolated({...base,work_unit:{roles:["cr",role]},role_details:{cr:{status:"pending"},[role]:{status:"running"}}}),error:/preceding role cr/},{});
 }
@@ -42,7 +42,7 @@ for(const roles of [["cr","dev","qa"],["dev","cr","qa"],["req","dev","cr","qa"]]
   snapshots.push({snapshot:source},{snapshot:stopped});
 }
 for(const state of ["qa_failed","qa_conditional","needs_revalidation"])for(const status of ["pending","blocked"]){const value=isolated(structuredClone(qaRepair));value.state=state;value.resume_state="dev_in_progress";value.handoffs[0].state=state==="needs_revalidation"?"qa_failed":state;value.role_details.cr.status=status;snapshots.push({snapshot:value});}
-for(const history of [{to:"sc",state:"qa_passed",reference_version:"v1"},{to:"dev",state:"qa_failed",reference_version:"v1"},{to:"dev",state:"qa_failed",work_unit_id:"other",reference_version:"v2"}])snapshots.push({snapshot:isolated({...base,state:"needs_revalidation",resume_state:"dev_in_progress",work_unit:{roles:["dev","cr","qa"],work_unit_id:"w1",reference_version:"v2"},handoffs:[{...qaRepair.handoffs[0],work_unit_id:"w1",...history}]})});
+for(const history of [{to:"sc",state:"qa_passed",reference_version:"v1"},{to:"dev",state:"qa_failed",reference_version:"v1"},{to:"dev",state:"qa_failed",work_unit_id:"other",reference_version:"v2"}])snapshots.push({snapshot:isolated({...base,state:"needs_revalidation",resume_state:"dev_in_progress",work_unit:{roles:["dev","cr","qa"],work_unit_id:"w1",reference_version:"v2"},handoffs:[{...qaRepair.handoffs[0],work_unit_id:"w1",...history}]}),...(history.to==="sc"?{error:/handoffs\/0\/to must be equal to one of the allowed values/}:{})});
 const finalReview=isolated({...review,role_details:{...review.role_details,qa:{status:"blocked"}}});
 snapshots.push({snapshot:finalReview},{snapshot:{...retest,view_id:finalReview.view_id}});
 let step = 0;
@@ -50,10 +50,11 @@ let latest;
 const { server, complete } = startServer({ onReply(reply) {
   const current = snapshots[step];
   if (current.error) {
+    assert.ok(reply.error, JSON.stringify({ step, expected: current.error, snapshot: current.snapshot, reply }));
     assert.equal(reply.error.code, -32602);
     assert.match(reply.error.message, current.error);
   } else if (current.snapshot) {
-    assert.ok(reply.result);
+    assert.ok(reply.result, JSON.stringify({ step, expected: current, reply }));
     latest = reply.result.structuredContent.snapshot;
   } else {
     assert.deepEqual(reply.result.structuredContent.snapshot, latest, "rejected role transitions must preserve the last valid snapshot and all elapsed metrics");
