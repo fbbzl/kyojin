@@ -81,10 +81,12 @@ async function serverContract() {
     assert.equal(snapshot.role_details.cr.summary, "CR active");
     assert.equal(snapshot.role_details.qa.status, "pending");
     const tools = await request("tools/list", {});
-    const schema = tools.result.tools[0].inputSchema.properties.snapshot.properties.role_details.properties;
+    const snapshotSchema = tools.result.tools[0].inputSchema.properties.snapshot;
+    const schema = snapshotSchema.properties.role_details.properties;
     const invalidStatuses = [null, "", " RUNNING ", "RUNNING", "in-progress", "preparing", "working", "active", "started", "started_working", "completed", "waiting", "waiting_user", "failed", "paused", "cancelled", "skipped", 0, false, {}, []];
+    assert.deepEqual(snapshotSchema.definitions.roleStatus.enum, statuses);
     for (const role of ["req", "dev", "cr", "qa"]) {
-      assert.deepEqual(schema[role].properties.status.enum, statuses);
+      assert.equal(schema[role].$ref, "#/definitions/roleDetail", role + " must reuse the role-detail definition");
       for (const status of invalidStatuses) {
         const input = { view_id: "strict-role-status", role_details: { [role]: { status } } };
         assert.equal((await call({ snapshot: input })).error.code, -32602, role + " " + JSON.stringify(status));

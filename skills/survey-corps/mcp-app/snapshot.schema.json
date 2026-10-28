@@ -56,10 +56,10 @@
     "role_details": {
       "type": "object",
       "properties": {
-        "req": { "allOf": [{ "$ref": "#/definitions/roleDetail" }], "type": "object", "properties": { "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] } } },
-        "dev": { "allOf": [{ "$ref": "#/definitions/roleDetail" }], "type": "object", "properties": { "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] } } },
-        "cr": { "allOf": [{ "$ref": "#/definitions/roleDetail" }], "type": "object", "properties": { "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] } } },
-        "qa": { "allOf": [{ "$ref": "#/definitions/roleDetail" }], "type": "object", "properties": { "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] } } }
+        "req": { "$ref": "#/definitions/roleDetail" },
+        "dev": { "$ref": "#/definitions/roleDetail" },
+        "cr": { "$ref": "#/definitions/roleDetail" },
+        "qa": { "$ref": "#/definitions/roleDetail" }
       },
       "additionalProperties": true
     },
@@ -76,6 +76,7 @@
   ],
   "additionalProperties": true,
   "definitions": {
+    "roleStatus": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] },
     "stringList": { "type": "array", "items": { "type": "string" } },
     "stringOrStringList": {
       "anyOf": [
@@ -130,7 +131,7 @@
     "roleDetail": {
       "type": "object",
       "properties": {
-        "status": { "type": "string", "enum": ["pending", "running", "passed", "blocked", "needs_user_confirm"] },
+        "status": { "$ref": "#/definitions/roleStatus" },
         "blocker_type": { "type": "string" },
         "metrics": { "$ref": "#/definitions/metrics" },
         "summary": { "type": "string" },

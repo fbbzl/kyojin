@@ -14,6 +14,7 @@ const MAX_FRAME_BYTES = 256 * 1024;
 const MAX_SNAPSHOT_BYTES = 200 * 1024;
 const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2025-03-26", "2025-06-18", "2025-11-25"]);
 const SNAPSHOT_SCHEMA = require("./snapshot.schema.json");
+const ROLE_STATUSES = SNAPSHOT_SCHEMA.definitions.roleStatus.enum.join(", ");
 const validateSnapshotSchema = require("./snapshot-validator");
 const EMPTY_SNAPSHOT = Object.freeze({ view_id: "sc-task-view:empty", state: "unknown" });
 let latestSnapshot = null;
@@ -62,7 +63,7 @@ function validateSnapshot(snapshot) {
   if (!validateSnapshotSchema(snapshot)) {
     const error = validateSnapshotSchema.errors[0];
     const field = "snapshot" + error.instancePath;
-    if (/^snapshot\/role_details\/(req|dev|cr|qa)\/status$/.test(field)) return field + " must be one of: pending, running, passed, blocked, needs_user_confirm";
+    if (/^snapshot\/role_details\/[^/]+\/status$/.test(field)) return field + " must be one of: " + ROLE_STATUSES;
     if (error.keyword === "required") {
       const missing = field + "." + error.params.missingProperty;
       if (error.params.missingProperty === "state") return missing + " must be a string for a task snapshot";
@@ -70,7 +71,6 @@ function validateSnapshot(snapshot) {
     }
     return field + " " + error.message;
   }
-  if (snapshot.view_id.trim() === "") return "snapshot.view_id must be a non-empty string";
   if (Buffer.byteLength(JSON.stringify(snapshot), "utf8") > MAX_SNAPSHOT_BYTES) return "snapshot exceeds 200 KiB";
   return null;
 }
