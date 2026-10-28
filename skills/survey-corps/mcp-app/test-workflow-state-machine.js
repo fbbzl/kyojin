@@ -13,9 +13,7 @@ const make = (view_id, state, statuses, extra = {}) => ({
 });
 const event = snapshot => ({ type: "SNAPSHOT_RECEIVED", snapshot });
 const rejectionError = (machine, snapshot) => machine.dispatch(event(snapshot), () => true).error;
-const accepted = (machine, snapshot) => {
-  assert.equal(rejectionError(machine, snapshot), null, snapshot.state + " should be consistent");
-};
+const accepted = (machine, snapshot) => assert.equal(rejectionError(machine, snapshot), null, snapshot.state + " should be consistent");
 
 const normal = createWorkflowStateMachine();
 const planned = make("normal", "planned", { dev: "pending", cr: "pending", qa: "pending" });
@@ -124,11 +122,9 @@ accepted(revalidate, make("revalidate", "qa_passed", { dev: "passed", cr: "passe
 accepted(revalidate, make("revalidate", "workflow_ready", { dev: "passed", cr: "passed", qa: "passed" }, { work_unit: { reference_version: "v2" } }));
 
 function freeze(value) {
-  if (value && typeof value === "object") {
-    Object.values(value).forEach(freeze);
-    Object.freeze(value);
-  }
-  return value;
+  if (!value || typeof value !== "object") return value;
+  Object.values(value).forEach(freeze);
+  return Object.freeze(value);
 }
 const pureEvent = freeze(event(make("pure-transition", "planned", { dev: "pending", cr: "pending", qa: "pending" })));
 const firstTransition = freeze(transition(null, pureEvent));

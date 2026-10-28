@@ -207,7 +207,7 @@ function createWorkflowStateMachine({ maxViews = 128 } = {}) {
       // Keep the validated candidate private even if the callback mutates its input snapshot.
       const next = result.next && structuredClone(result.next);
       const value = applySnapshot();
-      if (value != null && typeof value.then === "function") throw new TypeError("applySnapshot must return synchronously");
+      if (typeof value?.then === "function") throw new TypeError("applySnapshot must return synchronously");
       if (value !== false && value != null && next) views.set(viewId, next);
       return { error: null, value };
     } finally {

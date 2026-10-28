@@ -126,9 +126,7 @@ function handle(id, method, params) {
       throw error;
     }
     if (!snapshot) return failure(id, frameExceeded ? -32603 : -32602, frameExceeded ? "Response exceeds 256 KiB" : "snapshot exceeds 200 KiB after adding elapsed time");
-    if (hasSnapshot) {
-      latestSnapshot = snapshot;
-    }
+    if (hasSnapshot) latestSnapshot = snapshot;
     return send(viewResponse(id, snapshot, message));
   }
   failure(id, -32601, `Method not found: ${method}`);
