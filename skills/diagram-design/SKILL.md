@@ -3,7 +3,7 @@ name: diagram-design
 description: Create branded architecture, architecture delta, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant, radar/spider, polar chart (polar/radial lollipop), loop/flywheel, nested, tree, org chart, layer stack, exploded axonometric, axonometric plan, Venn, pyramid/funnel, treemap and marimekko, heatmap, bar and dumbbell, waterfall, line (slopegraph, ridgeline, streamgraph, bump), Gantt and scatter charts (bubble, beeswarm), high-level, process, medallion, data flow, DP integration, DP security matrix, Sankey, fishbone, Wardley map, kanban, user journey, service blueprint, deployment, dependency graph, UML class, story map, or database schema diagrams as HTML/SVG/PNG, with .drawio, Mermaid, and .excalidraw import, plus lifecycle phase maps, block decomposition trees, and onboarding guidance.
 license: MIT
 metadata:
-  version: 2.6.122
+  version: 2.6.124
 ---
 
 # Diagram Design
@@ -78,7 +78,7 @@ When behavior, state, enforcement, or risk carries the meaning, first load [`ref
 | Hierarchical, ID-addressable decomposition needing per-block I/O, constraints, and a code link | **Traceable block decomposition** → Tree |
 | One subject progresses through phases, waits, retries, cancellation, and terminal outcomes | **Lifecycle phase map** → State Machine |
 
-The pattern owns semantic primitives and its tighter budget; the type owns layout grammar. Use [`references/animation.md`](references/animation.md) only when motion is requested or materially clarifies ordered change; static remains the default.
+The pattern owns semantic primitives and its tighter budget; the type owns layout grammar. Use [`references/animation.md`](references/animation.md) only when the user explicitly requests motion; static remains the default.
 
 ### Visual-type guide (45)
 
@@ -315,7 +315,7 @@ Run before producing any diagram.
 
 ## 10. Templates & Variants
 
-Every diagram ships in three variants (see `assets/`):
+Choose one of the bundled variants (see `assets/`); create multiple variants only when requested:
 
 | Variant | File pattern | When to use |
 |---|---|---|
@@ -370,7 +370,7 @@ The size preset sets the `viewBox` **and** the type ramp; `faithful` is the only
 
 ## 12. Output
 
-Resolve the output format in this order: the user's explicit format, the §11 format dial for imports, then the default `html`. Produce only the selected format; do not infer extra exports.
+Resolve the output format in this order: the user's explicit format, the §11 format dial for imports, then the default `html`. Deliver only the selected format(s); generate HTML as the required source for SVG/PNG export, but include it in the delivery only when HTML is selected (including `html+png`). Do not infer extra exports.
 
 For the default `html` format, produce one self-contained `.html` file:
 
@@ -380,7 +380,7 @@ For the default `html` format, produce one self-contained `.html` file:
 
 Renders correctly in any modern browser. Motion-enabled output must render its complete meaning without JavaScript; under `prefers-reduced-motion: reduce` it shows the complete static frame and hides/disables playback controls.
 
-When `svg`, `png`, or `html+png` is selected, load [`references/export.md`](references/export.md) and produce exactly the requested format(s); exports remain manual and are never added to an HTML request.
+When `svg`, `png`, or `html+png` is selected, load [`references/export.md`](references/export.md) and export only the requested formats from the intermediate HTML; exports remain manual and are never added to an HTML request.
 
 ### Accessible SVG contract
 
@@ -395,6 +395,6 @@ Every diagram is an accessible figure by default (long form: [primitives-core.md
 
 ### Exporting to PNG / SVG
 
-When the user asks to export, save, rasterize, or convert a generated diagram to `.png` or `.svg`, load [`references/export.md`](references/export.md) and follow the procedure there. Run the packaged helpers `scripts/export_svg.py` and `scripts/export_png.py`; the reference owns their arguments and availability checks. Both formats deliver the diagram only (the `<svg>` node) — editorial wrappers like cards and headers are dropped by design. Export is **manual** — never produce export files unprompted.
+When the user asks to export, save, rasterize, or convert a generated diagram to `.png` or `.svg`, load [`references/export.md`](references/export.md) and follow the procedure there. Use the matching packaged helper(s): `scripts/export_svg.py` for SVG and `scripts/export_png.py` for PNG; the reference owns their arguments, availability checks, and permitted fallbacks. Both formats deliver the diagram only (the `<svg>` node) — editorial wrappers like cards and headers are dropped by design. Export is **manual** — never produce export files unprompted.
 
 For an imported diagram, pixel dimensions come from the `viewBox` × scale factor, so its size decision belongs to §11, not to export. For any diagram that needs an exact frame (an OG card or a slide image), see [`export.md` § Sizing the export](references/export.md).

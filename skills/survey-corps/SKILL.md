@@ -2,7 +2,7 @@
 name: survey-corps
 description: "Coordinate a multi-role engineering task with the smallest necessary role chain, evidence-based handoffs, and explicit escalation for high-risk changes. The shorthand `sc` starts this workflow."
 metadata:
-  version: 3.0.13
+  version: 3.0.14
 ---
 
 # 调查兵团
@@ -11,7 +11,7 @@ metadata:
 
 ## 最小阅读与解释顺序
 
-只需单角色且用户未明确启动 `sc` 时，读取“何时启动”后直接使用对应角色 Skill；否则按“启动别名/任务视图”→“何时启动/串行角色与交接”→“Subagent-only/最小编排”→“共同约束/交接与状态”→“完成门禁”的顺序执行。规则冲突时，授权与安全阻断优先于状态与交接门禁，状态与交接门禁优先于视图展示；对当前含 `work_unit` 的工作单元，必需字段或已提供字段若未定义、相互矛盾或证据不足，均不推断，暂停交接并进入 `blocked`，直到权威记录和解除条件明确；可选字段缺失和无工作单元的旧纯视图仍按任务视图契约兼容。
+只需单角色且用户未明确启动 `sc` 时，读取“何时启动”后直接使用对应角色 Skill；否则按“启动别名/任务视图”→“何时启动/串行角色与交接”→“Subagent-only/最小编排”→“共同约束/交接与状态”→“完成门禁”的顺序执行。规则冲突时，授权与安全阻断优先于状态与交接门禁，状态与交接门禁优先于视图展示；对当前含 `work_unit` 的工作单元，必需字段或已提供字段若未定义、相互矛盾或证据不足，均不推断，暂停交接，按“交接与状态”区分同基线补材料、基线失效和全局阻断，并记录解除条件；可选字段缺失和无工作单元的旧纯视图仍按任务视图契约兼容。
 
 快照、摘要、证据、交接和任务视图不得写入密码、Token、密钥或未经授权的个人敏感信息；需要定位时使用脱敏后的路径、标识符或结果摘要。
 
@@ -236,7 +236,7 @@ work_unit:
 
 开发场景状态为 `confirmed -> planned -> dev_in_progress -> ready_for_cr -> ready_for_qa -> qa_passed -> workflow_ready`；优化先由 `planned -> ready_for_cr` 建项，再进入 `dev_in_progress`，实施后复用 `ready_for_cr` 复审。QA 通过后由编排者核验门禁并将状态记为 `workflow_ready`。高风险事项尚待裁决时前置 `needs_user_confirm`；CR 阻断走 `cr_blocked -> ready_for_cr`，`qa_failed` 或 `qa_conditional` 按下文返修闭环处理，不能进入工作流完成。全局 `blocked` 的合法来源包括已确认的 P0/P1、未授权执行、任务视图 MCP 前置不可用，以及 subagent 能力不可用或交接证据无法回收。
 
-需求、实现、配置、依赖、迁移、契约、权限、安全、数据、测试证据或环境变化时进入 `needs_revalidation`，按最早失效环节计算 `resume_state`；仅同一基线下补材料使用 `needs_revision`，不改变工作流状态。
+需求、实现、配置、依赖、迁移、契约、权限、安全、数据、测试证据或环境变化导致基线或已有证据失效时，进入 `needs_revalidation`，按最早失效环节计算 `resume_state`；同一基线下可通过补齐或澄清材料解决的字段未定义、矛盾或证据不足，使用 `handoff_result=needs_revision`，暂停交接但不改变工作流状态。本节全局 `blocked` 条件优先，包括交接证据无法回收的情况。
 
 ```yaml
 handoff:
@@ -256,7 +256,7 @@ handoff:
   next_action:
 ```
 
-- 角色切换时由独立 subagent 记录交接；同一角色连续执行子技能可复用工作单元，不新增角色交接。接收方填写 `handoff_result`；`needs_revision` 表示同一基线下材料不全，`rejected` 表示职责、授权或结论不可接受，并在 `decision` 中说明原因；基线失效进入 `needs_revalidation`，确认 P0/P1 进入 `blocked`。
+- 角色切换时由独立 subagent 记录交接；同一角色连续执行子技能可复用工作单元，不新增角色交接。接收方填写 `handoff_result`；`needs_revision` 表示同一基线下材料需补齐或澄清，`rejected` 表示职责、授权或结论不可接受，并在 `decision` 中说明原因；基线失效进入 `needs_revalidation`，确认 P0/P1 进入 `blocked`。
 - 问题按所属资产派发：业务实现、配置、契约及实现单元测试归 `dev`；独立测试资产及其配置、fixture、测试预言机归 `qa`，测试环境或测试数据问题由 `qa` 处理或协调。未解决的一般阻断项保持其来源状态（如 `cr_blocked` 或 `qa_failed`）；已确认 P0/P1、未授权执行、任务视图 MCP 前置不可用或 subagent 前置不可用时进入全局 `blocked`。
 - 角色边界：`req` 负责需求和验收标准；`dev` 负责实现、实现耦合的单元测试及恢复输入；`cr` 负责静态审查发现和复审；`qa` 负责独立正式测试、Bug 生命周期和验收结论；用户或授权方负责代码同步、发布与运行操作。
 
