@@ -15,7 +15,7 @@ Choose one mode per figure with `data-motion-mode="none|reveal|step|loop"`.
 
 Only `loop` repeats. Queue state, typing, field values, policy outcomes, containment, and audit entries use `reveal` or `step` and finish complete.
 
-When motion is explicitly requested, `reveal` may autoplay semantic steps once, then remain complete; `loop` may automatically repeat one decorative token. Neither restarts on viewport re-entry; replaying `reveal` requires an explicit Replay action.
+When motion is explicitly requested, `reveal` may autoplay semantic steps once, then remain complete; `loop` may automatically repeat one decorative token. Neither restarts on viewport re-entry.
 
 ## Static-first enhancement contract
 
