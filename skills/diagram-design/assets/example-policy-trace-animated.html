@@ -299,6 +299,20 @@
       document.fonts.ready.then(() => { document.documentElement.dataset.fontsReady = 'true'; });
 
       document.querySelectorAll('[data-motion-root]').forEach((root) => {
+        if (root.dataset.motionMode === 'loop') {
+          const syncLoop = () => {
+            const active = !staticOverride && !reduce.matches && document.visibilityState !== 'hidden';
+            root.dataset.frame = 'static';
+            root.dataset.motionState = reduce.matches ? 'reduced' : staticOverride ? 'static' : 'decorative';
+            root.classList.toggle('is-playing', active);
+            root.querySelectorAll('[data-motion-decorative]').forEach((item) => item.classList.toggle('is-visible', active));
+          };
+          syncLoop();
+          reduce.addEventListener('change', syncLoop);
+          document.addEventListener('visibilitychange', syncLoop);
+          root.classList.add('motion-ready');
+          return;
+        }
         const count = Number(root.dataset.stepCount);
         const hold = parseFloat(getComputedStyle(root).getPropertyValue('--motion-hold')) || 720;
         const parsedStep = requestedStep !== null && /^\d+$/.test(requestedStep) ? Number(requestedStep) : null;
@@ -377,6 +391,7 @@
         }
 
         controls.addEventListener('click', (event) => {
+          if (controls.dataset.playbackDisabled === 'true') return;
           const button = event.target.closest('[data-motion-action]');
           if (!button) return;
           const action = button.dataset.motionAction;
@@ -388,6 +403,7 @@
         });
 
         root.addEventListener('keydown', (event) => {
+          if (controls.dataset.playbackDisabled === 'true') return;
           if (event.target.matches('input, textarea, select, a[href]')) return;
           const keys = { ArrowLeft: step - 1, ArrowRight: step + 1, Home: 0, End: count };
           if (event.code === 'Space' && !event.target.closest('button')) {

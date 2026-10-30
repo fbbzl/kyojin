@@ -52,7 +52,7 @@
     .diagram-container { width: 100%; overflow-x: auto; }
 
     /* Static source is complete. Only an initialized enhancement hides items. */
-    .motion-ready [data-motion-item] {
+    .motion-ready:not([data-motion-mode="loop"]) [data-motion-item] {
       opacity: .12;
       transform: translateY(8px);
       transform-box: fill-box;
@@ -78,6 +78,7 @@
       animation: draw-path var(--motion-step) linear forwards;
     }
     .flow-token { opacity: 0; pointer-events: none; }
+    .motion-ready[data-motion-mode="loop"]:not(.is-playing) [data-motion-decorative] { display: none; }
     .motion-ready.is-playing .flow-token.is-visible {
       opacity: 1;
       animation: token-flow 3.2s linear 1 forwards;
@@ -257,6 +258,20 @@
       document.fonts.ready.then(() => { document.documentElement.dataset.fontsReady = 'true'; });
 
       document.querySelectorAll('[data-motion-root]').forEach((root) => {
+        if (root.dataset.motionMode === 'loop') {
+          const syncLoop = () => {
+            const active = !staticOverride && !reduce.matches && document.visibilityState !== 'hidden';
+            root.dataset.frame = 'static';
+            root.dataset.motionState = reduce.matches ? 'reduced' : staticOverride ? 'static' : 'decorative';
+            root.classList.toggle('is-playing', active);
+            root.querySelectorAll('[data-motion-decorative]').forEach((item) => item.classList.toggle('is-visible', active));
+          };
+          syncLoop();
+          reduce.addEventListener('change', syncLoop);
+          document.addEventListener('visibilitychange', syncLoop);
+          root.classList.add('motion-ready');
+          return;
+        }
         const count = Number(root.dataset.stepCount);
         const hold = parseFloat(getComputedStyle(root).getPropertyValue('--motion-hold')) || 720;
         const parsedStep = requestedStep !== null && /^\d+$/.test(requestedStep) ? Number(requestedStep) : null;
@@ -335,6 +350,7 @@
         }
 
         controls.addEventListener('click', (event) => {
+          if (controls.dataset.playbackDisabled === 'true') return;
           const button = event.target.closest('[data-motion-action]');
           if (!button) return;
           const action = button.dataset.motionAction;
@@ -346,6 +362,7 @@
         });
 
         root.addEventListener('keydown', (event) => {
+          if (controls.dataset.playbackDisabled === 'true') return;
           if (event.target.matches('input, textarea, select, a[href]')) return;
           const keys = { ArrowLeft: step - 1, ArrowRight: step + 1, Home: 0, End: count };
           if (event.code === 'Space' && !event.target.closest('button')) {

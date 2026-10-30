@@ -606,7 +606,7 @@ def check_motion(parser: DiagramParser, source: str, errors: list[str]) -> None:
         errors.append("data-step-count must be an ASCII decimal integer")
     else:
         count = int(raw_count)
-    minimum_count = 0 if mode == "none" else 1
+    minimum_count = 0 if mode in {"none", "loop"} else 1
     if count < minimum_count or count > 8:
         errors.append(f"semantic step count must be {minimum_count}..8; got {count}")
 
@@ -637,11 +637,17 @@ def check_motion(parser: DiagramParser, source: str, errors: list[str]) -> None:
     if crowded:
         errors.append(f"no more than two semantic items may share a step; found {crowded}")
 
-    if mode in {"none", "loop"} and parser.scripts:
+    if mode == "none" and parser.scripts:
         errors.append(f"{mode} mode must be script-free")
     if mode in {"none", "loop"} and (parser.controls or parser.actions or parser.statuses):
         errors.append(f"{mode} mode must not expose playback controls or live status")
-    controlled = mode == "step" or (mode == "reveal" and bool(parser.scripts))
+    if mode == "loop" and (count != 0 or semantic_steps):
+        errors.append("loop mode needs zero semantic steps; keep semantic content unmarked and complete")
+    if mode == "loop" and sum("data-motion-decorative" in item for item in parser.items) != 1:
+        errors.append("loop mode needs exactly one decorative token")
+    if mode in {"reveal", "loop"} and not parser.scripts:
+        errors.append(f"{mode} mode needs the scoped control script")
+    controlled = mode in {"step", "reveal"}
     if controlled:
         if parser.controls != 1:
             errors.append(f"controlled mode needs one in-root control group; found {parser.controls}")

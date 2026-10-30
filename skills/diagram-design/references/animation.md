@@ -9,13 +9,13 @@ Choose one mode per figure with `data-motion-mode="none|reveal|step|loop"`.
 | Mode | Behavior | Controls / implementation | Use |
 |---|---|---|---|
 | `none` | Complete stable figure | No JavaScript | Default, print, screenshot, export, reduced-motion fallback with playback controls unavailable |
-| `reveal` | One deterministic autoplay run ending complete | CSS-only for ≤5s; otherwise use the scoped controller | Short ordered explanation; never auto-replay |
+| `reveal` | One deterministic autoplay run ending complete | Scoped controller; CSS presentation | Short ordered explanation; never auto-replay |
 | `step` | Paused semantic states | Minimal inline JS for Play, Pause, Replay, Previous, Next | Teaching, comparison, policy traces |
-| `loop` | One decorative token repeats without changing meaning | CSS-only default | Quiet flow hint; ≥3s cycle |
+| `loop` | One decorative token repeats without changing meaning | Scoped controller; no controls or live status | Quiet flow hint; ≥3s cycle |
 
 Only `loop` repeats. Queue state, typing, field values, policy outcomes, containment, and audit entries use `reveal` or `step` and finish complete.
 
-`reveal` is the sole sanctioned autoplay mode: it may run once on initial load when motion was explicitly requested, then remains complete. It never restarts on viewport re-entry or without an explicit Replay action.
+When motion is explicitly requested, `reveal` may autoplay semantic steps once, then remain complete; `loop` may automatically repeat one decorative token. Neither restarts on viewport re-entry; replaying `reveal` requires an explicit Replay action.
 
 ## Static-first enhancement contract
 
@@ -26,7 +26,9 @@ Only `loop` repeats. Queue state, typing, field values, policy outcomes, contain
 5. **Explicit order.** Mark items `data-motion-item data-step="N"` for integer steps 1–8. DOM order follows narrative order. At most two items enter per step.
 6. **Stable end.** Completion exposes all items and sets `data-frame="end"`. Replay resets to step 0 first. Pause clears the pending timer and resume continues from the same step.
 7. **Scoped state.** Controls operate on their nearest `[data-motion-root]`; IDs, timers, live regions, and step state never cross figure boundaries.
-8. **Failure-safe startup.** JavaScript adds `.motion-ready` only after controls are bound and the initial render succeeds. A script error before that point leaves the complete source visible.
+8. **Failure-safe startup.** JavaScript adds `.motion-ready` only after required bindings and the initial render succeed. A script error before that point leaves the complete source visible.
+
+For `loop`, set `data-step-count="0"`, leave semantic content unmarked and complete, and mark exactly one `.flow-token` with `data-motion-item data-motion-decorative data-step="0" aria-hidden="true" focusable="false"`. Copy the template CSS and controller; omit controls and status. The controller enables the token only while the document is visible, not reduced, and not static; returning from page hide or reduced motion starts a new decorative cycle, while scrolling never restarts it; `data-frame="static"` always describes its complete semantic frame. No-JS hides the token through its base CSS. Rules about semantic steps, completion, replay, controls, status and exact-step overrides apply only to `reveal`/`step`.
 
 ## Semantic primitives
 
@@ -43,7 +45,7 @@ Every primitive has text, count, symbol, pattern, or outline in addition to colo
 | **Containment** | Reveal children, then persistent labeled boundary | Children and boundary visible | One boundary transition |
 | **Audit append** | Chronological rows revealed; stable timestamp/sequence | Complete ordered log visible | ≤5 appended rows |
 
-Do not animate layout coordinates, connector routes, `viewBox`, node dimensions, or semantic text. Avoid zoom, parallax, bounce, shake, glow, particles, and indefinite blinking.
+Do not animate layout coordinates, connector routes, `viewBox`, node dimensions, or semantic text. Avoid zoom, parallax, bounce, shake, glow, particles, and indefinite blinking. The CSS below illustrates `reveal`/`step`; use the complete template CSS for output.
 
 ```css
 :root {
@@ -84,7 +86,7 @@ Do not animate layout coordinates, connector routes, `viewBox`, node dimensions,
 
 ## Interactive controls and keyboard
 
-Every interactive `step` figure provides native buttons for **Play, Pause, Replay, Previous, and Next**, outside the SVG. Use `data-motion-action="play|pause|replay|prev|next"`, ≥44×44px targets, visible focus, disabled state for unavailable actions, and `aria-pressed` for play/pause state.
+Every `reveal` or `step` figure provides native buttons for **Play, Pause, Replay, Previous, and Next**, outside the SVG. Use `data-motion-action="play|pause|replay|prev|next"`, ≥44×44px targets, visible focus, disabled state for unavailable actions, and `aria-pressed` for play/pause state.
 
 When focus is within the motion root: `ArrowRight` advances, `ArrowLeft` goes back, `Home` resets, `End` completes, `Space` toggles play/pause when focus is not already on a native control, and unmodified `R` replays. Never intercept `R` when Control, Command, or Alt is held. Do not capture keys from inputs, links, or unrelated regions. Never move focus as the frame changes.
 
@@ -94,7 +96,7 @@ Use [`assets/template-motion.html`](../assets/template-motion.html) rather than 
 
 ## Reduced motion, color, and accessibility
 
-- `prefers-reduced-motion: reduce` initializes at the complete static frame, disables and hides every playback control, hides decorative movement, and exposes `data-motion-state="reduced"` plus status text that playback is unavailable. It never presents partial-step announcements beside a complete frame.
+- In `reveal`/`step`, `prefers-reduced-motion: reduce` initializes at the complete static frame, disables and hides every playback control, hides decorative movement, and exposes `data-motion-state="reduced"` plus status text that playback is unavailable. It never presents partial-step announcements beside a complete frame.
 - The SVG's `<title>` and `<desc>` describe the complete meaning, not the animation. Interaction instructions remain visible HTML text.
 - Decorative overlays carry `aria-hidden="true" focusable="false"`. Semantic text exists once in the accessibility tree.
 - State is never color-only: policy uses symbol + `PASS/FAIL/SKIPPED/NOT REACHED`; queues show counts; active stages use number/label/outline.
@@ -102,17 +104,17 @@ Use [`assets/template-motion.html`](../assets/template-motion.html) rather than 
 
 ## Complexity and deterministic timing
 
-Motion does not raise the static diagram budget: ≤8 semantic steps (target 3–6), ≤12 marked items, ≤2 simultaneous reveals, ≤2 drawn paths, one flow-token loop, 160–600ms transitions, 400–1200ms holds, ≤24px translation, and 3–8s total autoplay.
+Motion does not raise the static diagram budget: ≤8 semantic steps (target 3–6), ≤12 marked items, ≤2 simultaneous reveals, ≤2 drawn paths, one flow-token loop, 160–600ms transitions, 400–1200ms holds, ≤24px translation, and 3–8s per complete semantic playback run. A decorative loop instead has a cycle of at least 3s and no total-duration limit.
 
-One scoped exception to the translation limit: a part in an exploded axonometric may travel straight up by exactly its explode distance, the declared `--lift` that `scripts/verify-exploded.py` checks against its geometry (`type-exploded.md`). Nothing else in that figure moves further than 24px, and every other type keeps the limit.
+The 24px translation budget governs semantic items, not a decorative flow token traveling along its authored fixed connector. One scoped semantic exception: an exploded axonometric part may travel straight up by its declared `--lift` (`type-exploded.md`); the maintainer `scripts/verify-exploded.py` checks that distance against its geometry. Nothing else in that exploded figure moves further than 24px.
 
-Declare `data-step-count`; do not infer steps from transition events. Set `--motion-total` to step count × `--motion-hold` and keep it within the 8-second budget. Use one `setTimeout` chain per root, derive its hold from `--motion-hold`, clear it on Pause/Replay/page hide and immediately after rendering the final step, and never use `setInterval` for semantic playback. Pause when `document.visibilityState` becomes hidden and do not catch up later. `?motion=step&step=N` may expose an exact zero-duration frame for visual regression only when `N` is a non-negative base-10 integer from 0 through `data-step-count`; missing, fractional, negative, and over-budget values leave normal playback in place.
+For `reveal`/`step`, declare `data-step-count`; do not infer steps from transition events. Set `--motion-total` to step count × `--motion-hold` and keep it within the 8-second budget. Use one `setTimeout` chain per root, derive its hold from `--motion-hold`, clear it on Pause/Replay/page hide and immediately after rendering the final step, and never use `setInterval` for semantic playback. Pause when `document.visibilityState` becomes hidden and do not catch up later. `?motion=step&step=N` may expose an exact zero-duration frame for visual regression only when `N` is a non-negative base-10 integer from 0 through `data-step-count`; missing, fractional, negative, and over-budget values leave normal playback in place.
 
 The final-state capture contract is synchronous: `?motion=static`, `<html data-motion="static">`, or mode `none` exposes every semantic item, hides controls and decorative overlays, and sets `data-frame="static"`. Wait for `document.fonts.ready` before capture. The rendered clipping verifier uses this same static URL before comparing authored and overflow-released paint. Two captures from the same URL, viewport, fonts, and device scale must be pixel-identical; random delays, generated IDs, clocks, and runtime path measurement are forbidden.
 
 ## Export and verification
 
-PNG and SVG exports are static final-state artifacts unless the user explicitly requests a named step. Before capture, open `?motion=static`, await `document.fonts.ready`, and assert `data-frame="static"`. SVG extraction omits HTML controls and scripts; source-visible semantic markup keeps the result complete.
+PNG and SVG exporters always produce the complete static frame. Before capture, open `?motion=static`, await `document.fonts.ready`, and assert `data-frame="static"`. For a user-requested named step, author a separate static HTML diagram of that state with its own accessible title/description, then use the same exporters; do not pass a step URL or silently substitute the final frame. The exact-step URL is for visual regression only. SVG extraction omits controls and scripts; source-visible semantic markup keeps the result complete.
 
 In upstream maintainer-checkout mode, as defined in [`doctor.md`](doctor.md), run
 the following with `<repo-root>` resolved to that upstream root:
@@ -131,7 +133,7 @@ unavailable check as unverified rather than passed.
 
 The maintainer verifier checks mode/state declarations, contiguous steps, motion budgets, complete SVG naming, no-JS source visibility, decorative accessibility, the full control set, live status, reduced-motion/print CSS, keyboard handling, page-hide pause, bounded static/test overrides, immediate final-step stop, and exact canonical-controller identity. Root SVG icons marked `aria-hidden="true"` are exempt from diagram naming checks, while the document still needs an accessible SVG (exactly one for the policy-trace example). Its adversarial tests mutate the canonical template to prove each failure is rejected.
 
-Then verify in a browser:
+Then verify in a browser (control/status checks 2–4 apply to `reveal`/`step`; for `loop`, check the token stops under reduced motion and page hide while semantic content stays complete):
 
 1. Disable JavaScript: the complete diagram remains visible and meaningful.
 2. Emulate `prefers-reduced-motion: reduce`: the final state is complete, playback controls are hidden and disabled, and the DOM status says playback is unavailable.
@@ -142,7 +144,7 @@ Then verify in a browser:
 
 ## Anti-patterns
 
-- Unrequested autoplay, autoplay outside the single sanctioned `reveal` run, viewport re-entry, or an endless semantic loop.
+- Unrequested motion, automatic semantic playback outside the single `reveal` run, viewport-triggered replay, or an endless semantic loop.
 - A blank/partial no-JS or reduced-motion frame.
 - Motion that rescues an over-dense or unlabeled static diagram.
 - Pass/fail, queue fullness, or outcome encoded only by hue.
