@@ -2,7 +2,7 @@
 name: survey-corps
 description: "Coordinate a multi-role engineering task with the smallest necessary role chain, evidence-based handoffs, and explicit escalation for high-risk changes. The shorthand `sc` starts this workflow."
 metadata:
-  version: 3.0.14
+  version: 3.0.15
 ---
 
 # 调查兵团
@@ -237,6 +237,8 @@ work_unit:
 开发场景状态为 `confirmed -> planned -> dev_in_progress -> ready_for_cr -> ready_for_qa -> qa_passed -> workflow_ready`；优化先由 `planned -> ready_for_cr` 建项，再进入 `dev_in_progress`，实施后复用 `ready_for_cr` 复审。QA 通过后由编排者核验门禁并将状态记为 `workflow_ready`。高风险事项尚待裁决时前置 `needs_user_confirm`；CR 阻断走 `cr_blocked -> ready_for_cr`，`qa_failed` 或 `qa_conditional` 按下文返修闭环处理，不能进入工作流完成。全局 `blocked` 的合法来源包括已确认的 P0/P1、未授权执行、任务视图 MCP 前置不可用，以及 subagent 能力不可用或交接证据无法回收。
 
 需求、实现、配置、依赖、迁移、契约、权限、安全、数据、测试证据或环境变化导致基线或已有证据失效时，进入 `needs_revalidation`，按最早失效环节计算 `resume_state`；同一基线下可通过补齐或澄清材料解决的字段未定义、矛盾或证据不足，使用 `handoff_result=needs_revision`，暂停交接但不改变工作流状态。本节全局 `blocked` 条件优先，包括交接证据无法回收的情况。
+
+REQ-only 场景在 `planned` 下完成需求交付，将 `req` 标记为 `passed`，由编排者核验后进入 `workflow_ready`。需要新增角色或重新澄清需求时，新建 `work_unit_id` 与 `view_id`，记录来源工作单元、需求版本及失效证据；保留旧单元的历史基线，尚未完成的旧单元须先停止运行角色并将其置为 `pending`，再记为 `cancelled`。新单元从 `confirmed -> planned` 开始，按本轮角色链重新经过适用门禁；同一单元的 `needs_revalidation` 仅使用状态机已支持的 DEV/CR/QA `resume_state`，不得以 REQ 恢复值或修改既有角色链替代新单元。
 
 ```yaml
 handoff:

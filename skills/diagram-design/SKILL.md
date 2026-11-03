@@ -3,7 +3,7 @@ name: diagram-design
 description: Create branded architecture, architecture delta, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant, radar/spider, polar chart (polar/radial lollipop), loop/flywheel, nested, tree, org chart, layer stack, exploded axonometric, axonometric plan, Venn, pyramid/funnel, treemap and marimekko, heatmap, bar and dumbbell, waterfall, line (slopegraph, ridgeline, streamgraph, bump), Gantt and scatter charts (bubble, beeswarm), high-level, process, medallion, data flow, DP integration, DP security matrix, Sankey, fishbone, Wardley map, kanban, user journey, service blueprint, deployment, dependency graph, UML class, story map, or database schema diagrams as HTML/SVG/PNG, with .drawio, Mermaid, and .excalidraw import, plus lifecycle phase maps, block decomposition trees, and onboarding guidance.
 license: MIT
 metadata:
-  version: 2.6.127
+  version: 2.6.128
 ---
 
 # Diagram Design
@@ -396,5 +396,7 @@ Every diagram is an accessible figure by default (long form: [primitives-core.md
 ### Exporting to PNG / SVG
 
 When the user asks to export, save, rasterize, or convert a generated diagram to `.png` or `.svg`, load [`references/export.md`](references/export.md) and follow the procedure there. Use the matching packaged helper(s): `scripts/export_svg.py` for SVG and `scripts/export_png.py` for PNG; the reference owns their arguments, availability checks, and permitted fallbacks. Both formats deliver the diagram only (the `<svg>` node) — editorial wrappers like cards and headers are dropped by design. Export is **manual** — never produce export files unprompted.
+
+Font-mode rules take precedence over the export reference's default-font and missing-font instructions. In `system` mode, a missing Google Fonts link is valid: use the SVG helper's `--system-fonts` option and verify the intended fallback. In `web` mode, preserve the active guide's approved families, weights, and stylesheets; the SVG helper injects a default import, so replace that import in the generated SVG with the approved source Google Fonts `/css2` import(s), XML-escaping their URLs and retaining the export URL allowlist. Parse the resulting SVG and verify font mappings and rendering before claiming an exact brand match. If the selected format cannot preserve or verify the required fonts, stop that export rather than silently switching formats. Export never changes the source HTML; if source repair is needed, leave export and obtain authorization for the generation/repair flow.
 
 For an imported diagram, pixel dimensions come from the `viewBox` × scale factor, so its size decision belongs to §11, not to export. For any diagram that needs an exact frame (an OG card or a slide image), see [`export.md` § Sizing the export](references/export.md).

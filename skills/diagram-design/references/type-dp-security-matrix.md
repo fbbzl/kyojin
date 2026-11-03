@@ -30,7 +30,7 @@ components:                             # 2..14 rows, ordered top → bottom
   - { name: "JupyterHub" }
   - { name: "NiFi" }
 
-cells:                                  # explicit (row, col) entries; omitted → defaults to "none"
+cells:                                  # explicit (row, col) entries; omitted → "none" only under confirmed default-deny (§8)
   # value = displayed text (free-form)
   # level = visual category: full | rw | read | none  (closed vocabulary, drives styling)
   # focal: true (max 1)            — overrides level to focal styling
@@ -55,7 +55,7 @@ cells:                                  # explicit (row, col) entries; omitted �
 
   # ... rows 6..7 ...
 
-none_label: "No access"                 # default text rendered when a cell is omitted
+none_label: "No access"                 # label for confirmed no-access cells, including permitted omissions (§8)
 dark: false
 ```
 
@@ -233,7 +233,7 @@ Exactly **one** focal cell per diagram (or zero). The focal cell:
 - May carry a 2-line content: primary `value` at `y = row_y(k) + 18`, `sub` at `y = row_y(k) + 30`
 - Calls out the diagram's central security claim — the *one* access rule that distinguishes this platform's posture from a generic permissions table
 
-If zero or >1 `focal: true` cells are declared, halt and ask the user.
+Zero or one `focal: true` cell is valid; if more than one is declared, halt and ask the user.
 
 ---
 
@@ -260,7 +260,7 @@ If zero or >1 `focal: true` cells are declared, halt and ask the user.
 
 ## 7. Reproducibility checklist (taste gate)
 
-Before emitting SVG, verify **every** item:
+Before emitting SVG, verify **every** item; default paint below is subject to the focal and scoped color overrides in §4:
 
 1. `viewBox = "0 0 {viewBox_w} {viewBox_h}"` derived via §2 (4 roles × 8 components → 920 × 520).
 2. Header row at `y=72 h=52`. Component header cell white-filled with two-line `Component / vs. AD group` label. Role banners filled `ink` with name + AD-group code in white.
@@ -268,8 +268,8 @@ Before emitting SVG, verify **every** item:
 4. Component label cell `rx=4`, name left-aligned at `x=24`, optional `hint` right-aligned at `x = comp_col_x + comp_col_w − 12`.
 5. Every value cell `rx=4`, stroke `ink @ 0.12` 0.6, fill + text matching §2.4 for its `level`.
 6. Exactly **one** focal cell (or zero). Focal cell stroke `accent` width 1.4. Primary value at `y = row_y(k) + 18`; `sub` (if present) at `y = row_y(k) + 30`.
-7. Cells omitted from `cells:` render as `level: "none"` with `none_label` text (default `"No access"`).
-8. Custom-colored cells ≤ 2 (in addition to the focal cell).
+7. Omitted cells render as `level: "none"` with `none_label` text only under a source-confirmed default-deny policy; otherwise stop for permission confirmation (§8).
+8. Custom-colored cells ≤ 2 (in addition to the focal cell), and custom-colored entities across cells, components, and roles total ≤ 5 (§4).
 9. No connector elements anywhere in the SVG.
 10. Legend strip at `legend_y_top`, one swatch per `level` actually used, hairline separator above.
 11. `viewBox_h` grows with `n_components`; `viewBox_w` grows with `n_roles`.
@@ -281,8 +281,8 @@ Before emitting SVG, verify **every** item:
 - **More than one focal cell** — focal exists to mark *the* critical access rule; >1 erases the signal.
 - **Connectors anywhere** — matrix is value-driven; arrows belong in DP integration / process diagrams.
 - **Freeform `level` values** — closed vocabulary is `full | rw | read | none`. Use `value` for free-form displayed text + `color` override for arbitrary tinting.
-- **Per-row or per-column color tints** — apply `color` per cell only. Whole-row or whole-column highlighting tends to over-emphasize and collapses the matrix into a list.
-- **Using `none_label` as a placeholder for "TBD"** — `none` means *no access*. If the permission is unknown, leave the cell empty in inputs but document it elsewhere; don't render an ambiguous state.
+- **Propagating row or column color into data cells** — component colors affect only row labels and role colors only column banners (§4); style individual intersections with per-cell `color`.
+- **Using `none_label` as a placeholder for "TBD"** — `none` means *no access*. Unknown or unverified permissions stop generation of the affected matrix pending confirmation; omitted cells may mean `none` only when the source confirms a default-deny policy. Never map unknown permissions to "No access".
 - **More than 6 roles** — split into two matrices (e.g., human roles vs service accounts) before exceeding 6 columns.
 - **More than 14 components** — split by domain (storage / compute / observability / governance) before exceeding 14 rows.
 - **Using the matrix to document *how* permissions are granted** — that belongs in a process or sequence diagram. The matrix shows *what* each role can do, not the grant flow.
