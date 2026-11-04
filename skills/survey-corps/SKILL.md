@@ -164,6 +164,8 @@ QA 在 CR 通过后准备或修改独立测试资产，完成后先停止 QA，�
 
 角色通常按 `pending -> running -> passed` 推进，`passed` 表示工作完成并满足要求；无法推进时转为 `blocked`，用 `summary` 说明原因、`next_action` 说明解除条件，解除后 `blocked -> running` 返修。需用户决定时转为 `needs_user_confirm`，未获确认不得继续；用户回复后按实际条件回到 `pending`、`running` 或 `blocked`。暂停、取消属于任务状态，不增加角色状态；未参与角色不列入角色链。任务 `state` 表示阶段或整体结果，角色 `status` 表示执行状况，`handoff_result` 表示交接接收结果，三者不能互相替代。
 
+角色等待用户执行并回传外部检查时，角色置为 `blocked`，对应子技能置为 `waiting_user`，并在 `summary`、`next_action` 说明等待内容与解除条件；这不属于 `needs_user_confirm`，除非还需要用户作决策。用户回传后，角色按实际条件转为 `running` 或继续 `blocked`。
+
 准备工作在所属角色获得执行权后进行；等待上游结论不算执行，不得以摘要说明“等待”却继续上报 running。本规则不修改耗时计算。
 
 ## Subagent-only 执行约束

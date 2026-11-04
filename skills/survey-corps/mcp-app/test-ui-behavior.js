@@ -182,8 +182,8 @@ const roleLineCases = [
   {"name":"req-history","role":"req","status":"passed","skills":[{"name":"align-with-visuals","summary":"对齐记录"}],"active":false,"texts":["align-with-visuals"],"runningIndex":-1},
   {"name":"cr-history","role":"cr","status":"passed","skills":[{"name":"review-with-goal","summary":"审查记录"},{"name":"review-with-goal","status":"passed","summary":"后轮审查记录"}],"active":false,"texts":["review-with-goal"],"runningIndex":-1},
   {"name":"qa-active","role":"qa","status":"running","skills":[{"name":"test-with-goal","summary":"测试记录","status":"running"},{"name":"test-with-goal","status":"passed","summary":"测试历史仍仅同一名称"}],"active":true,"texts":["test-with-goal"],"runningIndex":0},
-  {"name":"guided-debugging","role":"dev","status":"running","skills":[{"name":"guide-debug","status":"running","summary":"等待用户回传只读检查结果"}],"active":true,"texts":["guide-debug"],"runningIndex":0},
-  {"name":"qa-guided-debugging","role":"qa","status":"running","crStatus":"passed","skills":[{"name":"guide-debug","status":"running","summary":"收集外部环境复现证据"}],"active":true,"texts":["guide-debug"],"runningIndex":0},
+  {"name":"guided-debugging","role":"dev","status":"blocked","skills":[{"name":"guide-debug","status":"waiting_user","summary":"等待用户回传只读检查结果"}],"active":false,"texts":["guide-debug"],"runningIndex":-1},
+  {"name":"qa-guided-debugging","role":"qa","status":"blocked","crStatus":"passed","skills":[{"name":"guide-debug","status":"waiting_user","summary":"等待用户回传环境复现证据"}],"active":false,"texts":["guide-debug"],"runningIndex":-1},
   {"name":"duplicate-prior-running","status":"running","skills":[{"name":"tech-select","status":"running","summary":"前轮执行"},{"name":"tech-select","status":"completed","summary":"后轮完成"}],"active":true,"texts":["tech-select"],"runningIndex":0},
   {"name":"duplicate-invalid-running","status":"running","skills":[{"name":"tech-select","status":"running"},{"name":"tech-select","status":"completed","summary":"有效完成"}],"active":true,"texts":["tech-select"],"runningIndex":-1},
   {"name":"duplicate-last-running","status":"running","skills":[{"name":"tech-select","status":"completed","summary":"前轮完成"},{"name":"tech-select","status":"running","summary":"后轮执行"}],"active":true,"texts":["tech-select"],"runningIndex":0},
@@ -192,7 +192,7 @@ const roleLineCases = [
   {"name":"running-no-data-static","status":"running","active":true,"texts":[],"runningIndex":-1},
   {"name":"global-blocked-static","state":"blocked","status":"running","skills":[{"name":"tech-select","status":"running","summary":"已停止"}],"active":false,"texts":["tech-select"],"runningIndex":-1},
   {"name":"role-blocked-static","status":"blocked","skills":[{"name":"tech-select","status":"running","summary":"阻断角色"}],"active":false,"texts":["tech-select"],"runningIndex":-1},
-  {"name":"qa-gated-static","role":"qa","status":"running","crStatus":"pending","skills":[{"name":"guide-debug","status":"running","summary":"CR 未通过前不得启动环境排查"}],"active":false,"texts":["guide-debug"],"runningIndex":-1}
+  {"name":"qa-gated-static","role":"qa","status":"pending","crStatus":"pending","skills":[],"active":false,"texts":[],"runningIndex":-1}
 ];
 
 const visualHarness = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main id="root">${template}</main><script>
