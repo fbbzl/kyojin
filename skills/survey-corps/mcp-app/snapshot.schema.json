@@ -41,6 +41,7 @@
         "role_selection_reason": { "type": "string" },
         "scope": { "$ref": "#/definitions/stringOrStringList" },
         "summary": { "type": "string" },
+        "execution_finished": { "type": "boolean", "description": "Whether this execution round has ended. Does not change workflow outcome or elapsed-time accounting; clear it before resuming." },
         "reference_version": { "type": "string" },
         "environment": { "$ref": "#/definitions/stringOrStringList" },
         "verified_scope": { "$ref": "#/definitions/stringList" },

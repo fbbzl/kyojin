@@ -114,6 +114,25 @@ const missingMetrics=[root.querySelector('[data-sc-metric=task-elapsed]').textCo
 supplied.work_unit.metrics={elapsed_ms:90061000,total_tokens:12345};supplied.role_details.dev.metrics={elapsed_ms:65000,total_tokens:2345};window.renderSurveyCorpsTaskView(root,supplied);
 delete supplied.role_details.qa.agent_name;delete supplied.work_unit.summary;delete supplied.work_unit.project_mcps;window.renderSurveyCorpsTaskView(root,supplied);
 const removed={headerText:root.querySelector('.sc-task-view__header').innerText,contextRemoved:!root.querySelector('[data-sc-context]'),namesRemoved:!root.querySelector('[data-sc-agent-name]'),projectMcpsHidden:root.querySelector('[data-sc-project-mcps]').hidden,summary:root.querySelector('[data-sc-preview-summary] .sc-task-view__summary-content').textContent,summaryTitle:root.querySelector('[data-sc-preview-summary] h3').textContent,summaryBodyNodes:root.querySelectorAll('[data-sc-preview-summary] section,[data-sc-preview-summary] p,[data-sc-preview-summary] ul,[data-sc-preview-summary] li').length};
+const conclusionCases=[];
+for(const item of [
+  {name:'legacy-terminal',state:'workflow_ready',finished:false,running:false,expected:'工作流结论：任务完成'},
+  {name:'finished-block',state:'cr_blocked',finished:true,running:false,expected:'本轮执行已结束：审查阻断，工作流未完成'},
+  {name:'unfinished-block',state:'cr_blocked',finished:false,running:false,expected:null},
+  {name:'finished-running',state:'cr_blocked',finished:true,running:true,expected:null},
+]){
+  const details={dev:{status:item.running?'running':'passed'},cr:{status:'blocked'},qa:{status:'pending'}};
+  const input={view_id:'conclusion:'+item.name,state:item.state,work_unit:{roles:['dev','cr','qa'],execution_finished:item.finished},role_details:details};
+  window.renderSurveyCorpsTaskView(root,input);
+  const summary=root.querySelector('[data-sc-preview-summary] .sc-task-view__summary-content');
+  let hover=null,focused=null;
+  if(item.expected&&innerWidth>560){
+    roleSummary('dev').dispatchEvent(new PointerEvent('pointerover',{bubbles:true}));hover={text:summary.textContent,owner:owner()};
+    roleSummary('dev').dispatchEvent(new PointerEvent('pointerout',{bubbles:true,relatedTarget:document.body}));
+    roleSummary('dev').focus();focused={text:summary.textContent,owner:owner()};roleSummary('dev').blur();
+  }
+  conclusionCases.push({name:item.name,visible:!!summary, text:summary?.textContent||'',expected:item.expected,hover,focused,bodyNodes:summary?.querySelectorAll('section,p,ul,li').length||0});
+}
 const roleCases={pending:'待开始',running:'进行中',passed:'通过',blocked:'阻断',needs_user_confirm:'待用户确认'};
 const roleStatuses={};const roleStatusClasses={};for(const status of Object.keys(roleCases)){supplied.role_details.qa.status=status;window.renderSurveyCorpsTaskView(root,supplied);const node=root.querySelector('[data-sc-role=qa] .sc-task-view__role-state');roleStatuses[status]=node.textContent;roleStatusClasses[status]=node.className;}
 const globalCases={confirmed:'已确认',planned:'计划',dev_in_progress:'开发中',ready_for_cr:'审查阶段',cr_blocked:'审查阻断',ready_for_qa:'测试阶段',qa_failed:'测试失败',qa_conditional:'测试条件通过',qa_passed:'测试通过',workflow_ready:'任务完成',completed:'已完成',complete:'已完成',done:'已完成',success:'已完成',successful:'已完成',succeeded:'已完成',failed:'失败',paused:'已暂停',waiting:'等待中',cancelled:'已取消',canceled:'已取消',needs_user_confirm:'等待用户确认',needs_revalidation:'需要重新验证',needs_revision:'需要修订',blocked:'已阻断'};
@@ -141,7 +160,7 @@ for(const [name,value] of [['zero',0],['false',false],['literal','未提供'],['
 const missingStateLabels=[];for(const status of [undefined,null,'']){window.renderSurveyCorpsTaskView(root,{state:'dev_in_progress',work_unit:{roles:['dev']},role_details:{dev:{status,subskills:[{name:'tech-select',status,summary:'有效记录'}]}}});missingStateLabels.push({role:root.querySelector('[data-sc-role=dev] > summary .sc-task-view__role-state').textContent,subskill:root.querySelector('[data-sc-role=dev] > summary .sc-task-view__role-subskill').textContent});}
 const elapsedBoundaries=[];for(const elapsed of [0,1,999,1000]){const sample={work_unit:{metrics:{elapsed_ms:elapsed},roles:[]}};window.renderSurveyCorpsTaskView(root,sample);elapsedBoundaries.push(root.querySelector('[data-sc-metric=task-elapsed]').textContent);}
 const result={missingData,missingStateLabels,pendingBodies,focus,lifecycle,boundaries,excludedFallback,invalidStates,emptyView,recovered,initial,sameSnapshot,changedActive,afterReplay,stateBefore,stateAfter,progress,waitingActive,finishedDevActive,flow,defaults,debugTrue,debugString,debugDefault,debugFalse,debugInSnapshot,provided,invalidMetrics,missingMetrics,elapsedBoundaries,payload,removed,roleCases,roleStatuses,roleStatusClasses,globalCases,globalStatuses,globalStatusClasses,unknown,prototypeFallbacks,toggleAdds,toggleRemoves,initialToggleListeners,activeToggleListeners};
-document.body.dataset.scTestResult=JSON.stringify(result);
+document.body.dataset.scTestResult=JSON.stringify({...result,conclusionCases});
 </script></body></html>`;
 
 // QA role-subskills-auto-height, P1: unique valid names retain first occurrence order; the last running record selects one name.
@@ -428,7 +447,19 @@ try {
   assert.equal(result.provided.contextRemoved, true);
   assert.equal(result.provided.namesRemoved, true);
   assert.equal(result.provided.injectedElements, 0, "task summary and project MCPs must not inject HTML");
-  assert.deepEqual(result.removed, { headerText: "已完成", contextRemoved: true, namesRemoved: true, projectMcpsHidden: true, summary: "任务总结", summaryTitle: "任务总结", summaryBodyNodes: 0 }, "removed metadata and absent project MCPs must stay hidden while optional values update");
+  assert.deepEqual(result.removed, { headerText: "已完成", contextRemoved: true, namesRemoved: true, projectMcpsHidden: true, summary: "任务总结结果工作流结论：已完成", summaryTitle: "任务总结", summaryBodyNodes: 2 }, "removed metadata stays hidden while a terminal task retains its status conclusion when summary is absent");
+  assert.deepEqual(result.conclusionCases.map(item=>[item.name,item.visible,item.text]),[
+    ['legacy-terminal',true,'任务总结结果工作流结论：任务完成'],
+    ['finished-block',true,'任务总结结果本轮执行已结束：审查阻断，工作流未完成'],
+    ['unfinished-block',false,''],
+    ['finished-running',false,''],
+  ],"terminal states and explicit blocked finishes show conclusions; an unfinished block or running role does not");
+  for(const item of result.conclusionCases.filter(item=>item.expected&&item.hover)){
+    assert.equal(item.hover.text,item.text,item.name+' keeps the conclusion visible during hover');
+    assert.equal(item.hover.owner,undefined,item.name+' prevents hover from taking over the preview');
+    assert.equal(item.focused.text,item.text,item.name+' keeps the conclusion visible during keyboard focus');
+    assert.equal(item.focused.owner,undefined,item.name+' prevents focus from taking over the preview');
+  }
   assert.deepEqual(result.roleStatuses, result.roleCases, "all supported role statuses must display Chinese");
   assert.notEqual(result.roleStatusClasses.running, result.roleStatusClasses.passed, "running and completed roles must use different semantic color classes");
   assert.notEqual(result.roleStatusClasses.passed, result.roleStatusClasses.blocked, "completed and failed roles must use different semantic color classes");
@@ -523,8 +554,8 @@ try {
     for(const item of observed.summaryRemoval){
       assert.equal(item.unchanged,true,item.name+" retains authoritative next actions");assert.equal(item.nextAbsent,true,item.name+" omits next-action title and values in visible and reserve summaries");assert.equal(item.copiesEqual,true,item.name+" keeps visible and natural-size summary content identical");assert.equal(item.summaryVisible,true);assert.equal(item.fits,true);assert.equal(item.title,"任务总结",item.name+" retains the summary title");assert.equal(item.injectedElements,0,item.name+" renders supplied summary text safely");assert.equal(item.fallback,null,item.name+" must not generate fallback text");assert.deepEqual(item.groupStyles,Array.from({length:item.labels.length},()=>groupStyleExpected),item.name+" boxes every supplied group on all four sides");assert.deepEqual(item.reserveGroupStyles,item.groupStyles,item.name+" keeps hidden sizing group styles synchronized");
       if(item.name.startsWith("mixed-")){assert.equal(item.groupStyles.length,3);assert.deepEqual(item.labels,["结果","已验证","注意事项"]);assert.deepEqual(item.values,[["保留结果"],["保留验证"],["未验证：保留未验证","风险：保留风险"]]);assert.equal(item.fallback,null);}
-      else if(item.name==="verified-only"){assert.deepEqual(item.labels,["已验证"]);assert.deepEqual(item.values,[["独立验证"]]);}else if(item.name==="entity-summary"){assert.deepEqual(item.labels,["结果"]);assert.deepEqual(item.values,[["&lt;img&gt; &amp; &quot; &#39;"]],"transport decoding must preserve literal entity text without recursive decoding");}else if(item.name==="literal-summary"||item.name==="unsafe-summary"){assert.deepEqual(item.labels,["结果"]);assert.deepEqual(item.values,[[item.name==="literal-summary"?"暂无总结":"<img src=x onerror=window.qaSummaryInjected=true>"]],item.name+" preserves explicit user text");}else{assert.deepEqual(item.labels,[]);assert.deepEqual(item.values,[]);assert.equal(item.bodyNodes,0,item.name+" leaves the absent summary body empty");assert.equal(item.contentText,"任务总结",item.name+" keeps only the title");}
-      assert.deepEqual(item.focused,item.initial,item.name+" focus does not resize the view");assert.deepEqual(item.restored,item.initial,item.name+" returning to the summary does not resize the view");if(mode.width>560){assert.equal(item.hover.owner,"dev");assert.deepEqual(item.hover.size,item.initial,item.name+" summary/role hover switches retain view size");}else assert.equal(item.hover,null);
+      else if(item.name==="verified-only"){assert.deepEqual(item.labels,["结果","已验证"]);assert.deepEqual(item.values,[["工作流结论：已完成"],["独立验证"]]);}else if(item.name==="entity-summary"){assert.deepEqual(item.labels,["结果"]);assert.deepEqual(item.values,[["&lt;img&gt; &amp; &quot; &#39;"]],"transport decoding must preserve literal entity text without recursive decoding");}else if(item.name==="literal-summary"||item.name==="unsafe-summary"){assert.deepEqual(item.labels,["结果"]);assert.deepEqual(item.values,[[item.name==="literal-summary"?"暂无总结":"<img src=x onerror=window.qaSummaryInjected=true>"]],item.name+" preserves explicit user text");}else if(["only-next-string","only-next-array","empty","whitespace"].includes(item.name)){assert.deepEqual(item.labels,["结果"]);assert.deepEqual(item.values,[["工作流结论：已完成"]]);}else{assert.deepEqual(item.labels,[]);assert.deepEqual(item.values,[]);assert.equal(item.bodyNodes,0,item.name+" leaves the absent summary body empty");assert.equal(item.contentText,"任务总结",item.name+" keeps only the title");}
+      assert.deepEqual(item.focused,item.initial,item.name+" focus does not resize the view");assert.deepEqual(item.restored,item.initial,item.name+" returning to the summary does not resize the view");if(mode.width>560){assert.equal(item.hover.owner,undefined);assert.deepEqual(item.hover.size,item.initial,item.name+" role hover cannot replace the conclusion or resize the task view");}else assert.equal(item.hover,null);
     }
     if(mode.width>560){const item=observed.lineInteraction;assert.equal(item.hovered.owner,"cr");assert.equal(item.hovered.focus,true);assert.deepEqual(item.hovered.size,item.baseline,"hover must not resize the task view");assert.equal(item.returned,"dev");assert.equal(item.focused.owner,"cr");assert.equal(item.focused.focus,true);assert.deepEqual(item.focused.size,item.baseline,"keyboard role switch must not resize the task view");}
     else assert.equal(observed.lineInteraction,null,"narrow cards retain their inline detail interaction");

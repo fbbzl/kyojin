@@ -259,9 +259,13 @@
       function renderTaskMetrics(root,work,state) {
         const metrics=asObject(work.metrics);
         setMetric(root.querySelector('[data-sc-metric="task-elapsed"]'),metrics.elapsed_ms,formatElapsed);
-        const finished=finishedStatuses.has(normalizedStatus(state));
+        const finished=root.__scSummaryInPreview;
         root.querySelector('[data-sc-metric="task-elapsed"]').hidden=!finished;
         root.querySelector('[data-sc-task-elapsed-label]').hidden=!finished;
+      }
+      function isExecutionFinished(work,state,selected,details) {
+        return (finishedStatuses.has(normalizedStatus(state))||asObject(work).execution_finished===true)&&
+          !selected.some(role=>asObject(details[role]).status==="running");
       }
       const projectMcpName=value=>{ const name=optionalText(value).toLowerCase(); return /^[a-z][a-z0-9._-]{0,63}$/.test(name)?name:""; };
       function renderGitInfo(root,work) {
@@ -304,7 +308,8 @@
       function taskSummaryNode(root) {
         const summary=document.createElement("div"),data=root.__scTaskSummary;
         summary.className="sc-task-view__summary-content";
-        [["结果",data.result],["已验证",data.verified],["注意事项",data.notes]].forEach(([label,value])=>{
+        const result=data.result||root.__scConclusionFallback||"";
+        [["结果",result],["已验证",data.verified||[]],["注意事项",data.notes||[]]].forEach(([label,value])=>{
           if (!value.length) return;
           const section=document.createElement("section"),content=document.createElement(Array.isArray(value)?"ul":"p");
           if (Array.isArray(value)) content.append(...listItems(value));
@@ -381,6 +386,7 @@
       }
       function previewRoleFor(root) {
         const selected=root.__scSelectedRoles||[];
+        if (root.__scSummaryInPreview) return null;
         if (root.querySelector("[data-sc-role-preview]").contains(document.activeElement)&&selected.includes(root.__scFocusedRole)) return root.__scFocusedRole;
         return [root.__scHoveredRole,root.__scFocusedRole,root.__scResolvedActiveRole].find(role=>selected.includes(role))||null;
       }
@@ -745,16 +751,19 @@
         renderGitInfo(root,work);
         renderProjectMcps(root,work);
         renderRootMetadata(root,work,selectedRoles);
+        root.__scSelectedRoles=selectedRoles;
+        root.__scRoleDetails=details;
+        root.__scSummaryInPreview=isExecutionFinished(work,state,selectedRoles,details);
         renderTaskMetrics(root,work,state);
         root.__scDebugMode=asObject(options).debug===true;
         const playButton=root.querySelector("[data-sc-play-animation]");
         if (playButton) playButton.hidden=!root.__scDebugMode;
         if (!root.__scDebugMode) { root.__scManualMotionCleanup?.(); root.__scManualMotionCleanup=undefined; }
-        root.__scSelectedRoles=selectedRoles;
         root.__scFileActivity=observeFileActivity(root.__scFileActivity,input,activeRole);
         root.__scResolvedActiveRole=activeRole;
         renderWorkflowMotion(root,selectedRoles,activeRole,state);
-        root.__scSummaryInPreview=finishedStatuses.has(normalizedStatus(state))&&!selectedRoles.some(role=>asObject(details[role]).status==="running");
+        const executionFinished=work.execution_finished===true;
+        root.__scConclusionFallback=executionFinished&&!finishedStatuses.has(normalizedStatus(state))?`本轮执行已结束：${stateText(state)}，工作流未完成`:`工作流结论：${stateText(state)}`;
         const view=root.matches(".sc-task-view")?root:root.querySelector(".sc-task-view");
         view.classList.toggle("is-finished",root.__scSummaryInPreview);
         root.querySelector("[data-sc-preview-summary]").replaceChildren(...(root.__scSummaryInPreview?[taskSummaryNode(root)]:[]));

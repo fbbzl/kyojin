@@ -216,7 +216,9 @@ assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-pr
 assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-preview > .sc-task-view__file-activity { display:none; }"), "completed previews must not regain an empty file strip when a role is hovered");
 assert.doesNotMatch(appTemplate, /is-showing-summary[^}]*\{[^}]*(?:grid-template-rows|padding-bottom)|@media[^}]*is-finished[^}]*grid-template-rows/, "summary switching must not change grid tracks or compensate for scaled file strip borders");
 assert.match(appTemplate, /replaceChildren\(\.\.\.\(root\.__scSummaryInPreview\?\[taskSummaryNode\(root\)\]:\[\]\)\)/, "only a finished task without selected running roles may populate the summary");
-assert.doesNotMatch(appTemplate, /empty\.textContent="暂无总结"|if \(!summary\.childElementCount\)/, "missing summary fields must leave the summary body blank without a generated fallback");
+assert.match(appTemplate, /finishedStatuses\.has\(normalizedStatus\(state\)\)\|\|asObject\(work\)\.execution_finished===true/, "explicit execution completion must expose a conclusion for any workflow result");
+assert.match(appTemplate, /const result=data\.result\|\|root\.__scConclusionFallback\|\|""/, "missing summaries must display a status conclusion when the execution has ended");
+assert.match(appTemplate, /if \(root\.__scSummaryInPreview\) return null;/, "ended execution summaries must take priority over role previews");
 assert.doesNotMatch(appTemplate, /任务上下文|data-sc-context|sc-task-view__context/, "the task context panel must be removed from the view");
 assert.match(appTemplate, /data-sc-selected-roles>尚未选择</, "the view must not infer all roles as selected");
 assert.doesNotMatch(appTemplate, /SC TASK FLOW|<h2\b/, "the redundant visual task-flow title must not render");
@@ -295,7 +297,7 @@ assert.equal(stateText("ready_for_qa"), "测试阶段", "QA phase label must not
 assert.match(appTemplate, /detailField\(body,"摘要".*detailField\(body,"必要证据".*detailField\(body,"风险"/s, "role cards retain summary, evidence and risks");
 assert.doesNotMatch(appTemplate, /detailField\(body,"下一步"/, "role details must omit the next-action field on desktop and narrow screens");
 assert.doesNotMatch(appTemplate, /\["下一步",data\.next\]|next:stringList\(work\.next_action\)/, "task summaries must omit the complete next-action section and its presentation data");
-assert.match(appTemplate, /\[\["结果",data\.result\],\["已验证",data\.verified\],\["注意事项",data\.notes\]\]/, "task summaries retain result, verified scope and notes");
+assert.match(appTemplate, /\[\["结果",result\],\["已验证",data\.verified\|\|\[\]\],\["注意事项",data\.notes\|\|\[\]\]\]/, "task summaries retain result, verified scope and notes");
 assert.match(appTemplate, /\.sc-task-view__role-subskill \{[^}]*min-height:1\.6em;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/, "each subskill name retains a clipped single-line row");
 assert.match(appTemplate, /function selectRoleSubskills\(role,value,active\)/, "left-card subskill lists stay independent of detail DOM");
 assert.match(appTemplate, /skill\.title=skill\.textContent=selectedSkill\?\.name\|\|""/, "each subskill name exposes its full value in a tooltip");
@@ -312,7 +314,7 @@ assert.match(appTemplate, /\.sc-task-view__workspace \{ display:grid; grid-templ
 assert.match(appTemplate, /data-sc-workspace>[\s\S]*?data-sc-roles[\s\S]*?data-sc-role-preview/, "the role lane must precede the right-side detail preview");
 assert.match(appTemplate, /details\[data-sc-role\] \{ position:relative; width:100%;/, "role cards must fill the one-quarter-width desktop role lane");
 assert.match(appTemplate, /details\[data-sc-role\] > \[data-sc-detail-body\] \{ display:none; \}/, "desktop role details must render in the shared preview");
-assert.match(appTemplate, /function previewRoleFor\(root\)[\s\S]*?root\.__scHoveredRole,root\.__scFocusedRole,root\.__scResolvedActiveRole/, "hover and keyboard focus must temporarily override the running-role preview");
+assert.match(appTemplate, /function previewRoleFor\(root\) \{[\s\S]*?if \(root\.__scSummaryInPreview\) return null;[\s\S]*?root\.__scHoveredRole,root\.__scFocusedRole,root\.__scResolvedActiveRole/, "hover and keyboard focus may preview roles only while the execution is unfinished");
 assert.match(appTemplate, /function bindRolePreview\(root\)[\s\S]*?pointerover[\s\S]*?focusin[\s\S]*?focusout/, "role preview must respond to pointer and keyboard focus");
 assert.match(appTemplate, /data-sc-preview-body tabindex="-1"/, "the independent detail region must be focusable when it has no subskill controls");
 assert.doesNotMatch(appTemplate, /按 → 进入详情，Shift\+Tab 返回角色卡/, "the requested keyboard instruction must not render");
