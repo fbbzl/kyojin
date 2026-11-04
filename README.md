@@ -75,7 +75,7 @@ sc：为当前项目增加订单导出功能，先明确验收标准，再完成
 
 每个 Skill 以带 YAML frontmatter 的 `SKILL.md` 为入口，适用条件和依赖以对应文件为准。`humanity-tech-docs` 另需安装 `technical-writer-voice` 和 `humanizer`；这些依赖不包含在本仓库中。
 
-[subskills/](skills/subskills/) 提供角色内的专项能力，包括视觉对齐、技术选型、根因分析、行为保持重构、目标审查与目标测试。部分子技能有明确前置条件，例如 `bug-fix` 只接收 QA 已登记且可复现的 Bug，`optimize` 只接收 CR 明确交回的优化项。
+[subskills/](skills/subskills/) 提供角色内的专项能力，包括视觉对齐、技术选型、根因分析、用户引导式排查、行为保持重构、目标审查与目标测试。部分子技能有明确前置条件，例如 `bug-fix` 只接收 QA 已登记且可复现的 Bug，`optimize` 只接收 CR 明确交回的优化项。
 
 ## Survey Corps 协作流程
 

@@ -367,7 +367,7 @@
         section.append(textElement("h3",label),content);
         body.append(section);
       }
-      const subskillNames={req:["align-with-visuals","grill-with-docs"],dev:["tech-select","refactor-with-goal","bug-fix","bug-cause","optimize"],cr:["review-with-goal"],qa:["test-with-goal"]};
+      const subskillNames={req:["align-with-visuals","grill-with-docs"],dev:["tech-select","refactor-with-goal","bug-fix","bug-cause","guide-debug","optimize"],cr:["review-with-goal"],qa:["test-with-goal","guide-debug"]};
       const stringList=value=>Array.isArray(value)?value.map(optionalText).filter(Boolean):[];
       function selectRoleSubskills(role,value,active) {
         if (!Array.isArray(value)) return [];

@@ -48,6 +48,7 @@ metadata:
 - 已确认任务是在不改变外部行为的前提下处理结构耦合、复杂状态、依赖方向、表示模型或副作用边界时，调用 [refactor-with-goal](../subskills/refactor-with-goal/SKILL.md)。它要求先声明行为不变量、影响边界、等价证据和可回退切片；若涉及新行为、缺陷修复、公共契约变化、数据迁移或权限变化，使用常规 `dev` 流程，必要时重新确认方案协议。
 - 仅当 `qa` 将已登记、可复现的 Bug 反馈给 `dev` 时，调用 [bug-fix](../subskills/bug-fix/SKILL.md)。用户直接报告或 `dev` 自行发现的未登记异常，按已确认范围调查和修正，交 `cr` 通过后再由 `qa` 核验反馈、复现和登记；不预先宣称 QA 已登记 Bug。Bug 的关闭或重开仍由 `qa` 决定。
 - 当 `qa` 已登记可复现 Bug，而根因尚不明确或需要单独保留因果证据时，调用 [bug-cause](../subskills/bug-cause/SKILL.md)；它可作为 `bug-fix` 的诊断阶段，但不登记、关闭或复测 Bug。
+- 当定位问题需要用户在 Codex 无法访问的数据库、Kafka、Redis、主机或其他环境执行检查并回传结果时，调用 [guide-debug](../subskills/guide-debug/SKILL.md)；每轮依据用户证据安排下一步，不让用户执行未确认的有副作用操作。
 - 仅当 `cr` 将带证据、目标和验收条件的优化审查项反馈给 `dev` 时，调用 [optimize](../subskills/optimize/SKILL.md)。用户直接提出或 `dev` 自行识别的优化机会先交 `cr` 形成审查项；优化完成后交回原 Goal 复审。
 - 仅当 `dev` 正在与用户对齐实现方案，且需要用户决定或确认技术、库、组件或集成模式时，调用 [tech-select](../subskills/tech-select/SKILL.md)。方案已确认后的例行内部选择不调用；涉及平台、安全、数据、外部账户、公共契约或发布模型的变化，仍须升级 `survey-corps` 确认。
 

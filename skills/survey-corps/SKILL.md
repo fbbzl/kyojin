@@ -142,7 +142,7 @@ handoffs: []             # 权威交接记录；不在 UI 中逐条展示
 
 左侧角色卡中的“进行中”仅在所属角色等于视图解析出的合法活动角色时播放持续文字流光；该角色须为唯一且精确 `status=running`，并满足任务未停止、参与顺序及 QA 的 CR 前置条件（含独立测试资产限定返修）。任务停止、活动角色无效、切换到其他状态或无角色时立即停止，原始状态文字与数据保持不变。角色状态与其下方合法运行子技能名称复用同一 `sc-status-shimmer` CSS 规则，周期 1.8 秒、linear、infinite，同时挂载从相同相位开始，悬停或焦点切换不重启其中一项；历史、已结束、未知、空白或 pending 子技能名称不播放。子技能名称保留默认 `var(--muted)` 基色，运行流光使用中性色亮部，状态原青蓝渐变不变；两者仍共用同一动画时序。使用 CSS，不新增计时器或依赖，不改变布局；减少动态偏好或不支持文字裁切时保留静态可读文字。
 
-子技能状态独立于五种角色状态，沿用各子技能的实际契约（如 `waiting_user`、`needs_revision`、`running`、`completed`），不把子技能状态上报为角色状态。`role_details.<role>.subskills` 是可选数组，每项包含 `name`、`status` 及可选字符串 `goal`、`summary`、`question`、`result`，`options` 和 `evidence` 只接收字符串数组。只记录该角色实际调用的子技能：REQ 支持 `align-with-visuals`、`grill-with-docs`；DEV 支持 `tech-select`、`refactor-with-goal`、`bug-fix`、`bug-cause`、`optimize`；CR 支持 `review-with-goal`；QA 支持 `test-with-goal`。非法名称、角色不匹配、错误类型和空白内容不展示；只有名称或状态、没有任务内容的项也不展示。问题与候选选项保留在权威快照中，不进入任务信息正文。
+子技能状态独立于五种角色状态，沿用各子技能的实际契约（如 `waiting_user`、`needs_revision`、`running`、`completed`），不把子技能状态上报为角色状态。`role_details.<role>.subskills` 是可选数组，每项包含 `name`、`status` 及可选字符串 `goal`、`summary`、`question`、`result`，`options` 和 `evidence` 只接收字符串数组。只记录该角色实际调用的子技能：REQ 支持 `align-with-visuals`、`grill-with-docs`；DEV 支持 `tech-select`、`refactor-with-goal`、`bug-fix`、`bug-cause`、`guide-debug`、`optimize`；CR 支持 `review-with-goal`；QA 支持 `test-with-goal`、`guide-debug`。非法名称、角色不匹配、错误类型和空白内容不展示；只有名称或状态、没有任务内容的项也不展示。问题与候选选项保留在权威快照中，不进入任务信息正文。
 
 子技能仅在左侧角色卡逐行展示去重后的有效调用名称与合法运行流光，不在任务信息正文中展开内容。编排者保留本轮实际调用记录，更新某项状态时不覆盖其他已调用项。展示使用当前任务权威数组，只合并派生展示，权威调用历史保持原样，不缓存或补造历史，不修改 `subskills`、服务端契约或交接信息；视图不回传选择、不启动技能、不执行审批或改变权威状态。
 
@@ -184,8 +184,8 @@ QA 在 CR 通过后准备或修改独立测试资产，完成后先停止 QA，�
 | 需求或影响不明 | `req`；需求收敛后按当前场景选择后续链路 | 有文档且存在高风险歧义：`grill-with-docs`；视觉化能消除歧义：`align-with-visuals` |
 | 已确认的功能或行为变更 | `dev -> cr -> qa` | 无 |
 | 受控重构 | `dev -> cr -> qa` | `refactor-with-goal`、`test-with-goal` |
-| 未登记异常 | `dev（调查） -> cr -> qa` | `test-with-goal` |
-| 已登记缺陷 | `dev -> cr -> qa` | `bug-fix`、`test-with-goal` |
+| 未登记异常 | `dev（调查） -> cr -> qa` | `guide-debug`、`test-with-goal` |
+| 已登记缺陷 | `dev -> cr -> qa` | `bug-fix`、`bug-cause`、`guide-debug`、`test-with-goal` |
 | 性能、容量、成本或资源效率优化 | `cr（建项） -> dev -> cr（复审） -> qa` | `optimize` |
 
 需求或影响不明且歧义会改变方案或验收时先由 `req` 收敛，再选择主场景；用户提出请求本身不构成启动 REQ 的理由。代码变更同时符合多行时，按缺陷修复、量化优化、受控重构、功能变更选择主链路；混合目标拆分工作单元并保留各自门禁。未登记异常由 `dev` 调查并按已确认范围修正，CR 通过后由 `qa` 核验反馈证据、复现和登记；已登记缺陷从 `dev` 开始。优化先由 `cr` 建项，实施后复审。
