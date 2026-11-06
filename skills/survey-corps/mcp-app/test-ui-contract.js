@@ -237,7 +237,7 @@ assertSkillMatch(/服务端.*累计/, "the server must own elapsed time accumula
 assertSkillMatch(/视图不得自行计时、推算/, "view must not invent elapsed time");
 assertSkillMatch(/work_unit\.roles` 只列本轮实际执行的角色，不沿用历史工作单元的角色链/, "role selection must be scoped to the current work unit");
 assertSkillMatch(/已登记 Bug 的默认链路为 `dev -> cr -> qa`.*才前置 `req`/, "registered bugs must not add REQ unless requirement clarification is necessary");
-assertSkillMatch(/启动所选角色前，先提交.*status=running.*再启动对应 subagent/, "the role timer must start before subagent work begins");
+assertSkillMatch(/授予角色执行权前，先提交.*status=running.*再通知对应 subagent 开始角色工作/, "the role timer must start before subagent work begins");
 assert.match(appTemplate, /border-radius:8px/, "task view must use a restrained rounded outer surface");
 assert.match(appTemplate, /border-radius:6px/, "cards must use restrained rounded corners");
 assert.match(appTemplate, /transition:box-shadow 160ms ease/, "cards must use short hover transitions");

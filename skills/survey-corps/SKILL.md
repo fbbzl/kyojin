@@ -2,7 +2,7 @@
 name: survey-corps
 description: "Coordinate a multi-role engineering task with the smallest necessary role chain, evidence-based handoffs, and explicit escalation for high-risk changes. The shorthand `sc` starts this workflow."
 metadata:
-  version: 3.0.15
+  version: 3.0.16
 ---
 
 # 调查兵团
@@ -27,7 +27,7 @@ metadata:
 - `show_sc_task_view` 工具缺失、MCP App 资源无法加载或工具调用失败时，立即将当前工作单元标记为 `blocked`，停止启动角色或继续交接。阻断报告必须说明实际错误，恢复条件为安装并启用 `survey-corps-task-view` 插件、启用 MCP Apps，必要时重启宿主客户端并在新会话中确认该 tool 可用后重试。不得以任何降级视图绕过阻断。
 - 每次角色启动、交接、状态变化、风险或证据变化，以及真实当前操作文件切换时，必须再次调用同一 `show_sc_task_view` tool 更新快照。视图仅随这些明确的编排动作刷新，不声明自动事件订阅、后台轮询或平台原生实时同步。
 - 每个工作单元的 `work_unit.roles` 只列本轮实际执行的角色，不沿用历史工作单元的角色链，也不默认填写全部角色。已登记 Bug 的默认链路为 `dev -> cr -> qa`；只有仍存在会改变方案或验收的需求歧义、且本轮确实需要 REQ 收敛时才前置 `req`。清晰的功能请求直接从 `dev` 开始。参与顺序由编排者按当前场景确定，例如常规 `dev -> cr -> qa`、优化 `cr -> dev -> qa`；不忽略已确认的参与列表重新推断。复审更新原角色卡，不复制角色。
-- 启动所选角色前，先提交包含该角色且其 `role_details.<role>.status=running` 的快照，并确认工具调用成功，再启动对应 subagent。首次快照若在角色完成后才发送，服务端无法回算该角色此前的耗时；不得用任务总耗时推算角色耗时。
+- 创建或唤醒 subagent 与授予角色执行权分开：角色保持 `pending` 或 `blocked` 时可先创建或唤醒对应 subagent，仅核验交接；有交接时由接收方填写 `handoff_result`，编排者不得代填。接单期间不得开展角色准备、取证、修改或测试。满足交接与前置门禁后，授予角色执行权前，先提交包含该角色且其 `role_details.<role>.status=running` 的快照，并确认工具调用成功，再通知对应 subagent 开始角色工作。首次快照若在角色完成后才发送，服务端无法回算该角色此前的耗时；不得用任务总耗时推算角色耗时。
 - MCP App 展示不是权威记录，也不能改变状态机、角色交接、完成门禁或 subagent-only 约束。权威记录仍是当前任务中的工作单元、交接和角色结论。
 
 ### 快照更新与输出
