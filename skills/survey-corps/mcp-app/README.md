@@ -2,7 +2,7 @@
 
 这是项目内、运行时零第三方依赖的 Node stdio MCP server。`snapshot.schema.json` 同时定义工具输入与服务端结构校验规则；开发依赖 Ajv 用于生成独立校验器，插件运行不要求安装 Ajv。宿主按需启动 `server.js`，SC 状态更新通过 `show_sc_task_view` 传入当前 snapshot；Codex `thread` entrypoint 则以空参数调用同一工具。工具以 `_meta.ui.resourceUri` 绑定静态 `text/html;profile=mcp-app` resource，并以 `openai/ui` 的 `thread` entrypoint 声明 Codex 任务内入口。工具返回 `structuredContent.snapshot`，UI 通过 MCP Apps 的 `ui/notifications/tool-result` bridge 渲染该快照。
 
-任务视图支持简体中文和英文。界面优先采用 MCP App 初始化时宿主提供的语言（Codex 中为应用界面语言），其次采用浏览器的语言偏好。中文语言环境显示简体中文，无匹配时显示英文。任务标题、摘要等由快照提供的文字沿用原文。
+任务视图支持简体中文和英文。界面优先使用本地 MCP 服务进程读取的操作系统区域设置，并忽略 Codex 界面语言；仅在系统区域设置不受支持时，才回退到 WebView 的 `navigator.languages` 和 `navigator.language`。中文显示简体中文，无匹配时显示英文。任务标题、摘要等由快照提供的文字沿用原文。
 
 这是 SC 任务视图的唯一渲染路径。项目不生成或打开本地 `visualizations` HTML，也不提供文本或其他替代视图。若 MCP tool 不可用或调用失败，SC 工作单元将进入 `blocked`，直到插件和 MCP Apps 能力恢复。`work_unit.execution_finished=true` 表示本轮执行已收尾，不改变工作流状态、完成门禁或计时终态；收尾时必须停止所有角色，恢复前清除此标记。结束总结优先于角色悬停或焦点预览；缺少 `work_unit.summary` 时只以当前状态生成结论，不推断通过或风险关闭。
 

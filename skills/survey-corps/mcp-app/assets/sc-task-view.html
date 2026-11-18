@@ -263,9 +263,9 @@
           if (!(error instanceof RangeError)) throw error;
         }
       }
-      function resolveLocale(hostLocale,preferences=globalThis.navigator) {
-        const host=supportedLocale(hostLocale);
-        if (host) return host;
+      function resolveLocale(systemLocale,preferences=globalThis.navigator) {
+        const system=supportedLocale(systemLocale);
+        if (system) return system;
         for (const locale of [...(preferences?.languages??[]),preferences?.language]) {
           const supported=supportedLocale(locale);
           if (supported) return supported;
@@ -823,7 +823,7 @@
       function bindAnimationControls(root) { if (root.__scAnimationButtonBound) return; const button=root.querySelector("[data-sc-play-animation]"); if (!button) return; const onClick=()=>{ if (!root.__scDebugMode) return; root.__scManualMotionCleanup?.(); root.__scManualMotionCleanup=undefined; if (prefersReducedMotion()) return; const cleanups=[]; animateOnce(root.querySelector("details.is-active"),"is-manual-replay",cleanups); root.__scManualMotionCleanup=()=>cleanups.forEach(cleanup=>cleanup()); }; button.addEventListener("click",onClick); root.__scAnimationButtonBound=true; root.__scAnimationButtonCleanup=()=>button.removeEventListener("click",onClick); }
       window.renderSurveyCorpsTaskView=(root,snapshot,options)=>{
         if (!(root instanceof Element)) throw new TypeError("root must be a DOM element");
-        const locale=resolveLocale(asObject(options).locale),copy=copyByLocale[locale];
+        const locale=resolveLocale(asObject(options).systemLocale),copy=copyByLocale[locale];
         const view=root.matches(".sc-task-view")?root:root.querySelector(".sc-task-view");
         localizeView(root,view,locale,copy);
         const input=asObject(snapshot),work=asObject(input.work_unit),details=asObject(input.role_details),state=input.state;

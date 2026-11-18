@@ -9,6 +9,7 @@ const { createWorkflowStateMachine } = require("./workflow-state-machine");
 
 const APP_URI = "ui://survey-corps/task-view";
 const APP_MIME = "text/html;profile=mcp-app";
+const SYSTEM_LOCALE = Intl.DateTimeFormat().resolvedOptions().locale;
 const TEMPLATE_PATH = path.join(__dirname, "assets", "sc-task-view.html");
 const MAX_FRAME_BYTES = 256 * 1024;
 const MAX_SNAPSHOT_BYTES = 200 * 1024;
@@ -35,9 +36,10 @@ function readTemplate() { return fs.readFileSync(TEMPLATE_PATH, "utf8"); }
 function appHtml() {
   return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body><main id="sc-task-view-root">${readTemplate()}</main><script>(()=>{
     const root=document.getElementById("sc-task-view-root"),initId="sc-ui-init",parentWindow=window.parent;
-    let ready=false, locale;
+    const systemLocale=${JSON.stringify(SYSTEM_LOCALE)};
+    let ready=false;
     const render=snapshot=>{
-      window.renderSurveyCorpsTaskView(root,snapshot,{locale});
+      window.renderSurveyCorpsTaskView(root,snapshot,{systemLocale});
       document.documentElement.lang=root.lang;
     };
     render({});
@@ -48,7 +50,6 @@ function appHtml() {
       if(message.id===initId){
         if("error" in message)return;
         if(!ready&&"result" in message){
-          locale=message.result?.hostContext?.locale;
           render({});
           ready=true;
           parentWindow.postMessage({jsonrpc:"2.0",method:"ui/notifications/initialized"},"*");

@@ -25,14 +25,16 @@ function runBridge(script) {
   const listeners = {};
   const root = {};
   const documentElement = {};
+  const systemLocale = Intl.DateTimeFormat().resolvedOptions().locale;
   const parent = { postMessage: message => messages.push(message) };
   const window = {
     parent,
     addEventListener: (name, callback) => { listeners[name] = callback; },
-    renderSurveyCorpsTaskView: (element, snapshot, { locale }) => {
+    renderSurveyCorpsTaskView: (element, snapshot, { systemLocale: locale }) => {
       assert.equal(element, root);
-      root.lang = locale === "en-GB" ? "en" : "zh-CN";
-      rendered.push({ snapshot, locale });
+      assert.equal(locale, systemLocale);
+      root.lang = locale.toLowerCase().startsWith("zh") ? "zh-CN" : "en";
+      rendered.push({ snapshot, systemLocale: locale });
     },
   };
   vm.runInNewContext(script, { window, document: { documentElement, getElementById: () => root } });
@@ -42,6 +44,7 @@ function runBridge(script) {
 const plain = value => JSON.parse(JSON.stringify(value));
 
 async function main() {
+  const systemLocale = Intl.DateTimeFormat().resolvedOptions().locale;
   const html = await readResource();
   const script = html.slice(html.lastIndexOf("<script>") + 8, html.lastIndexOf("</script>"));
   const failed = runBridge(script);
@@ -60,17 +63,17 @@ async function main() {
   assert.equal(failed.rendered.length, 1, "tool results must stay blocked after initialization failure");
 
   const ready = runBridge(script);
-  assert.equal(ready.rendered[0].locale, undefined, "before initialization the renderer may use browser preferences");
+  assert.equal(ready.rendered[0].systemLocale, systemLocale, "the renderer receives the local process locale");
   const initializeResult = locale => ({ jsonrpc: "2.0", id: "sc-ui-init", result: { protocolVersion: "2026-01-26", hostContext: { locale } } });
   ready.receive(initializeResult("zh-CN"), {});
-  assert.equal(ready.rendered.length, 1, "only the host can set the locale");
+  assert.equal(ready.rendered.length, 1, "initialization does not rerender before acknowledgement");
   ready.receive(initializeResult("en-GB"));
   assert.deepEqual(plain(ready.messages[1]), { jsonrpc: "2.0", method: "ui/notifications/initialized" }, "successful initialization must be acknowledged");
   ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "sc-task-view:demo" } } } });
-  assert.deepEqual(plain(ready.rendered[1]), { snapshot: {}, locale: "en-GB" }, "initial labels must use the host locale");
-  assert.equal(ready.documentElement.lang, "en", "document language must match the resolved renderer language");
+  assert.deepEqual(plain(ready.rendered[1]), { snapshot: {}, systemLocale }, "host initialization must not override the system locale");
+  assert.equal(ready.documentElement.lang, systemLocale.toLowerCase().startsWith("zh") ? "zh-CN" : "en", "document language must follow the local process locale");
   ready.receive(initializeResult("zh-CN"));
-  assert.deepEqual(plain(ready.rendered[2]), { snapshot: { view_id: "sc-task-view:demo" }, locale: "en-GB" }, "tool result must render with the initialized locale");
+  assert.deepEqual(plain(ready.rendered[2]), { snapshot: { view_id: "sc-task-view:demo" }, systemLocale }, "tool results must keep using the local process locale");
   assert.equal(ready.rendered.length, 3, "repeated initialization cannot overwrite the initialized locale");
   console.log("MCP App bridge contract test passed.");
 }

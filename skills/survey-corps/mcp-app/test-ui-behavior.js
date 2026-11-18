@@ -367,7 +367,7 @@ window.renderSurveyCorpsTaskView(lineRoot,clickInput);clickSample('default');cli
 clickSummary('dev').click();clickSample('click-dev');clickSummary('cr').click();clickSample('click-cr');window.renderSurveyCorpsTaskView(lineRoot,clickInput);clickSample('same-view');
 window.renderSurveyCorpsTaskView(lineRoot,{...clickInput,view_id:'click:B'});clickSample('new-view');clickSummary('dev').click();window.renderSurveyCorpsTaskView(lineRoot,{...clickInput,view_id:'click:B',work_unit:{roles:['cr']}});clickSample('removed');
 lineRoot.remove();
-// Exercise locale selection on the DOM with conflicting host and webview preferences.
+// Exercise locale selection when system and webview preferences conflict.
 const localeRoot=root.cloneNode(true);
 localeRoot.removeAttribute('id');
 document.body.append(localeRoot);
@@ -379,15 +379,15 @@ const localizedTask={
 const localizedBefore=JSON.stringify(localizedTask);
 const localeResults=[];
 for(const [scenario,host,languages,language] of [
-  ['hostEnglish','en-GB',['zh-CN'],'zh-CN'],
-  ['hostChinese','zh-TW',['en-US'],'en-US'],
-  ['missingHost',undefined,['fr-FR','zh-Hans'],'fr-FR'],
-  ['invalidHost','not a locale',[],'zh-CN'],
+  ['systemChineseWebviewEnglish','zh-CN',['en-US'],'en-US'],
+  ['systemEnglishWebviewChinese','en-GB',['zh-CN'],'zh-CN'],
+  ['missingSystem',undefined,['fr-FR','zh-Hans'],'fr-FR'],
+  ['invalidSystem','not a locale',[],'zh-CN'],
   ['unsupported','es-MX',['fr-FR'],'fr-FR']
 ]){
   Object.defineProperty(navigator,'languages',{value:languages,configurable:true});
   Object.defineProperty(navigator,'language',{value:language,configurable:true});
-  window.renderSurveyCorpsTaskView(localeRoot,localizedTask,{locale:host});
+  window.renderSurveyCorpsTaskView(localeRoot,localizedTask,{systemLocale:host});
   const section=localeRoot.querySelector('.sc-task-view');
   const body=section.querySelector('[data-sc-role=dev] > [data-sc-detail-body]');
   localeResults.push({
@@ -537,9 +537,9 @@ try {
     const observed=readChromeResult(page,path.join(temp,`visual-${mode.width}-${mode.reduced}`),mode.width,mode.reduced);
     assert.equal(observed.viewport,mode.width,"responsive cases must run at the exact requested iframe viewport");
     assert.deepEqual(observed.localeResults.map(({scenario,english,chinese})=>[scenario,english,chinese]),[
-      ["hostEnglish",true,false],["hostChinese",false,true],["missingHost",false,true],
-      ["invalidHost",false,true],["unsupported",true,false]
-    ],"the rendered content language follows host preference, webview preference and English fallback");
+      ["systemChineseWebviewEnglish",false,true],["systemEnglishWebviewChinese",true,false],["missingSystem",false,true],
+      ["invalidSystem",false,true],["unsupported",true,false]
+    ],"the rendered content language follows the system locale and uses webview preferences only as fallback");
     for(const item of observed.localeResults){
       const expected=item.english
         ? {status:"In development",role:"In progress",headings:["Summary","Required evidence","Risks"],a11y:"Task details"}
