@@ -10,7 +10,7 @@ const script = template.match(/<script>([\s\S]*?)<\/script>/)[1];
 const context = { window: {} };
 vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.serialUnits={roleStatus,roleStates,resolveActiveRole};})();"), context);
 const { roleStatus, roleStates, resolveActiveRole } = context.window.serialUnits;
-const roleStatusText = value => roleStatus(value).label;
+const roleStatusText = (value, locale = "zh-CN") => roleStatus(value, locale).label;
 
 assert.equal(roleStatusText("running"), "进行中");
 assert.equal(roleStatusText(" RUNNING "), "未知状态");
@@ -20,8 +20,11 @@ assert.deepEqual(Object.keys(roleStates), statuses);
 for (const [status, label] of Object.entries({pending:"待开始",running:"进行中",passed:"通过",blocked:"阻断",needs_user_confirm:"待用户确认"})) assert.equal(roleStatusText(status), label);
 for (const status of ["completed", "failed", "preparing", "working", "active", "in_progress", "waiting_user", "skipped", "paused", "cancelled"]) assert.equal(roleStatusText(status), "未知状态");
 assert.equal(roleStatusText(undefined), "状态未提供");
+assert.equal(roleStatusText("running", "en"), "In progress");
+assert.equal(roleStatusText(" RUNNING ", "en"), "Unknown status");
+assert.equal(roleStatusText(undefined, "en"), "Status unavailable");
 assert.doesNotMatch(template, /rolePhases|rolePhaseText|预审中|测试准备中|等待审查通过|测试中/);
-assert.match(template, /state=roleStatus\(detail\.status\)/, "role title must render from status only");
+assert.match(template, /state=roleStatus\(detail\.status,locale\)/, "role wording must use the exact reported status and selected locale");
 
 const details = { dev: { status: "passed" }, cr: { status: "running" }, qa: { status: "pending" } };
 assert.equal(resolveActiveRole(details, "ready_for_cr", ["dev", "cr", "qa"]), "cr");

@@ -2,6 +2,8 @@
 
 这是项目内、运行时零第三方依赖的 Node stdio MCP server。`snapshot.schema.json` 同时定义工具输入与服务端结构校验规则；开发依赖 Ajv 用于生成独立校验器，插件运行不要求安装 Ajv。宿主按需启动 `server.js`，SC 状态更新通过 `show_sc_task_view` 传入当前 snapshot；Codex `thread` entrypoint 则以空参数调用同一工具。工具以 `_meta.ui.resourceUri` 绑定静态 `text/html;profile=mcp-app` resource，并以 `openai/ui` 的 `thread` entrypoint 声明 Codex 任务内入口。工具返回 `structuredContent.snapshot`，UI 通过 MCP Apps 的 `ui/notifications/tool-result` bridge 渲染该快照。
 
+任务视图支持简体中文和英文。界面优先采用 MCP App 初始化时宿主提供的语言（Codex 中为应用界面语言），其次采用浏览器的语言偏好。中文语言环境显示简体中文，无匹配时显示英文。任务标题、摘要等由快照提供的文字沿用原文。
+
 这是 SC 任务视图的唯一渲染路径。项目不生成或打开本地 `visualizations` HTML，也不提供文本或其他替代视图。若 MCP tool 不可用或调用失败，SC 工作单元将进入 `blocked`，直到插件和 MCP Apps 能力恢复。`work_unit.execution_finished=true` 表示本轮执行已收尾，不改变工作流状态、完成门禁或计时终态；收尾时必须停止所有角色，恢复前清除此标记。结束总结优先于角色悬停或焦点预览；缺少 `work_unit.summary` 时只以当前状态生成结论，不推断通过或风险关闭。
 
 角色严格串行，同时最多一个 `running`，不得跳过显式未完成的前序角色；缺失历史状态仍兼容。QA 常规运行须等选中的 CR 为 `passed`；仅 SC 协议中的独立测试资产限定返修可在 CR 为 `blocked` 时进行，修复后仍须复审再正式测试。服务端先校验含 `work_unit` 快照的状态与角色一致性，再按同一 `view_id` 校验合法阶段跳转；矛盾更新会在缓存和计时前拒绝，并保留上一份有效快照。首次快照建立基线，服务重启后重新建立基线；首次暂停/补材料须声明 `resume_state`。业务写入的暂停、等待、阻断和结束态不得残留 `running`，角色与整体状态须一并更新。直接渲染旧非法快照时不高亮、自动展开或播放交接动效，计时器也不启动活动时段，角色原始状态保持不变。`roles` 的数组和单角色标量按同一规则规范化校验。

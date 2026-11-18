@@ -24,6 +24,7 @@ const snapshot = {
 };
 const harness = `<!doctype html><html><body><main id="root">${template}</main><script>
 window.onerror=(message,source,line,column,error)=>document.body.dataset.scTestError=String(message)+" at "+line+":"+column+" "+error?.stack;
+Object.defineProperty(navigator,'languages',{value:['zh-CN']});
 const root=document.getElementById("root");
 let toggleAdds=0,toggleRemoves=0;
 const add=root.addEventListener.bind(root),remove=root.removeEventListener.bind(root);
@@ -196,6 +197,7 @@ const roleLineCases = [
 ];
 
 const visualHarness = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main id="root">${template}</main><script>
+Object.defineProperty(navigator,'languages',{value:['zh-CN'],configurable:true});
 const root=document.getElementById('root'),snapshot=${JSON.stringify(snapshot)};
 snapshot.role_details.cr.status='passed';
 // The same fixtures run at exact 360/960 iframe widths; observed DOM is the oracle.
@@ -365,7 +367,52 @@ window.renderSurveyCorpsTaskView(lineRoot,clickInput);clickSample('default');cli
 clickSummary('dev').click();clickSample('click-dev');clickSummary('cr').click();clickSample('click-cr');window.renderSurveyCorpsTaskView(lineRoot,clickInput);clickSample('same-view');
 window.renderSurveyCorpsTaskView(lineRoot,{...clickInput,view_id:'click:B'});clickSample('new-view');clickSummary('dev').click();window.renderSurveyCorpsTaskView(lineRoot,{...clickInput,view_id:'click:B',work_unit:{roles:['cr']}});clickSample('removed');
 lineRoot.remove();
-const idle=root.querySelector('[data-sc-role=req]');const result={terminalHandoffs,handoffFreshness,clickSelection,plainStatuses,projectFiles,projectUpdates,connectorFiles,absoluteFiles,emojiTiming,fileActivity,fileFrames,roleLines,listHeights,pulseFrames,pulseStatics,lineInteraction,lineSummary,summaryRemoval,partitions,dynamicLanes,summaryTypography,roleTones,globalTones,roleColors,globalColors,activeRoleMotion,connectors,statusLayout,reduced,viewAnimation:getComputedStyle(view).animationName,activeAnimation:getComputedStyle(active,'::before').animationName,idleAnimation:getComputedStyle(idle,'::before').animationName,replay:active.classList.contains('is-manual-replay'),viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth};parent.postMessage({scVisualResult:result},'*');
+// Exercise locale selection on the DOM with conflicting host and webview preferences.
+const localeRoot=root.cloneNode(true);
+localeRoot.removeAttribute('id');
+document.body.append(localeRoot);
+const localizedTask={
+  view_id:'locale',state:'dev_in_progress',
+  work_unit:{roles:['dev','cr'],git:{repository:'kyojin',branch:'codex/sc-system-locale'},target:'修正 <sample> label'},
+  role_details:{dev:{status:'running',summary:'Preserve 原文'},cr:{status:'pending'}}
+};
+const localizedBefore=JSON.stringify(localizedTask);
+const localeResults=[];
+for(const [scenario,host,languages,language] of [
+  ['hostEnglish','en-GB',['zh-CN'],'zh-CN'],
+  ['hostChinese','zh-TW',['en-US'],'en-US'],
+  ['missingHost',undefined,['fr-FR','zh-Hans'],'fr-FR'],
+  ['invalidHost','not a locale',[],'zh-CN'],
+  ['unsupported','es-MX',['fr-FR'],'fr-FR']
+]){
+  Object.defineProperty(navigator,'languages',{value:languages,configurable:true});
+  Object.defineProperty(navigator,'language',{value:language,configurable:true});
+  window.renderSurveyCorpsTaskView(localeRoot,localizedTask,{locale:host});
+  const section=localeRoot.querySelector('.sc-task-view');
+  const body=section.querySelector('[data-sc-role=dev] > [data-sc-detail-body]');
+  localeResults.push({
+    scenario,english:section.matches(':lang(en)'),chinese:section.matches(':lang(zh-CN)'),
+    status:section.querySelector('[data-sc-field=state]').textContent,
+    role:section.querySelector('[data-sc-role=dev] .sc-task-view__role-state').textContent,
+    headings:[...body.querySelectorAll('h3')].map(node=>node.textContent),
+    summary:body.querySelector('li').textContent,
+    target:section.querySelector('[data-sc-field=target]').textContent,
+    a11y:section.querySelector('[data-sc-role-preview]').getAttribute('aria-label'),
+    unchanged:localizedBefore===JSON.stringify(localizedTask)
+  });
+}
+window.renderSurveyCorpsTaskView(localeRoot,{...localizedTask,state:'needs_user_confirm'},{locale:'en'});
+const localeStatus=localeRoot.querySelector('[data-sc-field=state]');
+const localeGit=localeRoot.querySelector('[data-sc-git]');
+const localeBar=localeStatus.parentElement.getBoundingClientRect();
+const statusBox=localeStatus.getBoundingClientRect();
+const gitBox=localeGit.getBoundingClientRect();
+const localeLayout={
+  visible:gitBox.width>0&&statusBox.width>0,
+  fits:gitBox.right<=statusBox.left+1&&statusBox.right<=localeBar.right+1&&localeStatus.scrollWidth<=localeStatus.clientWidth+1
+};
+localeRoot.remove();
+const idle=root.querySelector('[data-sc-role=req]');const result={localeResults,localeLayout,terminalHandoffs,handoffFreshness,clickSelection,plainStatuses,projectFiles,projectUpdates,connectorFiles,absoluteFiles,emojiTiming,fileActivity,fileFrames,roleLines,listHeights,pulseFrames,pulseStatics,lineInteraction,lineSummary,summaryRemoval,partitions,dynamicLanes,summaryTypography,roleTones,globalTones,roleColors,globalColors,activeRoleMotion,connectors,statusLayout,reduced,viewAnimation:getComputedStyle(view).animationName,activeAnimation:getComputedStyle(active,'::before').animationName,idleAnimation:getComputedStyle(idle,'::before').animationName,replay:active.classList.contains('is-manual-replay'),viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth};parent.postMessage({scVisualResult:result},'*');
 </script></body></html>`;
 
 function readChromeResult(pagePath, profilePath, width, reduced = false) {
@@ -489,6 +536,18 @@ try {
     fs.writeFileSync(page,wrapper,"utf8");
     const observed=readChromeResult(page,path.join(temp,`visual-${mode.width}-${mode.reduced}`),mode.width,mode.reduced);
     assert.equal(observed.viewport,mode.width,"responsive cases must run at the exact requested iframe viewport");
+    assert.deepEqual(observed.localeResults.map(({scenario,english,chinese})=>[scenario,english,chinese]),[
+      ["hostEnglish",true,false],["hostChinese",false,true],["missingHost",false,true],
+      ["invalidHost",false,true],["unsupported",true,false]
+    ],"the rendered content language follows host preference, webview preference and English fallback");
+    for(const item of observed.localeResults){
+      const expected=item.english
+        ? {status:"In development",role:"In progress",headings:["Summary","Required evidence","Risks"],a11y:"Task details"}
+        : {status:"开发中",role:"进行中",headings:["摘要","必要证据","风险"],a11y:"任务信息"};
+      const {scenario,english,chinese,...content}=item;
+      assert.deepEqual(content,{...expected,summary:"Preserve 原文",target:"修正 <sample> label",unchanged:true},scenario+" localizes interface labels while preserving authored text");
+    }
+    assert.deepEqual(observed.localeLayout,{visible:true,fits:true},"long English status and Git info fit together at each viewport");
     assert.equal(observed.handoffFreshness.length,9);for(const item of observed.handoffFreshness){assert.deepEqual(item.paths,item.expected?['D:/workspace/requirements.md']:[],item.key+' renders only a current eligible delivery');assert.equal(item.unchanged,true,'handoff filtering preserves authoritative history');}
     assert.equal(observed.terminalHandoffs.length,19);for(const item of observed.terminalHandoffs){assert.deepEqual(item.paths,['ready_for_qa','paused','needs_user_confirm','blocked'].includes(item.state)?['D:/workspace/requirements.md']:[],item.state+' applies terminal-only delivery hiding');assert.equal(item.roles,2);assert.equal(item.arrows,1,'terminal transitions keep the role chain arrows');assert.equal(item.unchanged,true,'terminal hiding preserves delivery history');}
     assert.deepEqual(observed.clickSelection.map(item=>[item.key,item.selected]),[['default',[]],['hover',[]],['click-dev',['dev']],['click-cr',['cr']],['same-view',['cr']],['new-view',[]],['removed',[]]],"click selection is unique, persists only within the same view and clears for removed roles");

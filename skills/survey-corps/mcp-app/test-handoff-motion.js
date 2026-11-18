@@ -45,8 +45,8 @@ for (const status of [undefined, "pending", "passed", "blocked", "needs_user_con
   assert.equal(observe(notRunning, snapshot([handoff()])).event, null, "later running must not backfill an animation");
 }
 assert.equal(observe(empty, snapshot([handoff()], { role_details: { cr: { status: "running" } } })).event.id, "h1");
-assert.equal(stateText("ready_for_cr"), "审查阶段");
-assert.equal(stateText("ready_for_qa"), "测试阶段");
+assert.equal(stateText("ready_for_cr", "zh-CN"), "审查阶段");
+assert.equal(stateText("ready_for_qa", "zh-CN"), "测试阶段");
 for (const status of ["pending", "running", "blocked", "needs_user_confirm", undefined]) {
   const qaHandoff = handoff("qa-start", { from: "cr", to: "qa" });
   const invalid = observe(empty, snapshot([qaHandoff], { role_details: { cr: { status }, qa: { status: "running" } } }));

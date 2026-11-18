@@ -2,7 +2,7 @@
   Survey Corps MCP App task view. Codex loads this resource in its embedded host.
   Snapshot values are rendered only through textContent.
 -->
-<section class="sc-task-view" aria-label="SC 任务流程">
+<section class="sc-task-view">
   <style>
     .sc-task-view { --bg:#080b10; --panel:#0d1219; --panel-active:#101923; --line:#4b5869; --text:#e8edf3; --muted:#9ba8b8; --focus:#b9e2ff; --pending:#95a3b5; --active:#46b8ee; --completed:#27c9b0; --ok:#4bd882; --warn:#e9c85c; --revision:#ec9b4f; --danger:#ed7589; --unknown:#fff; --motion-period:1.8s; box-sizing:border-box; width:min(680px,100%); margin:0 auto; padding:20px; border:2px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font:13px/1.6 "Segoe UI Variable","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif; }
     .sc-task-view *, .sc-task-view *::before, .sc-task-view *::after { box-sizing:inherit; }
@@ -20,6 +20,8 @@
     .sc-task-view__header-controls { grid-column:2; display:flex; align-items:center; justify-content:flex-end; }
     .sc-task-view__header-controls:has(> button[hidden]) { display:none; }
     .sc-task-view__status { grid-column:2; justify-self:end; max-width:100%; padding:6px 12px; color:var(--muted); font-size:33.8px; line-height:31.2px; font-weight:700; text-align:center; white-space:nowrap; }
+    .sc-task-view:lang(en) .sc-task-view__topbar { grid-template-columns:minmax(0,1fr) fit-content(75%); }
+    .sc-task-view:lang(en) .sc-task-view__status { min-width:0; text-align:right; white-space:normal; overflow-wrap:anywhere; }
     .sc-task-view__flow { display:flex; flex-direction:column; align-items:stretch; margin-top:18px; }
     .sc-task-view__node { min-width:0; border:2px solid var(--line); border-radius:6px; background:var(--panel); transition:box-shadow 160ms ease,transform 160ms ease; }
     .sc-task-view__root { padding:14px; border-width:2px; text-align:center; }
@@ -184,32 +186,32 @@
   </style>
   <header class="sc-task-view__header">
     <div class="sc-task-view__topbar">
-      <p class="sc-task-view__git" data-sc-git hidden aria-label="Git 信息"></p>
-      <span class="sc-task-view__status" data-sc-field="state" aria-live="polite">未知</span>
+      <p class="sc-task-view__git" data-sc-git data-sc-aria="gitInfo" hidden></p>
+      <span class="sc-task-view__status" data-sc-field="state" aria-live="polite"></span>
     </div>
     <details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>
-      <summary><span>项目 MCP</span><span class="sc-task-view__project-mcp-count" data-sc-project-mcp-count></span></summary>
+      <summary><span data-sc-copy="projectMcp"></span><span class="sc-task-view__project-mcp-count" data-sc-project-mcp-count></span></summary>
       <ul class="sc-task-view__project-mcp-list" data-sc-project-mcp-list></ul>
     </details>
-    <div class="sc-task-view__header-controls"><button type="button" class="sc-task-view__play" data-sc-play-animation hidden aria-label="播放任务视图动画">播放动画</button></div>
+    <div class="sc-task-view__header-controls"><button type="button" class="sc-task-view__play" data-sc-play-animation data-sc-copy="playAnimation" data-sc-aria="playAnimationLabel" hidden></button></div>
   </header>
-  <section class="sc-task-view__flow" data-sc-flow aria-label="SC 到 QA 的主工作流程">
+  <section class="sc-task-view__flow" data-sc-flow data-sc-aria="workflow">
     <article class="sc-task-view__node sc-task-view__root" data-sc-root>
       <p class="sc-task-view__target" data-sc-field="target"></p>
       <dl class="sc-task-view__metadata">
-        <dt>任务类型</dt><dd data-sc-field="task_type"></dd>
-        <dt>参与角色</dt><dd data-sc-selected-roles>尚未选择</dd>
-        <dt>选择原因</dt><dd data-sc-field="role_selection_reason"></dd>
-        <dt data-sc-task-elapsed-label hidden>累计耗时</dt><dd data-sc-metric="task-elapsed" hidden></dd>
+        <dt data-sc-copy="taskType"></dt><dd data-sc-field="task_type"></dd>
+        <dt data-sc-copy="roles"></dt><dd data-sc-selected-roles></dd>
+        <dt data-sc-copy="roleReason"></dt><dd data-sc-field="role_selection_reason"></dd>
+        <dt data-sc-task-elapsed-label data-sc-copy="taskElapsed" hidden></dt><dd data-sc-metric="task-elapsed" hidden></dd>
       </dl>
     </article>
     <div class="sc-task-view__workspace" data-sc-workspace>
       <div class="sc-task-view__role-lane">
         <svg class="sc-task-view__lane-frame" data-sc-lane-frame hidden aria-hidden="true" focusable="false"><rect></rect></svg>
-        <div class="sc-task-view__roles" data-sc-roles aria-label="REQ、DEV、CR、QA 顺序任务"></div>
+        <div class="sc-task-view__roles" data-sc-roles></div>
       </div>
-      <aside class="sc-task-view__role-preview" data-sc-role-preview aria-label="任务信息">
-        <div class="sc-task-view__file-activity" data-sc-file-activity aria-hidden="true"><div class="sc-task-view__file-track" data-sc-file-track><div class="sc-task-view__file-slot" data-sc-file-previous aria-hidden="true"></div><div class="sc-task-view__file-slot" data-sc-file-current aria-label="当前操作文件" tabindex="0"></div><div class="sc-task-view__file-slot" data-sc-file-next aria-hidden="true"></div></div></div>
+      <aside class="sc-task-view__role-preview" data-sc-role-preview data-sc-aria="taskDetails">
+        <div class="sc-task-view__file-activity" data-sc-file-activity aria-hidden="true"><div class="sc-task-view__file-track" data-sc-file-track><div class="sc-task-view__file-slot" data-sc-file-previous aria-hidden="true"></div><div class="sc-task-view__file-slot" data-sc-file-current data-sc-aria="currentFile" tabindex="0"></div><div class="sc-task-view__file-slot" data-sc-file-next aria-hidden="true"></div></div></div>
         <div class="sc-task-view__preview-content">
           <div class="sc-task-view__preview-size" data-sc-preview-size inert aria-hidden="true"></div>
           <div class="sc-task-view__preview-body" data-sc-preview-body tabindex="-1"></div>
@@ -221,8 +223,77 @@
   <script>
     "use strict";
     (() => {
-      const commonStates={passed:["已完成","completed"],qa_success:["测试通过","passed"],skipped:["已跳过","pending"],completed:["已完成","completed"],complete:["已完成","completed"],done:["已完成","completed"],success:["已完成","completed"],successful:["已完成","completed"],succeeded:["已完成","completed"],failed:["失败","danger"],paused:["已暂停","waiting"],waiting:["等待中","waiting"],cancelled:["已取消","pending"],canceled:["已取消","pending"],needs_user_confirm:["等待用户确认","waiting"],needs_revision:["需要修订","revision"],blocked:["已阻断","danger"]};
-      const taskStates={...commonStates,confirmed:["已确认","completed"],planned:["计划","pending"],dev_in_progress:["开发中","active"],ready_for_cr:["审查阶段","waiting"],cr_blocked:["审查阻断","danger"],ready_for_qa:["测试阶段","waiting"],qa_failed:["测试失败","danger"],qa_conditional:["测试条件通过","revision"],qa_passed:["测试通过","passed"],workflow_ready:["任务完成","passed"],needs_revalidation:["需要重新验证","revision"]};
+      const copyByLocale={
+        "zh-CN":{
+          view:"SC 任务流程",gitInfo:"Git 信息",projectMcp:"项目 MCP",playAnimation:"播放动画",
+          playAnimationLabel:"播放任务视图动画",workflow:"SC 到 QA 的主工作流程",taskType:"任务类型",
+          roles:"参与角色",roleReason:"选择原因",taskElapsed:"累计耗时",taskDetails:"任务信息",currentFile:"当前操作文件",
+          roleElapsed:"耗时 ",rolesEmpty:"尚未选择",unknownStatus:"未知状态",missingStatus:"状态未提供",
+          detailShortcut:"按 → 键进入右侧详情",summary:"摘要",evidence:"必要证据",risks:"风险",
+          taskSummary:"任务总结",result:"结果",verified:"已验证",notes:"注意事项",
+          unverifiedNote:text=>`未验证：${text}`,riskNote:text=>`风险：${text}`,
+          roleSequence:labels=>labels.length?`${labels.join("、")} 顺序任务`:"角色顺序",
+          handoffFiles:(from,to)=>`${from} → ${to} 交接文件`,
+          conclusion:state=>`工作流结论：${state}`,
+          incomplete:state=>`本轮执行已结束：${state}，工作流未完成`,
+          timeUnits:["毫秒","秒","分","小时","天"]
+        },
+        en:{
+          view:"SC task workflow",gitInfo:"Git information",projectMcp:"Project MCPs",playAnimation:"Play animation",
+          playAnimationLabel:"Play task view animation",workflow:"SC to QA workflow",taskType:"Task type",
+          roles:"Roles",roleReason:"Selection reason",taskElapsed:"Total elapsed",taskDetails:"Task details",currentFile:"Current file",
+          roleElapsed:"Elapsed ",rolesEmpty:"None selected",unknownStatus:"Unknown status",missingStatus:"Status unavailable",
+          detailShortcut:"Press the Right Arrow key to enter details",summary:"Summary",evidence:"Required evidence",risks:"Risks",
+          taskSummary:"Task summary",result:"Result",verified:"Verified",notes:"Notes",
+          unverifiedNote:text=>`Unverified: ${text}`,riskNote:text=>`Risk: ${text}`,
+          roleSequence:labels=>labels.length?`Role order: ${labels.join(", ")}`:"Role order",
+          handoffFiles:(from,to)=>`${from} → ${to} handoff files`,
+          conclusion:state=>`Workflow outcome: ${state}`,
+          incomplete:state=>`Execution ended with status “${state}”. The workflow is incomplete.`,
+          timeUnits:[" ms"," s"," min"," h"," d"]
+        }
+      };
+      function supportedLocale(value) {
+        if (typeof value!=="string"||!value.trim()) return;
+        try {
+          const {language}=new Intl.Locale(value.trim());
+          if (language==="zh") return "zh-CN";
+          if (language==="en") return "en";
+        } catch (error) {
+          if (!(error instanceof RangeError)) throw error;
+        }
+      }
+      function resolveLocale(hostLocale,preferences=globalThis.navigator) {
+        const host=supportedLocale(hostLocale);
+        if (host) return host;
+        for (const locale of [...(preferences?.languages??[]),preferences?.language]) {
+          const supported=supportedLocale(locale);
+          if (supported) return supported;
+        }
+        return "en";
+      }
+      function localizeView(root,view,locale,copy) {
+        root.lang=locale;
+        view.setAttribute("aria-label",copy.view);
+        root.querySelectorAll("[data-sc-copy]").forEach(node=>{ node.textContent=copy[node.dataset.scCopy]; });
+        root.querySelectorAll("[data-sc-aria]").forEach(node=>{ node.setAttribute("aria-label",copy[node.dataset.scAria]); });
+      }
+      const completedState=["已完成","Completed","completed"],qaPassedState=["测试通过","Tests passed","passed"];
+      const cancelledState=["已取消","Canceled","pending"];
+      const taskStates={
+        passed:completedState,qa_success:qaPassedState,skipped:["已跳过","Skipped","pending"],
+        completed:completedState,complete:completedState,done:completedState,success:completedState,
+        successful:completedState,succeeded:completedState,failed:["失败","Failed","danger"],
+        paused:["已暂停","Paused","waiting"],waiting:["等待中","Waiting","waiting"],
+        cancelled:cancelledState,canceled:cancelledState,needs_user_confirm:["等待用户确认","Awaiting confirmation","waiting"],
+        needs_revision:["需要修订","Revision needed","revision"],blocked:["已阻断","Blocked","danger"],
+        confirmed:["已确认","Confirmed","completed"],planned:["计划","Planned","pending"],
+        dev_in_progress:["开发中","In development","active"],ready_for_cr:["审查阶段","Code review","waiting"],
+        cr_blocked:["审查阻断","Review blocked","danger"],ready_for_qa:["测试阶段","Testing","waiting"],
+        qa_failed:["测试失败","Tests failed","danger"],qa_conditional:["测试条件通过","Conditional pass","revision"],
+        qa_passed:qaPassedState,workflow_ready:["任务完成","Task complete","passed"],
+        needs_revalidation:["需要重新验证","Revalidation needed","revision"]
+      };
       const roles=["req","dev","cr","qa"],roleLabels={req:"REQ",dev:"DEV",cr:"CR",qa:"QA"};
       const finishedStatuses=new Set(["completed","complete","done","success","successful","succeeded","passed","qa_passed","qa_success","workflow_ready","failed","cancelled","canceled","skipped"]);
       const stoppedStates=new Set(["needs_user_confirm","paused","waiting","blocked",...finishedStatuses]);
@@ -230,35 +301,47 @@
       const missing=value=>value===undefined||value===null||value==="";
       const asList=value=>Array.isArray(value)?value:missing(value)?[]:[value];
       const safeText=value=>missing(value)?"":typeof value==="object"?JSON.stringify(value):String(value);
-      const stateText=value=>typeof value==="string"&&Object.hasOwn(taskStates,value)?taskStates[value][0]:"未知状态";
-      const stateClass=value=>`sc-task-view__state--${typeof value==="string"&&Object.hasOwn(taskStates,value)?taskStates[value][1]:"unknown"}`;
+      const labelIndex=locale=>locale==="zh-CN"?0:1;
+      const stateText=(value,locale)=>typeof value==="string"&&Object.hasOwn(taskStates,value)?taskStates[value][labelIndex(locale)]:copyByLocale[locale].unknownStatus;
+      const stateClass=value=>`sc-task-view__state--${typeof value==="string"&&Object.hasOwn(taskStates,value)?taskStates[value][2]:"unknown"}`;
       const normalizedStatus=value=>safeText(value).trim().toLowerCase().replace(/[ -]+/g,"_");
-      const roleStates={pending:{label:"待开始",tone:"pending"},running:{label:"进行中",tone:"active"},passed:{label:"通过",tone:"passed"},blocked:{label:"阻断",tone:"danger"},needs_user_confirm:{label:"待用户确认",tone:"waiting"}};
-      const roleStatus=value=>typeof value==="string"&&Object.hasOwn(roleStates,value)?roleStates[value]:{label:missing(value)?"状态未提供":"未知状态",tone:"unknown"};
+      const roleStates={
+        pending:["待开始","Pending","pending"],running:["进行中","In progress","active"],
+        passed:["通过","Passed","passed"],blocked:["阻断","Blocked","danger"],
+        needs_user_confirm:["待用户确认","Awaiting confirmation","waiting"]
+      };
+      function roleStatus(value,locale) {
+        if (typeof value==="string"&&Object.hasOwn(roleStates,value)) {
+          const labels=roleStates[value];
+          return {label:labels[labelIndex(locale)],tone:labels[2]};
+        }
+        const copy=copyByLocale[locale];
+        return {label:missing(value)?copy.missingStatus:copy.unknownStatus,tone:"unknown"};
+      }
       const optionalText=value=>typeof value==="string"?value.trim():"";
       const validMetric=value=>Number.isSafeInteger(value)&&value>=0;
-      function formatElapsed(value) {
+      function formatElapsed(value,[millisecond,second,minute,hour,day]) {
         if (!validMetric(value)) return "";
-        if (value<1000) return `${value}毫秒`;
+        if (value<1000) return `${value}${millisecond}`;
         let seconds=Math.floor(value/1000);
         const days=Math.floor(seconds/86400); seconds%=86400;
         const hours=Math.floor(seconds/3600); seconds%=3600;
         const minutes=Math.floor(seconds/60); seconds%=60;
         const pad=value=>String(value).padStart(2,"0");
-        if (days) return `${days}天 ${pad(hours)}小时 ${pad(minutes)}分 ${pad(seconds)}秒`;
-        if (hours) return `${hours}小时 ${pad(minutes)}分 ${pad(seconds)}秒`;
-        if (minutes) return `${minutes}分 ${pad(seconds)}秒`;
-        return `${seconds}秒`;
+        if (days) return `${days}${day} ${pad(hours)}${hour} ${pad(minutes)}${minute} ${pad(seconds)}${second}`;
+        if (hours) return `${hours}${hour} ${pad(minutes)}${minute} ${pad(seconds)}${second}`;
+        if (minutes) return `${minutes}${minute} ${pad(seconds)}${second}`;
+        return `${seconds}${second}`;
       }
-      function setMetric(node,value,format) {
+      function setElapsed(node,value,copy) {
         if (!node) return;
         const valid=validMetric(value);
-        node.textContent=valid?format(value):"";
+        node.textContent=valid?formatElapsed(value,copy.timeUnits):"";
         node.classList.toggle("sc-task-view__placeholder",!valid);
       }
-      function renderTaskMetrics(root,work,state) {
+      function renderTaskMetrics(root,work,copy) {
         const metrics=asObject(work.metrics);
-        setMetric(root.querySelector('[data-sc-metric="task-elapsed"]'),metrics.elapsed_ms,formatElapsed);
+        setElapsed(root.querySelector('[data-sc-metric="task-elapsed"]'),metrics.elapsed_ms,copy);
         const finished=root.__scSummaryInPreview;
         root.querySelector('[data-sc-metric="task-elapsed"]').hidden=!finished;
         root.querySelector('[data-sc-task-elapsed-label]').hidden=!finished;
@@ -288,7 +371,7 @@
         count.textContent=`(${mcps.length})`;
         list.replaceChildren(...listItems(mcps));
       }
-      function renderRootMetadata(root,work,selected) {
+      function renderRootMetadata(root,work,selected,copy) {
         const selectedNode=root.querySelector("[data-sc-selected-roles]");
         selectedNode.replaceChildren(...selected.map((role,index)=>{
           const step=document.createElement("span"),label=textElement("span",roleLabels[role]);
@@ -298,18 +381,18 @@
           step.append(label);
           return step;
         }));
-        if (!selected.length) selectedNode.textContent="尚未选择";
+        if (!selected.length) selectedNode.textContent=copy.rolesEmpty;
         selectedNode.classList.toggle("sc-task-view__placeholder",!selected.length);
         root.__scTaskSummary={
           result:optionalText(work.summary),verified:stringList(work.verified_scope),
-          notes:[...stringList(work.unverified_scope).map(text=>`未验证：${text}`),...stringList(work.risks).map(text=>`风险：${text}`)]
+          notes:[...stringList(work.unverified_scope).map(copy.unverifiedNote),...stringList(work.risks).map(copy.riskNote)]
         };
       }
-      function taskSummaryNode(root) {
+      function taskSummaryNode(root,copy) {
         const summary=document.createElement("div"),data=root.__scTaskSummary;
         summary.className="sc-task-view__summary-content";
         const result=data.result||root.__scConclusionFallback||"";
-        [["结果",result],["已验证",data.verified||[]],["注意事项",data.notes||[]]].forEach(([label,value])=>{
+        [[copy.result,result],[copy.verified,data.verified||[]],[copy.notes,data.notes||[]]].forEach(([label,value])=>{
           if (!value.length) return;
           const section=document.createElement("section"),content=document.createElement(Array.isArray(value)?"ul":"p");
           if (Array.isArray(value)) content.append(...listItems(value));
@@ -317,7 +400,7 @@
           section.append(textElement("h4",label),content);
           summary.append(section);
         });
-        const title=textElement("h3","任务总结");
+        const title=textElement("h3",copy.taskSummary);
         title.className="sc-task-view__summary-title";
         summary.prepend(title);
         return summary;
@@ -464,10 +547,10 @@
         node.focus({preventScroll:true});
         node.scrollLeft=reading.scrollLeft;
       }
-      function renderPreviewSize(root) {
+      function renderPreviewSize(root,copy) {
         // Natural-size copies reserve the largest role detail and summary during preview changes.
         const copies=[...root.querySelectorAll("[data-sc-role] > [data-sc-detail-body]")].map(source=>cloneRoleDetail(source));
-        if (root.__scSummaryInPreview) copies.push(taskSummaryNode(root));
+        if (root.__scSummaryInPreview) copies.push(taskSummaryNode(root,copy));
         root.querySelector("[data-sc-preview-size]").replaceChildren(...copies);
       }
       function renderRolePreview(root,force=false,preserveFocus=true) {
@@ -548,9 +631,9 @@
           default: return {symbol:"🛠️",motion:""};
         }
       }
-      function roleNode(role,detail,activeRole,openRole) {
+      function roleNode(role,detail,activeRole,openRole,locale,copy) {
         const node=document.createElement("details"),summary=document.createElement("summary"),name=document.createElement("span"),status=document.createElement("span"),body=document.createElement("div");
-        const active=role===activeRole,state=roleStatus(detail.status);
+        const active=role===activeRole,state=roleStatus(detail.status,locale);
         node.className=`sc-task-view__node${active?" is-active":""}`;
         node.open=role===openRole;
         node.dataset.scRole=role;
@@ -563,7 +646,7 @@
         emoji.setAttribute("aria-hidden","true");
         name.append(emoji);
         summary.setAttribute("aria-keyshortcuts","ArrowRight");
-        summary.title="按 → 键进入右侧详情";
+        summary.title=copy.detailShortcut;
         status.className=`sc-task-view__role-state sc-task-view__state--${state.tone}`;
         status.textContent=state.label;
         status.classList.toggle("is-status-running",active);
@@ -576,9 +659,9 @@
         progress.className="sc-task-view__role-progress";
         progress.append(status);
         if (detail.status==="passed") {
-          const elapsed=textElement("span","耗时 "),value=document.createElement("span");
+          const elapsed=textElement("span",copy.roleElapsed),value=document.createElement("span");
           elapsed.className="sc-task-view__role-elapsed";
-          setMetric(value,asObject(detail.metrics).elapsed_ms,formatElapsed);
+          setElapsed(value,asObject(detail.metrics).elapsed_ms,copy);
           elapsed.append(value);
           progress.append(elapsed);
         }
@@ -595,9 +678,9 @@
         body.className="sc-task-view__detail";
         body.dataset.scDetailBody="";
         if (detail.status==="pending") { node.append(body); return node; }
-        detailField(body,"摘要",detail.summary);
-        detailField(body,"必要证据",detail.evidence);
-        detailField(body,"风险",detail.risks);
+        detailField(body,copy.summary,detail.summary);
+        detailField(body,copy.evidence,detail.evidence);
+        detailField(body,copy.risks,detail.risks);
         node.append(body);
         return node;
       }
@@ -612,11 +695,11 @@
         if (version&&optionalText(latest.reference_version)&&latest.reference_version!==work.reference_version) return [];
         return [...new Set(latest.files.map(filePath).filter(Boolean))];
       }
-      function renderHandoffFiles(connector,files) {
+      function renderHandoffFiles(connector,files,copy) {
         if (!files.length) { connector.setAttribute("aria-hidden","true"); return; }
         connector.classList.add("has-files");
         connector.setAttribute("role","group");
-        connector.setAttribute("aria-label",roleLabels[connector.dataset.scConnectorFrom]+" → "+roleLabels[connector.dataset.scConnectorTo]+" 交接文件");
+        connector.setAttribute("aria-label",copy.handoffFiles(roleLabels[connector.dataset.scConnectorFrom],roleLabels[connector.dataset.scConnectorTo]));
         const labels=document.createElement("span");
         labels.className="sc-task-view__connector-files";
         files.forEach(path=>{
@@ -629,15 +712,16 @@
       }
       function renderRoles(root,details,activeRole,openRole,selectedRoles,preserveFocus,input) {
         const box=root.querySelector("[data-sc-roles]"),fragment=document.createDocumentFragment();
+        const locale=root.lang,copy=copyByLocale[locale];
         const focused=preserveFocus&&box.contains(document.activeElement)?document.activeElement:null;
         const focusedRole=focused?.closest("[data-sc-role]")?.dataset.scRole;
         if (!preserveFocus||!selectedRoles.includes(root.__scHoveredRole)) root.__scHoveredRole=null;
         if (!preserveFocus||!selectedRoles.includes(root.__scFocusedRole)||box.contains(document.activeElement)) root.__scFocusedRole=null;
         if (!preserveFocus||!selectedRoles.includes(root.__scClickedRole)) root.__scClickedRole=null;
-        box.setAttribute("aria-label",`${selectedRoles.map(role=>roleLabels[role]).join("、")} 顺序任务`);
+        box.setAttribute("aria-label",copy.roleSequence(selectedRoles.map(role=>roleLabels[role])));
         selectedRoles.forEach((role,index)=>{
-          if (index) { const connector=document.createElement("span"); connector.className="sc-task-view__connector"; connector.dataset.scConnectorFrom=selectedRoles[index-1]; connector.dataset.scConnectorTo=role; renderHandoffFiles(connector,handoffFiles(input,selectedRoles[index-1],role)); fragment.append(connector); }
-          const node=roleNode(role,asObject(details[role]),activeRole,openRole);
+          if (index) { const connector=document.createElement("span"); connector.className="sc-task-view__connector"; connector.dataset.scConnectorFrom=selectedRoles[index-1]; connector.dataset.scConnectorTo=role; renderHandoffFiles(connector,handoffFiles(input,selectedRoles[index-1],role),copy); fragment.append(connector); }
+          const node=roleNode(role,asObject(details[role]),activeRole,openRole,locale,copy);
           node.classList.toggle("is-click-selected",role===root.__scClickedRole);
           fragment.append(node);
         });
@@ -738,7 +822,10 @@
       }
       function bindAnimationControls(root) { if (root.__scAnimationButtonBound) return; const button=root.querySelector("[data-sc-play-animation]"); if (!button) return; const onClick=()=>{ if (!root.__scDebugMode) return; root.__scManualMotionCleanup?.(); root.__scManualMotionCleanup=undefined; if (prefersReducedMotion()) return; const cleanups=[]; animateOnce(root.querySelector("details.is-active"),"is-manual-replay",cleanups); root.__scManualMotionCleanup=()=>cleanups.forEach(cleanup=>cleanup()); }; button.addEventListener("click",onClick); root.__scAnimationButtonBound=true; root.__scAnimationButtonCleanup=()=>button.removeEventListener("click",onClick); }
       window.renderSurveyCorpsTaskView=(root,snapshot,options)=>{
-        if (!(root instanceof Element)) throw new TypeError("root 必须是一个 DOM 元素");
+        if (!(root instanceof Element)) throw new TypeError("root must be a DOM element");
+        const locale=resolveLocale(asObject(options).locale),copy=copyByLocale[locale];
+        const view=root.matches(".sc-task-view")?root:root.querySelector(".sc-task-view");
+        localizeView(root,view,locale,copy);
         const input=asObject(snapshot),work=asObject(input.work_unit),details=asObject(input.role_details),state=input.state;
         const fileReading=captureFileReading(root);
         const selectedRoles=[...new Set(asList(work.roles).filter(value=>typeof value==="string").map(value=>value.trim().toLowerCase()).filter(value=>roles.includes(value)))];
@@ -747,14 +834,15 @@
         const values={target:work.target,task_type:work.task_type,role_selection_reason:work.role_selection_reason};
         Object.entries(values).forEach(([name,value])=>root.querySelectorAll(`[data-sc-field="${name}"]`).forEach(node=>{ node.textContent=safeText(value); node.classList.toggle("sc-task-view__placeholder",missing(value)); }));
         const status=root.querySelector('[data-sc-field="state"]');
-        if (status) { status.textContent=stateText(state); status.className=`sc-task-view__status ${stateClass(state)}`; }
+        const stateLabel=stateText(state,locale);
+        if (status) { status.textContent=stateLabel; status.className=`sc-task-view__status ${stateClass(state)}`; }
         renderGitInfo(root,work);
         renderProjectMcps(root,work);
-        renderRootMetadata(root,work,selectedRoles);
+        renderRootMetadata(root,work,selectedRoles,copy);
         root.__scSelectedRoles=selectedRoles;
         root.__scRoleDetails=details;
         root.__scSummaryInPreview=isExecutionFinished(work,state,selectedRoles,details);
-        renderTaskMetrics(root,work,state);
+        renderTaskMetrics(root,work,copy);
         root.__scDebugMode=asObject(options).debug===true;
         const playButton=root.querySelector("[data-sc-play-animation]");
         if (playButton) playButton.hidden=!root.__scDebugMode;
@@ -763,10 +851,9 @@
         root.__scResolvedActiveRole=activeRole;
         renderWorkflowMotion(root,selectedRoles,activeRole,state);
         const executionFinished=work.execution_finished===true;
-        root.__scConclusionFallback=executionFinished&&!finishedStatuses.has(normalizedStatus(state))?`本轮执行已结束：${stateText(state)}，工作流未完成`:`工作流结论：${stateText(state)}`;
-        const view=root.matches(".sc-task-view")?root:root.querySelector(".sc-task-view");
+        root.__scConclusionFallback=executionFinished&&!finishedStatuses.has(normalizedStatus(state))?copy.incomplete(stateLabel):copy.conclusion(stateLabel);
         view.classList.toggle("is-finished",root.__scSummaryInPreview);
-        root.querySelector("[data-sc-preview-summary]").replaceChildren(...(root.__scSummaryInPreview?[taskSummaryNode(root)]:[]));
+        root.querySelector("[data-sc-preview-summary]").replaceChildren(...(root.__scSummaryInPreview?[taskSummaryNode(root,copy)]:[]));
         bindRolePreview(root);
         bindRoleRipple(root);
         renderRoles(root,details,activeRole,openRole,selectedRoles,sameView,input);
@@ -776,7 +863,7 @@
           inline.querySelector("[data-sc-file-track]").classList.remove("is-file-switching");
           fileBody.prepend(inline);
         }
-        renderPreviewSize(root);
+        renderPreviewSize(root,copy);
         renderRolePreview(root,true,sameView);
         restoreFileReading(root,fileReading);
         const observation=observeHandoff(root.__scHandoffObservation,input,selectedRoles,activeRole);

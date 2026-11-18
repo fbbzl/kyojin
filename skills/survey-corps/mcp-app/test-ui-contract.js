@@ -12,9 +12,10 @@ assert.ok(!isSourceTree || fs.existsSync(skillPath), "repository Skill is missin
 const skill = isSourceTree ? fs.readFileSync(skillPath, "utf8") : null;
 const script = appTemplate.match(/<script>([\s\S]*?)<\/script>/)[1];
 const context = { window: {} };
-vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,taskSummaryNode,roleEmoji,filePath,observeFileActivity,handoffFiles,displayFilePath,setFileSlot};})();"), context, { timeout: 1000 });
-const { stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, taskSummaryNode, roleEmoji, filePath, observeFileActivity, handoffFiles, displayFilePath, setFileSlot } = context.window.statusContract;
-const roleStatesLiteral = appTemplate.match(/const roleStates=(\{[^\r\n]+\});/)?.[1] || "";
+vm.runInNewContext(script.replace(/\}\)\(\);\s*$/, "window.statusContract={resolveLocale,copyByLocale,stateText,stateClass,renderGitInfo,resolveActiveRole,renderWorkflowMotion,renderRootMetadata,taskSummaryNode,roleEmoji,filePath,observeFileActivity,handoffFiles,displayFilePath,setFileSlot};})();"), context, { timeout: 1000 });
+const { resolveLocale, copyByLocale, stateText, stateClass, renderGitInfo, resolveActiveRole, renderWorkflowMotion, renderRootMetadata, taskSummaryNode, roleEmoji, filePath, observeFileActivity, handoffFiles, displayFilePath, setFileSlot } = context.window.statusContract;
+const zh = copyByLocale["zh-CN"];
+const chineseStateText = value => stateText(value, "zh-CN");
 const activityInput=(current,view_id="files",state="dev_in_progress")=>({view_id,state,role_details:{dev:{file_activity:{previous:"src/a.js",current,next:"test/c.js"}}}});
 const firstActivity=observeFileActivity(null,activityInput("src/b.js"),"dev");
 assert.equal(firstActivity.changed,false,"first file observation must remain static");
@@ -94,7 +95,7 @@ for (const dirty of [true, false]) {
 }
 renderGitInfo(gitRoot, { git: { repository: "kyojin" } });
 assert.equal(gitNode.textContent, "kyojin");
-assert.match(appTemplate, /<header[^>]*>\s*<div class="sc-task-view__topbar">\s*<p[^>]*data-sc-git hidden[^>]*>[\s\S]*?data-sc-field="state"/, "Git and global state must share the first header row in that order");
+assert.match(appTemplate, /<header[^>]*>\s*<div class="sc-task-view__topbar">\s*<p[^>]*\bdata-sc-git\b[^>]*\bhidden\b[^>]*>[\s\S]*?data-sc-field="state"/, "Git and global state must share the first header row in that order");
 assert.match(appTemplate, /\.sc-task-view\.is-running details\.is-active \.sc-task-view__role-emoji \{ animation:sc-fire-flicker var\(--emoji-period\)/, "only the resolved active role of an unfinished task may animate its fire");
 assert.match(appTemplate, /@keyframes sc-fire-flicker \{[^\r\n]*scale\(\.96,1\.04\)[^\r\n]*scale\(1\.04,\.96\)/, "running fire must visibly deform through each shared period");
 for (const [pseudo,motion] of [["before","sc-flame-tongue"],["after","sc-fire-sparks"]]) assert.match(appTemplate, new RegExp('is-running details\\.is-active \\.sc-task-view__role-emoji::'+pseudo+' \\{[^}]*position:absolute;[^}]*pointer-events:none;[^}]*animation:'+motion+' var\\(--emoji-period\\)'), "fire tongue and sparks must share the existing activity gate and period");
@@ -187,14 +188,14 @@ function selectionNode(tagName) {
 context.document = { createElement: selectionNode };
 const selection = selectionNode("dd"), selectionRoot = { querySelector: () => selection };
 for (const [summary,count] of [[undefined,1],["",1],["   ",1],["暂无总结",2]]) {
-  renderRootMetadata(selectionRoot,{summary},[]); const node=taskSummaryNode(selectionRoot);
+  renderRootMetadata(selectionRoot,{summary},[],zh); const node=taskSummaryNode(selectionRoot,zh);
   assert.equal(node.children.length,count,"missing content leaves only the title; explicit literal content remains valid");
   assert.equal(node.children[0].textContent,"任务总结");
   if (count===2) assert.equal(node.children[1].children[1].textContent,"暂无总结");
 }
 for (const [selected, text] of [[[], "尚未选择"], [["cr"], "CR"], [["cr", "dev", "qa"], "CR → DEV → QA"], [["req", "dev", "cr", "qa"], "REQ → DEV → CR → QA"], [[], "尚未选择"]]) {
   const work = { roles: selected, summary: "保留结果", next_action: "权威下一步" }, before = JSON.stringify(work);
-  renderRootMetadata(selectionRoot, work, selected);
+  renderRootMetadata(selectionRoot, work, selected, zh);
   assert.equal(selection.textContent, text, "selection must retain the declared role order and clear stale nodes");
   assert.equal(JSON.stringify(work), before, "metadata rendering must not mutate its snapshot");
   if (!selected.length) continue;
@@ -215,21 +216,20 @@ assert.doesNotMatch(appTemplate, /data-sc-task-summary|sc-task-view__task-summar
 assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-preview { grid-template-rows:minmax(0,1fr); }"), "completed summaries and role previews must share a single grid row at every width");
 assert.ok(appTemplate.includes(".sc-task-view.is-finished .sc-task-view__role-preview > .sc-task-view__file-activity { display:none; }"), "completed previews must not regain an empty file strip when a role is hovered");
 assert.doesNotMatch(appTemplate, /is-showing-summary[^}]*\{[^}]*(?:grid-template-rows|padding-bottom)|@media[^}]*is-finished[^}]*grid-template-rows/, "summary switching must not change grid tracks or compensate for scaled file strip borders");
-assert.match(appTemplate, /replaceChildren\(\.\.\.\(root\.__scSummaryInPreview\?\[taskSummaryNode\(root\)\]:\[\]\)\)/, "only a finished task without selected running roles may populate the summary");
+assert.match(appTemplate, /replaceChildren\(\.\.\.\(root\.__scSummaryInPreview\?\[taskSummaryNode\(root,copy\)\]:\[\]\)\)/, "only a finished task without selected running roles may populate the summary");
 assert.match(appTemplate, /finishedStatuses\.has\(normalizedStatus\(state\)\)\|\|asObject\(work\)\.execution_finished===true/, "explicit execution completion must expose a conclusion for any workflow result");
 assert.match(appTemplate, /const result=data\.result\|\|root\.__scConclusionFallback\|\|""/, "missing summaries must display a status conclusion when the execution has ended");
 assert.match(appTemplate, /if \(root\.__scSummaryInPreview\) return null;/, "ended execution summaries must take priority over role previews");
 assert.doesNotMatch(appTemplate, /任务上下文|data-sc-context|sc-task-view__context/, "the task context panel must be removed from the view");
-assert.match(appTemplate, /data-sc-selected-roles>尚未选择</, "the view must not infer all roles as selected");
 assert.doesNotMatch(appTemplate, /SC TASK FLOW|<h2\b/, "the redundant visual task-flow title must not render");
-assert.match(appTemplate, /<dl class="sc-task-view__metadata">[\s\S]*?<dt>任务类型<\/dt><dd data-sc-field="task_type">[\s\S]*?<dt>参与角色<\/dt><dd data-sc-selected-roles>[\s\S]*?<dt>选择原因<\/dt><dd data-sc-field="role_selection_reason">/, "required task metadata must remain in the stable label-value list");
+assert.match(appTemplate, /<dl class="sc-task-view__metadata">[\s\S]*?<dt data-sc-copy="taskType"><\/dt><dd data-sc-field="task_type">[\s\S]*?<dt data-sc-copy="roles"><\/dt><dd data-sc-selected-roles>[\s\S]*?<dt data-sc-copy="roleReason"><\/dt><dd data-sc-field="role_selection_reason">/, "required task metadata must remain in the stable label-value list");
 assert.match(appTemplate, /data-sc-metric="task-elapsed"/, "task metadata must expose measured elapsed time");
 assert.doesNotMatch(appTemplate, /task-tokens|total_tokens|Token|formatTokens/, "task and role cards must not render or format token usage");
-assert.match(appTemplate, /function formatElapsed\(value\)/, "elapsed time must use a deterministic formatter");
+assert.match(appTemplate, /function formatElapsed\(value,\[[^\]]+\]\)/, "elapsed time must use a deterministic formatter with localized units");
 assert.match(appTemplate, /const validMetric=value=>Number\.isSafeInteger\(value\)&&value>=0/, "metrics must reject missing, fractional and negative values");
 assert.match(appTemplate, /elapsed\.className="sc-task-view__role-elapsed"/, "completed role elapsed must render inside its role card");
 assert.doesNotMatch(appTemplate, /data-sc-preview-role|data-sc-preview-state|data-sc-preview-metrics|sc-task-view__preview-heading|sc-task-view__preview-identity|sc-task-view__role-metrics/, "the detail preview must not retain its removed header or duplicate metrics");
-assert.match(appTemplate, /renderTaskMetrics\(root,work,state\)/, "task metrics must be refreshed on every snapshot");
+assert.match(appTemplate, /renderTaskMetrics\(root,work,copy\)/, "task metrics must be refreshed on every snapshot");
 if (skill) assert.match(workUnitExample, /^  metrics:.*elapsed_ms/m, "snapshot example must nest elapsed time as a direct work_unit field");
 assert.doesNotMatch(snapshotExample, /\nwork_unit\.metrics:/, "snapshot example must not document task metrics as a root-level dotted key");
 assertSkillMatch(/role_details:\s+# 可选，以 req\/dev\/cr\/qa 为键[\s\S]*?metrics:.*elapsed_ms/, "snapshot contract must document role elapsed time");
@@ -254,9 +254,9 @@ assert.doesNotMatch(appTemplate, /\.sc-task-view__status::after/, "the global st
 assert.doesNotMatch(appTemplate, /details\[data-sc-role\] > summary::before/, "clickable role summaries must not render a blue left accent");
 assert.match(appTemplate, /details\[data-sc-role\]\.is-click-selected > summary::before \{[^}]*inset:-2px; border-radius:6px; box-shadow:inset 3px 0 0 var\(--active\); pointer-events:none/, "only the explicitly clicked role may show the static three-pixel blue crescent");
 assert.match(appTemplate, /bindRoleRipple\(root\);\s*renderRoles\(root,/, "snapshot rerender must clear transient click feedback before replacing role cards");
-assert.match(appTemplate, /<span class="sc-task-view__status" data-sc-field="state" aria-live="polite">未知<\/span>/, "only the current global status text must be announced as a live update");
+assert.match(appTemplate, /<span class="sc-task-view__status" data-sc-field="state" aria-live="polite"><\/span>/, "the renderer must populate the live region with the current localized status");
 assert.match(appTemplate, /data-sc-field="state" aria-live="polite">[^<]*<\/span>[\s\S]*?<\/div>[\s\S]*?header-controls/, "debug controls must remain outside the Git and status row");
-assert.match(appTemplate, /<details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>[\s\S]*?项目 MCP[\s\S]*?data-sc-project-mcp-list/, "project MCP names must render as a default-collapsed left header section");
+assert.match(appTemplate, /<details class="sc-task-view__project-mcps" data-sc-project-mcps hidden>[\s\S]*?data-sc-copy="projectMcp"[\s\S]*?data-sc-project-mcp-list/, "project MCP names must render as a default-collapsed left header section with a localized title");
 assert.match(appTemplate, /function renderProjectMcps\(root,work\)[\s\S]*?work\.project_mcps[\s\S]*?section\.hidden=!mcps\.length[\s\S]*?list\.replaceChildren\(\.\.\.listItems\(mcps\)\)/, "project MCPs must be supplied by the snapshot, hidden when absent, and rendered as text only");
 assert.match(appTemplate, /function textElement\(tag,text\)[\s\S]*?node\.textContent=text[\s\S]*?const listItems=values=>values\.map\(text=>textElement\("li",text\)\)/, "shared text and list helpers must preserve literal output");
 assert.match(appTemplate, /projectMcpName=value=>\{ const name=optionalText\(value\)\.toLowerCase\(\); return \/\^\[a-z\]/, "project MCP names must be normalized and restricted to safe identifiers");
@@ -266,7 +266,7 @@ assert.doesNotMatch(appTemplate, /@media \(max-width:560px\)[^\r\n]*\.sc-task-vi
 assert.match(appTemplate, /header-controls:has\(> button\[hidden\]\) \{ display:none; \}/, "hidden debug controls must not reserve an empty toolbar row");
 assertSkillMatch(/project_name:\s+# 可选；当前会话所属项目名称，UI 不展示，不得猜测/, "the optional project name must remain in the snapshot contract without rendering");
 assert.doesNotMatch(appTemplate, /data-sc-agent-name|sc-task-view__agent-name/, "subagent names must not render in role cards");
-assert.match(appTemplate, /data-sc-play-animation hidden/, "animation replay is a hidden debug control by default");
+assert.match(appTemplate, /data-sc-play-animation[^>]*\bhidden\b/, "animation replay is a hidden debug control by default");
 assert.doesNotMatch(appTemplate, /data-sc-subskill|data-sc-preview-subskill|sc-task-view__subskills|sc-task-view__size-subskill|subskillNode|renderSubskills|syncPreviewSubskills/, "detail views must not retain removed subskill DOM, controls or mirror logic");
 assert.doesNotMatch(appTemplate, /data-sc-subskill-submit|data-sc-subskill-approve|data-sc-subskill-choice/, "subskill records must not imply a reply or approval channel");
 assert.doesNotMatch(appTemplate, /data-sc-tree-gate|回到 SC|data-sc-state-reference|sc-task-view__console|data-sc-events|Session log/, "nonessential or post-QA views must not be rendered");
@@ -284,20 +284,19 @@ const activity=input=>resolveActiveRole(input.role_details,input.state,input.wor
 assert.equal(activity(repairInput),"qa","a bound test-asset repair may run without formal-test permission");
 for(const mutate of [v=>{v.handoffs=[];},v=>{v.handoffs[0].reference_version="old";},v=>{v.role_details.cr.blocker_type="bug";}]){const value=structuredClone(repairInput);mutate(value);assert.equal(activity(value),null,"incomplete repair authority must not animate QA");}
 assert.equal(activity({state:"dev_in_progress",work_unit:{roles:["cr","dev"]},role_details:{cr:{status:"pending"},dev:{status:"running"}}}),null,"an explicit pending predecessor cannot be skipped");
-for(const [state,label] of [["passed","已完成"],["qa_success","测试通过"],["skipped","已跳过"]]){assert.equal(stateText(state),label);assert.equal(resolveActiveRole(validDetails,state,selectedRoles),null,"terminal state must suppress stale running activity");}
+for(const [state,label] of [["passed","已完成"],["qa_success","测试通过"],["skipped","已跳过"]]){assert.equal(chineseStateText(state),label);assert.equal(resolveActiveRole(validDetails,state,selectedRoles),null,"terminal state must suppress stale running activity");}
 assertSkillMatch(/CR 未通过时 QA 保持 .pending.*独立测试资产限定返修可启动/,"only scoped asset repair may precede CR approval");
 for (const [state, label, tone] of [["paused", "已暂停", "waiting"], ["waiting", "等待中", "waiting"], ["failed", "失败", "danger"], ["cancelled", "已取消", "pending"], ["canceled", "已取消", "pending"], ["complete", "已完成", "completed"], ["done", "已完成", "completed"], ["successful", "已完成", "completed"]]) {
-  assert.equal(stateText(state), label, `${state} must display its supported global state label`);
+  assert.equal(chineseStateText(state), label, `${state} must display its supported global state label`);
   assert.equal(stateClass(state), `sc-task-view__state--${tone}`, `${state} must use its supported global state tone`);
 }
-assert.equal(roleStatesLiteral, '{pending:{label:"待开始",tone:"pending"},running:{label:"进行中",tone:"active"},passed:{label:"通过",tone:"passed"},blocked:{label:"阻断",tone:"danger"},needs_user_confirm:{label:"待用户确认",tone:"waiting"}}', "one canonical metadata table must define the five role labels and tones");
 assert.doesNotMatch(appTemplate, /roleStatusLabels|roleStatusTones|isActiveRoleStatus|roleStatusLabel|roleStatusTone/, "obsolete role-state helper layers must remain removed");
-assert.equal(stateText("ready_for_cr"), "审查阶段", "CR phase label must not imply waiting while CR is running");
-assert.equal(stateText("ready_for_qa"), "测试阶段", "QA phase label must not imply waiting while QA is running");
-assert.match(appTemplate, /detailField\(body,"摘要".*detailField\(body,"必要证据".*detailField\(body,"风险"/s, "role cards retain summary, evidence and risks");
+assert.equal(chineseStateText("ready_for_cr"), "审查阶段", "CR phase label must not imply waiting while CR is running");
+assert.equal(chineseStateText("ready_for_qa"), "测试阶段", "QA phase label must not imply waiting while QA is running");
+assert.match(appTemplate, /detailField\(body,copy\.summary,detail\.summary\).*detailField\(body,copy\.evidence,detail\.evidence\).*detailField\(body,copy\.risks,detail\.risks\)/s, "role cards retain summary, evidence and risks");
 assert.doesNotMatch(appTemplate, /detailField\(body,"下一步"/, "role details must omit the next-action field on desktop and narrow screens");
 assert.doesNotMatch(appTemplate, /\["下一步",data\.next\]|next:stringList\(work\.next_action\)/, "task summaries must omit the complete next-action section and its presentation data");
-assert.match(appTemplate, /\[\["结果",result\],\["已验证",data\.verified\|\|\[\]\],\["注意事项",data\.notes\|\|\[\]\]\]/, "task summaries retain result, verified scope and notes");
+assert.match(appTemplate, /\[\[copy\.result,result\],\[copy\.verified,data\.verified\|\|\[\]\],\[copy\.notes,data\.notes\|\|\[\]\]\]/, "task summaries retain result, verified scope and notes");
 assert.match(appTemplate, /\.sc-task-view__role-subskill \{[^}]*min-height:1\.6em;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/, "each subskill name retains a clipped single-line row");
 assert.match(appTemplate, /function selectRoleSubskills\(role,value,active\)/, "left-card subskill lists stay independent of detail DOM");
 assert.match(appTemplate, /skill\.title=skill\.textContent=selectedSkill\?\.name\|\|""/, "each subskill name exposes its full value in a tooltip");
@@ -330,7 +329,7 @@ assert.match(appTemplate, /sc-task-view__detail \{ display:grid; gap:16px; paddi
 assert.match(appTemplate, /data-sc-preview-size inert aria-hidden="true"/, "natural-size reserve copies must be inert and absent from the accessible tree");
 assert.match(appTemplate, /sc-task-view__preview-size \{[^}]*visibility:hidden; pointer-events:none/, "size reserve copies must never display or intercept a pointer");
 assert.match(appTemplate, /function cloneRoleDetail\(source\)/, "visible and natural-size detail copies share one clone helper");
-assert.match(appTemplate, /renderPreviewSize\(root\)[\s\S]*?cloneRoleDetail\(source\)/, "size reserve copies must use the shared clone helper without preview markers");
+assert.match(appTemplate, /renderPreviewSize\(root,copy\)[\s\S]*?cloneRoleDetail\(source\)/, "size reserve copies must use the shared clone helper without preview markers");
 assert.match(appTemplate, /source=root\.querySelector[\s\S]*?preview=cloneRoleDetail\(source\)/, "visible preview uses the same natural-size clone");
 assert.match(appTemplate, /copy\.removeAttribute\("data-sc-detail-body"\)/, "natural-size and visible copies drop their source detail marker");
 assert.match(appTemplate, /sc-task-view__preview-link \{[^}]*height:2px; background:var\(--focus\); box-shadow:0 0 4px/, "the preview owner must connect to the detail with a thin softly highlighted line");
@@ -351,6 +350,15 @@ assert.doesNotMatch(appTemplate, /sc-task-view__progress|role="progressbar"|任�
 assert.match(appTemplate, /--motion-period:1\.8s;/, "persistent motion must share the approved 1.8 second period");
 assert.match(appTemplate, /\.sc-task-view details\[data-sc-role\]\.is-active \{[^}]*border-color:var\(--role-accent\);[^}]*animation:sc-running-pulse var\(--motion-period\) ease-in-out infinite/, "active role cards must retain a visible persistent running animation");
 assert.match(appTemplate, /@keyframes sc-running-pulse/, "the running role animation must be defined");
-assert.equal(stateText("workflow_ready"), "任务完成", "workflow_ready must present completion without changing its state semantics");
+assert.equal(chineseStateText("workflow_ready"), "任务完成", "workflow_ready must present completion without changing its state semantics");
+
+const chineseBrowser = { languages: ["zh-Hant-TW", "en-US"], language: "zh-Hant-TW" };
+assert.equal(resolveLocale("en-GB", chineseBrowser), "en", "supported host preference takes priority");
+assert.equal(resolveLocale("fr-CA", chineseBrowser), "zh-CN", "unsupported host preference falls through to a supported browser language");
+assert.equal(resolveLocale(undefined, { languages: ["es-ES", "en-US", "zh-CN"] }), "en", "browser language order is preserved");
+assert.equal(resolveLocale(undefined, { language: "zh-CN" }), "zh-CN", "single-language hosts use navigator.language");
+assert.equal(resolveLocale("not_a_locale", { languages: ["de-DE"] }), "en", "invalid or unsupported preferences fall back to English");
+assert.equal(stateText("dev_in_progress", "en"), "In development");
+assert.equal(stateText("obsolete_state", "en"), "Unknown status");
 
 console.log(skill ? "SC minimal task-flow UI contract passed." : "SC minimal task-flow UI contract passed (repository Skill checks skipped outside the source tree).");

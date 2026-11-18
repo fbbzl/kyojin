@@ -38,7 +38,7 @@ function chromeBehavior() {
       open:[...root.querySelectorAll('[data-sc-role][open]')].map(node=>node.dataset.scRole),
       current:[...root.querySelectorAll('[data-sc-role][aria-current=step]')].map(node=>node.dataset.scRole)
     });
-    const render=value=>window.renderSurveyCorpsTaskView(root,value);
+    const render=value=>window.renderSurveyCorpsTaskView(root,value,{locale:'zh-CN'});
     const result={};
     const beforeInitial=JSON.stringify(initial);render(initial);
     result.dev={dev:status('dev'),cr:status('cr'),qa:status('qa'),...observe(),unchanged:beforeInitial===JSON.stringify(initial)};

@@ -33,9 +33,13 @@ function viewResponse(id, snapshot, message) {
 }
 function readTemplate() { return fs.readFileSync(TEMPLATE_PATH, "utf8"); }
 function appHtml() {
-  return `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body><main id="sc-task-view-root">${readTemplate()}</main><script>(()=>{
-    const root=document.getElementById("sc-task-view-root"),render=snapshot=>window.renderSurveyCorpsTaskView(root,snapshot),initId="sc-ui-init",parentWindow=window.parent;
-    let ready=false;
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body><main id="sc-task-view-root">${readTemplate()}</main><script>(()=>{
+    const root=document.getElementById("sc-task-view-root"),initId="sc-ui-init",parentWindow=window.parent;
+    let ready=false, locale;
+    const render=snapshot=>{
+      window.renderSurveyCorpsTaskView(root,snapshot,{locale});
+      document.documentElement.lang=root.lang;
+    };
     render({});
     window.addEventListener("message",event=>{
       if(event.source!==parentWindow)return;
@@ -43,7 +47,9 @@ function appHtml() {
       if(!message||message.jsonrpc!=="2.0")return;
       if(message.id===initId){
         if("error" in message)return;
-        if("result" in message){
+        if(!ready&&"result" in message){
+          locale=message.result?.hostContext?.locale;
+          render({});
           ready=true;
           parentWindow.postMessage({jsonrpc:"2.0",method:"ui/notifications/initialized"},"*");
         }
