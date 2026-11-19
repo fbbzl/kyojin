@@ -17,7 +17,7 @@ const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2025-03-26", "2025-06-18", "2025-1
 const SNAPSHOT_SCHEMA = require("./snapshot.schema.json");
 const ROLE_STATUSES = SNAPSHOT_SCHEMA.definitions.roleStatus.enum.join(", ");
 const validateSnapshotSchema = require("./snapshot-validator");
-const EMPTY_SNAPSHOT = Object.freeze({ view_id: "sc-task-view:empty", state: "unknown", __sc_empty_snapshot: true });
+const EMPTY_SNAPSHOT = Object.freeze({ view_id: "sc-task-view:empty", state: "unknown" });
 let latestSnapshot = null;
 const elapsedTracker = createElapsedTracker();
 const workflowStateMachine = createWorkflowStateMachine();
@@ -29,8 +29,10 @@ function send(message) {
   process.stdout.write(fallback);
 }
 function failure(id, code, message) { send({ jsonrpc: "2.0", id, error: { code, message } }); }
-function viewResponse(id, snapshot, message) {
-  return { jsonrpc: "2.0", id, result: { content: [{ type: "text", text: message }], structuredContent: { snapshot } } };
+function viewResponse(id, snapshot, message, emptyView = false) {
+  const structuredContent = { snapshot };
+  if (emptyView) structuredContent.empty_view = true;
+  return { jsonrpc: "2.0", id, result: { content: [{ type: "text", text: message }], structuredContent } };
 }
 function readTemplate() { return fs.readFileSync(TEMPLATE_PATH, "utf8"); }
 function appHtml() {
@@ -59,8 +61,9 @@ function appHtml() {
       }
       if(!ready||message.method!=="ui/notifications/tool-result")return;
       const result=message.params?.result??message.params;
-      const snapshot=result?.structuredContent?.snapshot;
-      if(snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)&&snapshot.__sc_empty_snapshot!==true)render(snapshot);
+      const structuredContent=result?.structuredContent;
+      const snapshot=structuredContent?.snapshot;
+      if(snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)&&structuredContent.empty_view!==true)render(snapshot);
     });
     parentWindow.postMessage({jsonrpc:"2.0",id:initId,method:"ui/initialize",params:{protocolVersion:"2026-01-26",appInfo:{name:"survey-corps-task-view",version:"0.1.4"},appCapabilities:{}}},"*");
   })();</script></body></html>`;
@@ -87,7 +90,7 @@ function handle(id, method, params) {
   if (method === "ping") return send({ jsonrpc: "2.0", id, result: {} });
   if (method === "resources/list") return send({ jsonrpc: "2.0", id, result: { resources: [{ uri: APP_URI, name: "SC Agent Tree", description: "Survey Corps task view MCP App", mimeType: APP_MIME }] } });
   if (method === "resources/read") { if (params?.uri !== APP_URI) return failure(id, -32602, "Unknown resource URI"); return send({ jsonrpc: "2.0", id, result: { contents: [resource(appHtml())] } }); }
-  if (method === "tools/list") return send({ jsonrpc: "2.0", id, result: { tools: [{ name: "show_sc_task_view", title: "Open SC task view", description: "Accept a typed Survey Corps snapshot; empty call restores the latest snapshot in this session.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: { type: "object", additionalProperties: false, properties: { snapshot: { ...SNAPSHOT_SCHEMA, description: "Optional full snapshot, rendered as text. Omit to restore." } } }, outputSchema: { type: "object", additionalProperties: false, required: ["snapshot"], properties: { snapshot: { ...SNAPSHOT_SCHEMA, description: "Accepted snapshot; explicit empty view before first input." } } }, _meta: { ui: { resourceUri: APP_URI }, "openai/ui": { entrypoints: [{ type: "thread" }] } } }] } });
+  if (method === "tools/list") return send({ jsonrpc: "2.0", id, result: { tools: [{ name: "show_sc_task_view", title: "Open SC task view", description: "Accept a typed Survey Corps snapshot; empty call restores the latest snapshot in this session.", annotations: { readOnlyHint: true, openWorldHint: false }, inputSchema: { type: "object", additionalProperties: false, properties: { snapshot: { ...SNAPSHOT_SCHEMA, description: "Optional full snapshot, rendered as text. Omit to restore." } } }, outputSchema: { type: "object", additionalProperties: false, required: ["snapshot"], properties: { snapshot: { ...SNAPSHOT_SCHEMA, description: "Accepted or restored task snapshot." }, empty_view: { type: "boolean", description: "True when snapshot is only an empty view before the first task snapshot." } } }, _meta: { ui: { resourceUri: APP_URI }, "openai/ui": { entrypoints: [{ type: "thread" }] } } }] } });
   if (method === "tools/call") {
     if (params?.name !== "show_sc_task_view") return failure(id, -32602, "unknown tool");
     const args = params.arguments;
@@ -99,10 +102,11 @@ function handle(id, method, params) {
       if (snapshotError) return failure(id, -32602, snapshotError);
     }
     const message = hasSnapshot ? "SC Agent Tree 已更新。" : latestSnapshot ? "SC Agent Tree 已恢复。" : "SC Agent Tree 尚未收到任务快照。";
+    const emptyView = !hasSnapshot && !latestSnapshot;
     let snapshot, frameExceeded = false;
     const acceptSnapshot = candidate => {
       if (Buffer.byteLength(JSON.stringify(candidate), "utf8") > MAX_SNAPSHOT_BYTES) return false;
-      frameExceeded = Buffer.byteLength(`${JSON.stringify(viewResponse(id, candidate, message))}\n`, "utf8") > MAX_FRAME_BYTES;
+      frameExceeded = Buffer.byteLength(`${JSON.stringify(viewResponse(id, candidate, message, emptyView))}\n`, "utf8") > MAX_FRAME_BYTES;
       return !frameExceeded;
     };
     try {
@@ -119,7 +123,7 @@ function handle(id, method, params) {
     }
     if (!snapshot) return failure(id, frameExceeded ? -32603 : -32602, frameExceeded ? "Response exceeds 256 KiB" : "snapshot exceeds 200 KiB after adding elapsed time");
     if (hasSnapshot) latestSnapshot = snapshot;
-    return send(viewResponse(id, snapshot, message));
+    return send(viewResponse(id, snapshot, message, emptyView));
   }
   failure(id, -32601, `Method not found: ${method}`);
 }

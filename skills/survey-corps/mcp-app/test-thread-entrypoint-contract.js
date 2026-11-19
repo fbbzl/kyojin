@@ -25,16 +25,17 @@ function request(id, params, check) {
 }
 
 request(1, { name: "show_sc_task_view", arguments: {} }, reply => {
-  assert.equal(reply.result.structuredContent.snapshot.view_id, "sc-task-view:empty");
-  assert.equal(reply.result.structuredContent.snapshot.state, "unknown");
+  assert.deepEqual(reply.result.structuredContent.snapshot, { view_id: "sc-task-view:empty", state: "unknown" });
+  assert.equal(reply.result.structuredContent.empty_view, true);
   assert.equal(reply.result.content[0].text, "SC Agent Tree 尚未收到任务快照。");
 });
-request(2, { name: "show_sc_task_view", arguments: { snapshot: { view_id: "sc-task-view:entry", state: "planned" } } }, reply => {
-  assert.equal(reply.result.structuredContent.snapshot.view_id, "sc-task-view:entry");
-  assert.equal(reply.result.structuredContent.snapshot.state, "planned");
+request(2, { name: "show_sc_task_view", arguments: { snapshot: { view_id: "sc-task-view:entry", state: "planned", __sc_empty_snapshot: true, empty_view: true } } }, reply => {
+  assert.deepEqual(reply.result.structuredContent.snapshot, { view_id: "sc-task-view:entry", state: "planned", __sc_empty_snapshot: true, empty_view: true });
+  assert.equal(reply.result.structuredContent.empty_view, undefined);
 });
 request(3, { name: "show_sc_task_view", arguments: {} }, reply => {
-  assert.deepEqual(reply.result.structuredContent.snapshot, { view_id: "sc-task-view:entry", state: "planned" });
+  assert.deepEqual(reply.result.structuredContent.snapshot, { view_id: "sc-task-view:entry", state: "planned", __sc_empty_snapshot: true, empty_view: true });
+  assert.equal(reply.result.structuredContent.empty_view, undefined);
   assert.equal(reply.result.content[0].text, "SC Agent Tree 已恢复。");
 });
 request(4, { name: "show_sc_task_view", arguments: { snapshot: { state: "planned" } } }, reply => {
@@ -50,6 +51,7 @@ request(6, { name: "show_sc_task_view", arguments: { unexpected: true } }, reply
   assert.match(reply.error.message, /unknown/);
 });
 request(7, { name: "show_sc_task_view", arguments: {} }, reply => {
-  assert.deepEqual(reply.result.structuredContent.snapshot, { view_id: "sc-task-view:entry", state: "planned" });
+  assert.deepEqual(reply.result.structuredContent.snapshot, { view_id: "sc-task-view:entry", state: "planned", __sc_empty_snapshot: true, empty_view: true });
+  assert.equal(reply.result.structuredContent.empty_view, undefined);
   assert.equal(reply.result.content[0].text, "SC Agent Tree 已恢复。");
 });

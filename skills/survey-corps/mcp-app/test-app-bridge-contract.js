@@ -63,7 +63,7 @@ async function main() {
   failed.receive({ jsonrpc: "2.0", id: "sc-ui-init", error: { code: -32602, message: "invalid params" } });
   assert.equal(failed.messages.length, 1, "initialization errors must not be acknowledged");
   failed.receive({ jsonrpc: "2.0", method: "ui/notifications/initialized" });
-  failed.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "sc-task-view:empty", state: "unknown", __sc_empty_snapshot: true } } } });
+  failed.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "sc-task-view:empty", state: "unknown" }, empty_view: true } } });
   assert.equal(failed.rendered.length, 0, "tool results must stay blocked after initialization failure");
 
   const ready = runBridge(script);
@@ -73,16 +73,16 @@ async function main() {
   assert.equal(ready.rendered.length, 0, "initialization does not render task data before a snapshot arrives");
   ready.receive(initializeResult("en-GB"));
   assert.deepEqual(plain(ready.messages[1]), { jsonrpc: "2.0", method: "ui/notifications/initialized" }, "successful initialization must be acknowledged");
-  ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "sc-task-view:empty", state: "unknown", __sc_empty_snapshot: true } } } });
+  ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "sc-task-view:empty", state: "unknown" }, empty_view: true } } });
   assert.equal(ready.rendered.length, 0, "the server empty sentinel must not be rendered as task data");
   assert.equal(ready.loading.hidden, false, "the loading state remains until a real snapshot arrives");
-  const firstSnapshot = { view_id: "sc-task-view:empty", state: "planned" };
+  const firstSnapshot = { view_id: "sc-task-view:empty", state: "planned", __sc_empty_snapshot: true, empty_view: true };
   ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: firstSnapshot } } });
   assert.deepEqual(plain(ready.rendered[0]), { snapshot: firstSnapshot, systemLocale }, "the first received snapshot renders immediately using the system locale");
   assert.equal(ready.root.hidden, false, "the task view appears after its first snapshot");
   assert.equal(ready.loading.hidden, true, "the loading state disappears after its first snapshot");
   assert.equal(ready.documentElement.lang, systemLocale.toLowerCase().startsWith("zh") ? "zh-CN" : "en", "document language must follow the local process locale");
-  const nextSnapshot = { view_id: "sc-task-view:demo", state: "dev_in_progress" };
+  const nextSnapshot = { view_id: "sc-task-view:demo", state: "dev_in_progress", __sc_empty_snapshot: true };
   ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: nextSnapshot } } });
   assert.deepEqual(plain(ready.rendered[1]), { snapshot: nextSnapshot, systemLocale }, "each later snapshot renders as soon as it arrives");
   ready.receive(initializeResult("zh-CN"));

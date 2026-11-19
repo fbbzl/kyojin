@@ -1,6 +1,6 @@
 # SC Agent Tree MCP App
 
-这是项目内、运行时零第三方依赖的 Node stdio MCP server。`snapshot.schema.json` 同时定义工具输入与服务端结构校验规则；开发依赖 Ajv 用于生成独立校验器，插件运行不要求安装 Ajv。宿主按需启动 `server.js`，SC 状态更新通过 `show_sc_task_view` 传入当前 snapshot；Codex `thread` entrypoint 则以空参数调用同一工具。工具以 `_meta.ui.resourceUri` 绑定静态 `text/html;profile=mcp-app` resource，并以 `openai/ui` 的 `thread` entrypoint 声明 Codex 任务内入口。工具返回 `structuredContent.snapshot`，UI 通过 MCP Apps 的 `ui/notifications/tool-result` bridge 渲染该快照。
+这是项目内、运行时零第三方依赖的 Node stdio MCP server。`snapshot.schema.json` 定义工具输入与快照结构校验规则；开发依赖 Ajv 用于生成独立校验器，插件运行不要求安装 Ajv。宿主按需启动 `server.js`，SC 状态更新通过 `show_sc_task_view` 传入当前 snapshot；Codex `thread` entrypoint 则以空参数调用同一工具。工具以 `_meta.ui.resourceUri` 绑定静态 `text/html;profile=mcp-app` resource，并以 `openai/ui` 的 `thread` entrypoint 声明 Codex 任务内入口。工具返回 `structuredContent.snapshot`；首次收到任务数据前额外返回 `structuredContent.empty_view=true`，UI bridge 据此保留加载态，不向任务快照写入内部标记。
 
 任务视图支持简体中文和英文。界面优先使用本地 MCP 服务进程读取的操作系统区域设置，并忽略 Codex 界面语言；仅在系统区域设置不受支持时，才回退到 WebView 的 `navigator.languages` 和 `navigator.language`。中文显示简体中文，无匹配时显示英文。任务标题、摘要等由快照提供的文字沿用原文。
 
@@ -73,14 +73,14 @@ node .\tools\test-codex-lifecycle.js
 
 marketplace 将该插件标为 `AVAILABLE`、`ON_INSTALL` 和 `Productivity`；这些字段控制客户端的发现与安装流程，不构成运行时隔离保证。
 
-注册的具体配置键由客户端版本决定；状态更新时调用 `show_sc_task_view`，参数为 `{ "snapshot": <当前 SC 快照> }`。`snapshot.view_id` 必填，对同一工作单元固定为 `sc-task-view:<work_unit_id>`；它是逻辑标识，不是路径或资源 URI，也不在 UI 中展示。入口空参调用 `{}` 会恢复当前 server 会话最近一次收到的快照；在首次收到快照前才返回 `sc-task-view:empty` 空视图。MCP App 资源 URI 为 `ui://survey-corps/task-view`。标准 `ui.resourceUri` 负责关联 HTML resource；Codex 专用的 `openai/ui.thread` entrypoint 负责让宿主把该 App 暴露为当前任务的侧栏入口。该入口仅声明可供用户在任务内容 tab 手动打开，不保证更新工具调用后自动展开右侧面板。
+注册的具体配置键由客户端版本决定；状态更新时调用 `show_sc_task_view`，参数为 `{ "snapshot": <当前 SC 快照> }`。`snapshot.view_id` 必填，对同一工作单元固定为 `sc-task-view:<work_unit_id>`；它是逻辑标识，不是路径或资源 URI，也不在 UI 中展示。入口空参调用 `{}` 会恢复当前 server 会话最近一次收到的快照；首次收到快照前返回 `{ snapshot: { view_id: "sc-task-view:empty", state: "unknown" }, empty_view: true }`。`empty_view` 属于响应信封，不属于 snapshot；后续恢复或业务快照省略此字段。MCP App 资源 URI 为 `ui://survey-corps/task-view`。标准 `ui.resourceUri` 负责关联 HTML resource；Codex 专用的 `openai/ui.thread` entrypoint 负责让宿主把该 App 暴露为当前任务的侧栏入口。该入口仅声明可供用户在任务内容 tab 手动打开，不保证更新工具调用后自动展开右侧面板。
 
 角色顺序由编排者写入 `work_unit.roles`，视图保留该原序；缓存更新、同值跳过、强制重显与短确认输出见 [SC 快照更新与输出](../SKILL.md#快照更新与输出)。节省来自减少重复调用与上下文输出，不改变完整快照协议或真实文件切换上报。
 
 ## 安全与边界
 
 - 请求帧上限为 256 KiB，输入及加入耗时后的快照上限为 200 KiB（均按 UTF-8 字节计算，快照预算为响应封装预留空间）。超限会拒绝且不改变缓存和计时记录。快照仅接受 JSON object，`view_id` 必须是非空字符串；含 `work_unit` 的任务快照必须带有已知字符串 `state` 和 `roles`；纯视图快照仍可不带 `state`。所有快照值由原模板以 `textContent` 输出。
-- 内部通过纯 `transition(previous, SNAPSHOT_RECEIVED)` 校验一致性与阶段跳转；唯一更新入口 `dispatch(event, applySnapshot)` 在容量检查和同步计时、预算处理成功后提交，回调失败或抛错不提交状态，异步回调与重入会明确拒绝。外部快照协议不变。
+- 内部通过纯 `transition(previous, SNAPSHOT_RECEIVED)` 校验一致性与阶段跳转；唯一更新入口 `dispatch(event, applySnapshot)` 在容量检查和同步计时、预算处理成功后提交，回调失败或抛错不提交状态，异步回调与重入会明确拒绝。输入快照协议不变；工具输出在 `structuredContent` 增加可选 `empty_view` 标记。
 - 角色卡只展示 `work_unit.roles` 中的有效参与角色；未选择角色时不生成角色卡。角色名称标记不在视图中展示。
 - server 本身不联网、不写入磁盘，快照仅在当前 server 进程内缓存最近一份，另保存最多 128 个任务的计时记录，无轮询或后台服务；marketplace 元数据不是运行时隔离保证。
 - 工具展示不改变 SC 权威状态、交接或完成门禁。
