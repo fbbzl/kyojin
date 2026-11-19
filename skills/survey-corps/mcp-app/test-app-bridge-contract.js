@@ -23,7 +23,8 @@ function runBridge(script) {
   const messages = [];
   const rendered = [];
   const listeners = {};
-  const root = {};
+  const root = { hidden: true };
+  const loading = { hidden: false, textContent: "" };
   const documentElement = {};
   const systemLocale = Intl.DateTimeFormat().resolvedOptions().locale;
   const parent = { postMessage: message => messages.push(message) };
@@ -37,8 +38,8 @@ function runBridge(script) {
       rendered.push({ snapshot, systemLocale: locale });
     },
   };
-  vm.runInNewContext(script, { window, document: { documentElement, getElementById: () => root } });
-  return { messages, rendered, documentElement, receive: (data, source = parent) => listeners.message({ source, data }) };
+  vm.runInNewContext(script, { window, document: { documentElement, getElementById: id => id === "sc-task-view-loading" ? loading : root } });
+  return { messages, rendered, documentElement, root, loading, receive: (data, source = parent) => listeners.message({ source, data }) };
 }
 
 const plain = value => JSON.parse(JSON.stringify(value));
@@ -48,6 +49,9 @@ async function main() {
   const html = await readResource();
   const script = html.slice(html.lastIndexOf("<script>") + 8, html.lastIndexOf("</script>"));
   const failed = runBridge(script);
+  assert.equal(failed.rendered.length, 0, "the app must not render an empty task before data arrives");
+  assert.equal(failed.root.hidden, true, "the empty task view stays hidden while waiting");
+  assert.equal(failed.loading.hidden, false, "the loading state stays visible while waiting");
   assert.deepEqual(plain(failed.messages[0]), {
     jsonrpc: "2.0", id: "sc-ui-init", method: "ui/initialize",
     params: {
@@ -59,22 +63,30 @@ async function main() {
   failed.receive({ jsonrpc: "2.0", id: "sc-ui-init", error: { code: -32602, message: "invalid params" } });
   assert.equal(failed.messages.length, 1, "initialization errors must not be acknowledged");
   failed.receive({ jsonrpc: "2.0", method: "ui/notifications/initialized" });
-  failed.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "ignored" } } } });
-  assert.equal(failed.rendered.length, 1, "tool results must stay blocked after initialization failure");
+  failed.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "sc-task-view:empty", state: "unknown", __sc_empty_snapshot: true } } } });
+  assert.equal(failed.rendered.length, 0, "tool results must stay blocked after initialization failure");
 
   const ready = runBridge(script);
-  assert.equal(ready.rendered[0].systemLocale, systemLocale, "the renderer receives the local process locale");
+  assert.equal(ready.rendered.length, 0, "initialization must wait for the first task snapshot");
   const initializeResult = locale => ({ jsonrpc: "2.0", id: "sc-ui-init", result: { protocolVersion: "2026-01-26", hostContext: { locale } } });
   ready.receive(initializeResult("zh-CN"), {});
-  assert.equal(ready.rendered.length, 1, "initialization does not rerender before acknowledgement");
+  assert.equal(ready.rendered.length, 0, "initialization does not render task data before a snapshot arrives");
   ready.receive(initializeResult("en-GB"));
   assert.deepEqual(plain(ready.messages[1]), { jsonrpc: "2.0", method: "ui/notifications/initialized" }, "successful initialization must be acknowledged");
-  ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "sc-task-view:demo" } } } });
-  assert.deepEqual(plain(ready.rendered[1]), { snapshot: {}, systemLocale }, "host initialization must not override the system locale");
+  ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: { view_id: "sc-task-view:empty", state: "unknown", __sc_empty_snapshot: true } } } });
+  assert.equal(ready.rendered.length, 0, "the server empty sentinel must not be rendered as task data");
+  assert.equal(ready.loading.hidden, false, "the loading state remains until a real snapshot arrives");
+  const firstSnapshot = { view_id: "sc-task-view:empty", state: "planned" };
+  ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: firstSnapshot } } });
+  assert.deepEqual(plain(ready.rendered[0]), { snapshot: firstSnapshot, systemLocale }, "the first received snapshot renders immediately using the system locale");
+  assert.equal(ready.root.hidden, false, "the task view appears after its first snapshot");
+  assert.equal(ready.loading.hidden, true, "the loading state disappears after its first snapshot");
   assert.equal(ready.documentElement.lang, systemLocale.toLowerCase().startsWith("zh") ? "zh-CN" : "en", "document language must follow the local process locale");
+  const nextSnapshot = { view_id: "sc-task-view:demo", state: "dev_in_progress" };
+  ready.receive({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: { snapshot: nextSnapshot } } });
+  assert.deepEqual(plain(ready.rendered[1]), { snapshot: nextSnapshot, systemLocale }, "each later snapshot renders as soon as it arrives");
   ready.receive(initializeResult("zh-CN"));
-  assert.deepEqual(plain(ready.rendered[2]), { snapshot: { view_id: "sc-task-view:demo" }, systemLocale }, "tool results must keep using the local process locale");
-  assert.equal(ready.rendered.length, 3, "repeated initialization cannot overwrite the initialized locale");
+  assert.equal(ready.rendered.length, 2, "repeated initialization cannot overwrite the initialized locale or rerender task data");
   console.log("MCP App bridge contract test passed.");
 }
 

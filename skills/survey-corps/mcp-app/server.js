@@ -17,7 +17,7 @@ const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2025-03-26", "2025-06-18", "2025-1
 const SNAPSHOT_SCHEMA = require("./snapshot.schema.json");
 const ROLE_STATUSES = SNAPSHOT_SCHEMA.definitions.roleStatus.enum.join(", ");
 const validateSnapshotSchema = require("./snapshot-validator");
-const EMPTY_SNAPSHOT = Object.freeze({ view_id: "sc-task-view:empty", state: "unknown" });
+const EMPTY_SNAPSHOT = Object.freeze({ view_id: "sc-task-view:empty", state: "unknown", __sc_empty_snapshot: true });
 let latestSnapshot = null;
 const elapsedTracker = createElapsedTracker();
 const workflowStateMachine = createWorkflowStateMachine();
@@ -34,15 +34,17 @@ function viewResponse(id, snapshot, message) {
 }
 function readTemplate() { return fs.readFileSync(TEMPLATE_PATH, "utf8"); }
 function appHtml() {
-  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body><main id="sc-task-view-root">${readTemplate()}</main><script>(()=>{
-    const root=document.getElementById("sc-task-view-root"),initId="sc-ui-init",parentWindow=window.parent;
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body><main><p id="sc-task-view-loading" role="status" aria-live="polite">Loading task view...</p><div id="sc-task-view-root" hidden>${readTemplate()}</div></main><script>(()=>{
+    const root=document.getElementById("sc-task-view-root"),loading=document.getElementById("sc-task-view-loading"),initId="sc-ui-init",parentWindow=window.parent;
     const systemLocale=${JSON.stringify(SYSTEM_LOCALE)};
+    loading.textContent=systemLocale.toLowerCase().startsWith("zh")?"正在加载任务视图…":"Loading task view...";
     let ready=false;
     const render=snapshot=>{
       window.renderSurveyCorpsTaskView(root,snapshot,{systemLocale});
       document.documentElement.lang=root.lang;
+      root.hidden=false;
+      loading.hidden=true;
     };
-    render({});
     window.addEventListener("message",event=>{
       if(event.source!==parentWindow)return;
       const message=event.data;
@@ -50,7 +52,6 @@ function appHtml() {
       if(message.id===initId){
         if("error" in message)return;
         if(!ready&&"result" in message){
-          render({});
           ready=true;
           parentWindow.postMessage({jsonrpc:"2.0",method:"ui/notifications/initialized"},"*");
         }
@@ -59,7 +60,7 @@ function appHtml() {
       if(!ready||message.method!=="ui/notifications/tool-result")return;
       const result=message.params?.result??message.params;
       const snapshot=result?.structuredContent?.snapshot;
-      if(snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot))render(snapshot);
+      if(snapshot&&typeof snapshot==="object"&&!Array.isArray(snapshot)&&snapshot.__sc_empty_snapshot!==true)render(snapshot);
     });
     parentWindow.postMessage({jsonrpc:"2.0",id:initId,method:"ui/initialize",params:{protocolVersion:"2026-01-26",appInfo:{name:"survey-corps-task-view",version:"0.1.4"},appCapabilities:{}}},"*");
   })();</script></body></html>`;
