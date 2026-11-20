@@ -48,7 +48,7 @@
 - 若发现与当前任务无关的未提交改动，先报告；后续暂存与提交只可使用当前任务的精确文件列表。
 - 不直接操作 `master` / `main`，除非用户明确要求。
 - 默认在当前业务分支工作；切分支前先确认目标分支和未提交改动。
-- 当需要向用户发起确认时，使用“缩写（英文全称）”格式：`c (commit)`、`ac (amend commit)`、`m (merge)`、`sq (squash)`、`rb (rebase)`、`cp (cherry-pick)`、`p (push)`。
+- 当需要向用户发起确认时，使用“缩写（英文全称）”格式：`c (commit)`、`ac (amend commit)`、`m (merge)`、`sq (squash)`、`rb (rebase)`、`cp (cherry-pick)`、`p (push)`、`fp (force-push)`。
 - Git 缩写只用于确认语句，目的是让用户少输入；其他陈述性说明保持原样，不必刻意改写成缩写。
 - 例如询问是否提交时，写 `是否执行 c (commit)？`；日常说明仍可直接写 `提交`、`push` 等原词。
 - 展示状态或结果时，使用自然原词，不使用缩写提示格式；例如写 `已经 commit`，不写 `已执行 c (commit)`。
